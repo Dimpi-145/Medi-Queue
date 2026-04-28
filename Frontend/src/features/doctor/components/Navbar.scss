@@ -1,0 +1,62 @@
+.doctor-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  margin: 20px 24px 0;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.06);
+  min-width: 0;
+}
+
+.doctor-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #3b82f6;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 700;
+}
+
+.profile-meta {
+  min-width: 0;
+}
+
+.profile-meta h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.profile-meta .small-label {
+  display: block;
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.btn-logout {
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-logout:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}

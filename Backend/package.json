@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@imagekit/nodejs": "^7.5.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cookie": "^1.1.1",
+    "cookie-parser": "^1.4.7",
+    "cookies-parser": "^1.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "install": "^0.13.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1",
+    "parser": "^0.1.4",
+    "socket.io": "^4.8.3"
+  }
+}
