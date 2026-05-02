@@ -140,6 +140,32 @@
   overflow-x: hidden;
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.back-button:hover {
+  background: #f8fafc;
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+.patient-detail-page {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(320px, 1.2fr) minmax(300px, 0.8fr);

@@ -20,3 +20,7 @@ export async function register(data){
 
     return response.data
 }
+export const getPatientDashboard = async () => {
+  const response = await api.get("/patient-dashboard");
+  return response.data;
+};

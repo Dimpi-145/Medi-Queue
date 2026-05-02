@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import PatientQueue from "../components/PatientQueue";
-import PatientDetails from "../components/PatientDetails";
-import PrescriptionBox from "../components/PrescriptionBox";
 import "../doctorDashboard.scss";
 
 const initialQueue = [
@@ -46,8 +45,7 @@ const appointmentList = [
 const DoctorDashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [queue, setQueue] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [prescriptionText, setPrescriptionText] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [appointments, setAppointments] = useState([]);
@@ -55,7 +53,7 @@ const DoctorDashboard = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setQueue(initialQueue);
-      setSelectedPatient(initialQueue[0]);
+      setSelectedPatientId(initialQueue[0].id);
       setLoadingQueue(false);
     }, 400);
 
@@ -70,48 +68,15 @@ const DoctorDashboard = () => {
     };
   }, []);
 
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     console.log("Logout clicked");
   };
 
   const handleSelectPatient = (patient) => {
-    setSelectedPatient(patient);
-    setPrescriptionText("");
-  };
-
-  const handleGeneratePdf = () => {
-    if (!selectedPatient) return;
-
-    const prescriptionContent = `Prescription for ${selectedPatient.name}\nAge: ${selectedPatient.age}\nGender: ${selectedPatient.gender}\n\nInstructions:\n${prescriptionText || "No prescription text entered."}`;
-    const blob = new Blob([prescriptionContent], { type: "application/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `prescription-${selectedPatient.name.replace(/\s+/g, "_")}.pdf`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
-
-  const handleSubmitPrescription = () => {
-    if (!selectedPatient) return;
-    console.log("Submitted prescription", {
-      patient: selectedPatient,
-      prescription: prescriptionText,
-    });
-    alert(`Prescription submitted for ${selectedPatient.name}`);
-  };
-
-  const handleNextPatient = () => {
-    if (!selectedPatient) return;
-
-    const updatedQueue = queue.map((item) =>
-      item.id === selectedPatient.id ? { ...item, status: "completed" } : item
-    );
-
-    const nextPatient = updatedQueue.find((item) => item.status === "waiting");
-
-    setQueue(updatedQueue);
-    setSelectedPatient(nextPatient || null);
-    setPrescriptionText("");
+    setSelectedPatientId(patient.id);
+    navigate(`/doctor-dashboard/patient/${patient.id}`);
   };
 
   const activeQueue = queue.filter((item) => item.status !== "completed");
@@ -180,25 +145,12 @@ const DoctorDashboard = () => {
 
     return (
       <div className="dashboard-grid">
-        <div className="left-panel">
-          <PatientQueue
-            queue={activeQueue}
-            selectedPatientId={selectedPatient?.id}
-            onSelectPatient={handleSelectPatient}
-            loading={loadingQueue}
-          />
-        </div>
-        <div className="right-panel">
-          <PatientDetails patient={selectedPatient} />
-          <PrescriptionBox
-            prescriptionText={prescriptionText}
-            onTextChange={setPrescriptionText}
-            onGenerate={handleGeneratePdf}
-            onSubmit={handleSubmitPrescription}
-            onNext={handleNextPatient}
-            disabled={!selectedPatient}
-          />
-        </div>
+        <PatientQueue
+          queue={activeQueue}
+          selectedPatientId={selectedPatientId}
+          onSelectPatient={handleSelectPatient}
+          loading={loadingQueue}
+        />
       </div>
     );
   };

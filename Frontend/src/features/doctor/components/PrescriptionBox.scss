@@ -20,7 +20,7 @@
 
 .prescription-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
@@ -28,6 +28,7 @@
 .btn-secondary,
 .btn-success {
   border: none;
+  width: 100%;
   padding: 12px 18px;
   border-radius: 999px;
   font-weight: 700;

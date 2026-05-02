@@ -1,6 +1,7 @@
 import React from "react";
 import "./PrescriptionBox.scss";
 
+
 const PrescriptionBox = ({ prescriptionText, onTextChange, onGenerate, onSubmit, onNext, disabled }) => {
   return (
     <div className="prescription-card">

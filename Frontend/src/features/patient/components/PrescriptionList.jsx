@@ -1,36 +1,79 @@
-import React from 'react'
-import './PrescriptionList.scss'
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "./PrescriptionList.scss";
 
-const PrescriptionList = ({ prescriptions, loading }) => {
+const Prescription = () => {
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ================= FETCH PRESCRIPTIONS =================
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axios.get(
+          "http://localhost:3000/api/prescriptions/my",
+          { withCredentials: true }
+        );
+
+        setPrescriptions(res.data || []);
+      } catch (err) {
+        console.error("Prescription Fetch Error:", err);
+        setPrescriptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <section className="card-panel prescriptions-panel">
+    <section className="card-panel prescription-panel">
+
+      {/* HEADER */}
       <div className="panel-header">
         <div>
-          <p className="eyebrow">Prescriptions</p>
-          <h2>Active Scripts</h2>
+          <p className="eyebrow">Medical Records</p>
+          <h2>Prescriptions</h2>
         </div>
-        <button className="ghost-button">Download All</button>
       </div>
+
+      {/* LOADING */}
       {loading ? (
         <div className="panel-empty">Loading prescriptions...</div>
       ) : prescriptions.length === 0 ? (
         <div className="panel-empty">No prescriptions available.</div>
       ) : (
         <div className="prescription-list">
-          {prescriptions.map((prescription, index) => (
-            <article key={index} className="prescription-card">
+
+          {prescriptions.map((item, index) => (
+            <div key={index} className="prescription-row">
+
               <div>
-                <h4>{prescription.doctor}</h4>
-                <p>{prescription.date}</p>
-                <p className="preview">{prescription.preview}</p>
+                <h4>Dr. {item.doctorId?.username || "Doctor"}</h4>
+                <p>{item.notes}</p>
               </div>
-              <button className="secondary-button">Download PDF</button>
-            </article>
+
+              <div className="prescription-meta">
+                <span className="date">
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </span>
+
+                <button className="secondary-button">
+                  View
+                </button>
+              </div>
+
+            </div>
           ))}
+
         </div>
       )}
-    </section>
-  )
-}
 
-export default PrescriptionList
+    </section>
+  );
+};
+
+export default Prescription;

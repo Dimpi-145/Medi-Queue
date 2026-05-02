@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const authRouter = require('../routes/auth.routes')
 const generateToken = require("../utils/jwt");
-const imagekit = require("../config/imagekit.config")
+// const imagekit = require("../config/imagekit.config")
 const Appointment = require("../models/appointment.model")
 
 async function registerController(req, res) {
