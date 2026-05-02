@@ -1,0 +1,92 @@
+.profile-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+
+  
+}
+/* 🔥 HEADER FIX */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 🔥 BUTTON STYLE */
+.book-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #2563eb;
+  }
+}
+
+
+.profile-card .patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.profile-card .patient-info img {
+  width: 80px;
+  height: 80px;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.patient-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.patient-details div {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.patient-details span {
+  display: block;
+  color: #6b7280;
+  margin-bottom: 0.45rem;
+}
+
+.patient-details strong {
+  color: #111827;
+  font-size: 1.05rem;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.metric-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #eff6ff;
+}
+
+.metric-card p {
+  color: #1d4ed8;
+  margin-bottom: 0.6rem;
+}
+
+.metric-card strong {
+  font-size: 1.5rem;
+  color: #111827;
+}
