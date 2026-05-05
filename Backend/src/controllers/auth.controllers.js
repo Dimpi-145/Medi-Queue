@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcryptjs")
 const authRouter = require('../routes/auth.routes')
 const generateToken = require("../utils/jwt");
-// const imagekit = require("../config/imagekit.config")
+const ImageKit = require('@imagekit/nodejs')
 const Appointment = require("../models/appointment.model")
 
 async function registerController(req, res) {
@@ -24,7 +24,7 @@ async function registerController(req, res) {
 
         // optional image upload
         if (req.file) {
-            const client = new imagekit({
+            const client = new ImageKit({
                 publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
                 privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
                 urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
@@ -116,81 +116,29 @@ async function loginController (req, res){
     })
 }
 
-async function admincreateDoctor(req, res){
 
-    const { username, email, password, specialization } = req.body;
 
-    const hashed = await bcrypt.hash(password, 10);
 
-    const doctor = await userModel.create({
-      username,
-      email,
-      password: hashed,
-      role: "doctor",
-      specialization
-    });
 
-    res.json({ message: "Doctor created", doctor });
-}
-async function walkInRegister(req, res) {
-  try {
-    const {
-      username,
-      email,
-      gender,
-      age,
-      doctorId
-    } = req.body;
 
-    if (!doctorId) {
-      return res.status(400).json({
-        message: "doctorId is required"
-      });
+async function getPatientById(req, res) {
+    try {
+        const { id } = req.params;
+        const patient = await userModel.findById(id).select('-password');
+        if (!patient || patient.role !== 'patient') {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+        res.status(200).json(patient);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
     }
-
-    // 1. Create patient (NO PASSWORD for walk-in optional)
-    const patient = await userModel.create({
-      username,
-      email,
-      role: "patient",
-      gender,
-      age,
-      password: await bcrypt.hash("walkin123", 10) // default temp password
-    });
-
-    // 2. Generate queue number
-    const last = await Appointment.findOne({ doctorId })
-      .sort({ queueNumber: -1 });
-
-    const queueNumber = last ? last.queueNumber + 1 : 1;
-
-    // 3. Create appointment (QUEUE ENTRY)
-    const appointment = await Appointment.create({
-      patientId: patient._id,
-      doctorId,
-      queueNumber,
-      status: "pending",
-      source: "walk-in" ,
-      date: new Date() 
-    });
-
-    return res.status(201).json({
-      message: "Walk-in patient registered and added to queue",
-      patient,
-      appointment
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message
-    });
-  }
 }
+
+
 
 
 module.exports = {
     registerController,
     loginController,
-    admincreateDoctor,
-    walkInRegister
+    getPatientById,
 }

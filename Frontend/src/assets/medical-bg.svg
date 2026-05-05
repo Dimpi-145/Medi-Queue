@@ -1,0 +1,77 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <style>
+    .ecg-line {
+      stroke: white;
+      stroke-opacity: 0.2;
+      stroke-width: 2;
+      fill: none;
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: draw 4s ease-in-out infinite;
+    }
+
+    @keyframes draw {
+      0% { stroke-dashoffset: 400; }
+      40% { stroke-dashoffset: 0; }
+      60% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -400; }
+    }
+
+    .pulse-glow {
+      fill: white;
+      opacity: 0.4;
+      transform-origin: center;
+      animation: glow 4s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0% { r: 3; opacity: 0.5; }
+      40% { r: 10; opacity: 0; }
+      100% { r: 3; opacity: 0; }
+    }
+  </style>
+
+  <g stroke="white" stroke-opacity="0.18" stroke-width="2">
+
+    <!-- Medical Cross -->
+    <rect x="120" y="80" width="60" height="20"/>
+    <rect x="140" y="60" width="20" height="60"/>
+
+    <!-- ECG Path -->
+    <path id="ecgPath"
+      class="ecg-line"
+      d="M40 300 H140 L180 250 L220 340 L260 270 H360"
+    />
+
+    <!-- Moving Pulse (Exact Path Follow) -->
+    <g>
+      <!-- Glow -->
+      <circle class="pulse-glow" r="6">
+        <animateMotion dur="4s" repeatCount="indefinite">
+          <mpath href="#ecgPath"/>
+        </animateMotion>
+      </circle>
+
+      <!-- Core Dot -->
+      <circle r="3" fill="white">
+        <animateMotion dur="4s" repeatCount="indefinite">
+          <mpath href="#ecgPath"/>
+        </animateMotion>
+      </circle>
+    </g>
+
+    <!-- Hospital -->
+    <rect x="600" y="120" width="120" height="160"/>
+    <rect x="640" y="80" width="40" height="40"/>
+
+    <!-- Extra crosses -->
+    <rect x="700" y="40" width="30" height="10"/>
+    <rect x="710" y="30" width="10" height="30"/>
+
+    <rect x="200" y="450" width="30" height="10"/>
+    <rect x="210" y="440" width="10" height="30"/>
+
+  </g>
+
+</svg>

@@ -1,52 +1,60 @@
-// pages/Patients.jsx
-import React, { useState, useEffect } from 'react';
-import { getPatients, createPatient, getDoctors } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { getPatients, createPatient, getDoctors, getDoctorsByDepartment } from "../services/api";
+import "./Patients.scss";
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const [showForm, setShowForm] = useState(false);
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    age: '',
-    gender: '',
-    phone: '',
-    doctorId: '',
+    username: "",
+    email: "",
+    password: "",
+    age: "",
+    gender: "",
+    phone: "",
+    doctorId: "",
   });
+
+  // ================= FETCH PATIENTS =================
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+
+      const res = await getPatients();
+          console.log("🧨 PATIENT API RESPONSE:", res.data);
+      setPatients(res.data || []);
+    } catch (err) {
+      console.error("Error fetching patients:", err);
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+    
+  };
+
+  // ================= FETCH DOCTORS =================
+  const fetchDoctors = async () => {
+    try {
+      const res = await getDoctors();
+      setDoctors(res.data || []);
+    } catch (err) {
+      console.error("Error fetching doctors:", err);
+      setDoctors([]);
+    }
+  };
 
   useEffect(() => {
     fetchPatients();
     fetchDoctors();
   }, []);
 
-  const fetchPatients = async () => {
-    try {
-      const response = await getPatients();
-      setPatients(response.data);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-      // Mock data
-      setPatients([
-        { id: 1, name: 'John Doe', email: 'john@example.com', age: 30, gender: 'Male', phone: '1234567890' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', age: 25, gender: 'Female', phone: '0987654321' },
-      ]);
-    }
-  };
-
-  const fetchDoctors = async () => {
-    try {
-      const response = await getDoctors();
-      setDoctors(response.data);
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
-      setDoctors([
-        { id: 1, name: 'Dr. Smith' },
-        { id: 2, name: 'Dr. Johnson' },
-      ]);
-    }
-  };
-
+  // ================= INPUT =================
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -54,139 +62,182 @@ const Patients = () => {
     });
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
     try {
-      await createPatient(formData);
+      const response = await createPatient(formData);
+      console.log("✅ Patient created successfully:", response.data);
+
       setFormData({
-        name: '',
-        email: '',
-        age: '',
-        gender: '',
-        phone: '',
-        doctorId: '',
+        username: "",
+        email: "",
+        password: "",
+        age: "",
+        gender: "",
+        phone: "",
+        doctorId: "",
       });
+
       setShowForm(false);
-      fetchPatients();
-    } catch (error) {
-      console.error('Error creating patient:', error);
+      await fetchPatients();
+    } catch (err) {
+      console.error("❌ Error creating patient:", err);
+      console.error("📋 Error response:", err.response?.data);
+      setError(err.response?.data?.message || err.message || "Failed to create patient");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="patients">
+
       <div className="header">
         <h2>Patient Management</h2>
-        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Add New Patient'}
+
+        <button
+          className="btn-primary"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? "Cancel" : "Add New Patient"}
         </button>
       </div>
 
+      {/* ================= FORM ================= */}
       {showForm && (
         <form className="form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name:</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Age:</label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Gender:</label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Phone:</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Assign Doctor:</label>
-            <select
-              name="doctorId"
-              value={formData.doctorId}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select Doctor</option>
-              {doctors.map(doctor => (
-                <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn-primary">Register Patient</button>
+
+          {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
+
+          <input
+            type="text"
+            name="username"
+            placeholder="Name"
+            value={formData.username}
+            onChange={handleInputChange}
+            disabled={submitting}
+            required
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleInputChange}
+            disabled={submitting}
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password (min 6 chars, optional)"
+            value={formData.password}
+            onChange={handleInputChange}
+            disabled={submitting}
+          />
+
+          <input
+            type="number"
+            name="age"
+            placeholder="Age"
+            value={formData.age}
+            onChange={handleInputChange}
+            disabled={submitting}
+            required
+          />
+
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleInputChange}
+            disabled={submitting}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="others">Other</option>
+          </select>
+
+          <input
+            type="text"
+            name="phone"
+            placeholder="Phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            disabled={submitting}
+          />
+
+          {/* DOCTORS DROPDOWN */}
+          <select
+            name="doctorId"
+            value={formData.doctorId}
+            onChange={(e) => {
+              console.log("SELECTED DOCTOR VALUE:", e.target.value);
+              setFormData({ ...formData, doctorId: e.target.value });
+            }}
+            required
+          >
+            <option value="">Assign Doctor</option>
+
+            {doctors.map((doc) => (
+              <option
+                key={doc._id || doc.id}
+                value={doc._id || doc.id}
+              >
+                {doc.username || doc.name}
+              </option>
+            ))}
+
+          </select>
+          <button type="submit" className="btn-primary" disabled={submitting}>
+            {submitting ? "Creating..." : "Register Patient"}
+          </button>
+
         </form>
       )}
 
+      {/* ================= TABLE ================= */}
       <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Age</th>
-              <th>Gender</th>
-              <th>Phone</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map(patient => (
-              <tr key={patient.id}>
-                <td>{patient.id}</td>
-                <td>{patient.name}</td>
-                <td>{patient.email}</td>
-                <td>{patient.age}</td>
-                <td>{patient.gender}</td>
-                <td>{patient.phone}</td>
-                <td>
-                  <button className="btn-secondary">Edit</button>
-                  <button className="btn-danger">Delete</button>
-                </td>
+
+        {loading ? (
+          <p>Loading patients...</p>
+        ) : (
+          <table className="table">
+
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Phone</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {patients.map((p) => (
+                <tr key={p._id}>
+                  <td>{p.username}</td>
+                  <td>{p.email}</td>
+                  <td>{p.age}</td>
+                  <td>{p.gender}</td>
+                  <td>{p.phone}</td>
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+        )}
+
       </div>
+
     </div>
   );
 };

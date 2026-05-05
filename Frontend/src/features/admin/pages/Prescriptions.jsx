@@ -1,32 +1,27 @@
-// pages/Prescriptions.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { getPrescriptions } from "../services/api";
+import "./Prescriptions.scss";
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
+
+  const fetchPrescriptions = async () => {
+    try {
+      const res = await getPrescriptions();
+      setPrescriptions(res.data || []);
+    } catch (error) {
+      console.error("Error fetching prescriptions:", error);
+      setPrescriptions([]);
+    }
+  };
 
   useEffect(() => {
     fetchPrescriptions();
   }, []);
 
-  const fetchPrescriptions = async () => {
-    try {
-      // Assuming there's an API for prescriptions
-      // const response = await getPrescriptions();
-      // setPrescriptions(response.data);
-
-      // Mock data for now
-      setPrescriptions([
-        { id: 1, patientName: 'John Doe', doctorName: 'Dr. Smith', date: '2024-04-27', fileName: 'prescription_001.pdf' },
-        { id: 2, patientName: 'Jane Smith', doctorName: 'Dr. Johnson', date: '2024-04-26', fileName: 'prescription_002.pdf' },
-      ]);
-    } catch (error) {
-      console.error('Error fetching prescriptions:', error);
-    }
-  };
-
-  const downloadPrescription = (fileName) => {
-    // Implement download functionality
-    console.log('Downloading:', fileName);
+  const downloadPrescription = (fileUrl) => {
+    if (!fileUrl) return;
+    window.open(fileUrl, "_blank");
   };
 
   return (
@@ -37,31 +32,31 @@ const Prescriptions = () => {
         <table className="table">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Patient</th>
               <th>Doctor</th>
               <th>Date</th>
-              <th>Actions</th>
+              <th>Action</th>
             </tr>
           </thead>
+
           <tbody>
-            {prescriptions.map(prescription => (
-              <tr key={prescription.id}>
-                <td>{prescription.id}</td>
-                <td>{prescription.patientName}</td>
-                <td>{prescription.doctorName}</td>
-                <td>{prescription.date}</td>
+            {prescriptions.map((p) => (
+              <tr key={p.id}>
+                <td>{p.patientName}</td>
+                <td>{p.doctorName}</td>
+                <td>{new Date(p.date).toLocaleDateString()}</td>
                 <td>
                   <button
                     className="btn-primary"
-                    onClick={() => downloadPrescription(prescription.fileName)}
+                    onClick={() => downloadPrescription(p.fileUrl)}
                   >
-                    Download PDF
+                    Download
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
+
         </table>
       </div>
     </div>

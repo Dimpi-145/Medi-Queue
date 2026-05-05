@@ -45,39 +45,53 @@ const Login = () => {
         }
     };
 
-    return (
-        <main>
-            <div className="form-container">
-                <h1>Login</h1>
+return (
+  <div className="auth-container">
 
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="Enter username"
-                        value={formData.username}
-                        onChange={handleChange}
-                    />
+    <div className="auth-card">
 
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
+      <h2>Welcome Back</h2>
+      <p>Login to continue to MediQueue</p>
 
-                    <button className="button primary-button">
-                        Login
-                    </button>
-                </form>
+      <form onSubmit={handleSubmit}>
 
-                <p>
-                    Don't have an account ? <Link to="/register">Create One.</Link>
-                </p>
-            </div>
-        </main>
-    )
+        <div className="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter username"
+            value={formData.username}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={handleChange}
+          />
+        </div>
+
+        <button className="auth-btn">
+          Login
+        </button>
+
+      </form>
+
+      <div className="auth-footer">
+        Don’t have an account?{" "}
+        <Link to="/register">Create one</Link>
+      </div>
+
+    </div>
+
+  </div>
+);
 }
 
 export default Login

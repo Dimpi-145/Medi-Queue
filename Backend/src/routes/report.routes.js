@@ -11,9 +11,9 @@ const role = require("../middleware.js/role.middleware");
 ReportRouter.post("/upload", upload.single("report"),auth, role("patient"), reportController.uploadReport);
 
 // Patient gets own reports
-// ReportRouter.get("/my", auth, role("patient"), reportController.getMyReports);
+ReportRouter.get("/my", auth, role("patient"), reportController.getMyReports);
 
-// // Doctor views via token
-// ReportRouter.get("/view/:token", auth, role("doctor"), reportController.getReportByToken);
+// Doctor views via token
+ReportRouter.get("/view/:token", auth, role("doctor"), reportController.getReportByToken);
 
 module.exports = ReportRouter;

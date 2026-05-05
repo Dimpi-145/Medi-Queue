@@ -1,6 +1,6 @@
-// pages/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { getDashboardStats } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { getDashboardStats } from "../services/api";
+import "./Dashboard.scss";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -16,17 +16,10 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await getDashboardStats();
-      setStats(response.data);
+      const res = await getDashboardStats();
+      setStats(res.data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      // Mock data for now
-      setStats({
-        totalPatients: 150,
-        totalDoctors: 12,
-        patientsInQueue: 8,
-        appointmentsToday: 25,
-      });
+      console.error("Error fetching stats:", error);
     }
   };
 
@@ -37,19 +30,22 @@ const Dashboard = () => {
       <div className="cards">
         <div className="card">
           <h3>Total Patients</h3>
-          <p className="stat">{stats.totalPatients}</p>
+          <p>{stats.totalPatients}</p>
         </div>
+
         <div className="card">
           <h3>Total Doctors</h3>
-          <p className="stat">{stats.totalDoctors}</p>
+          <p>{stats.totalDoctors}</p>
         </div>
+
         <div className="card">
           <h3>Patients in Queue</h3>
-          <p className="stat">{stats.patientsInQueue}</p>
+          <p>{stats.patientsInQueue}</p>
         </div>
+
         <div className="card">
           <h3>Appointments Today</h3>
-          <p className="stat">{stats.appointmentsToday}</p>
+          <p>{stats.appointmentsToday}</p>
         </div>
       </div>
     </div>

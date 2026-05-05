@@ -1,36 +1,57 @@
-// services/api.js
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:5000/api'; // Adjust if needed
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: "/api",
+  withCredentials: true,
 });
 
-// Add token if available
-const token = localStorage.getItem('token');
-if (token) {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-}
+// ================= TOKEN =================
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
-// Auth APIs
-export const createPatient = (patientData) => api.post('/auth/admin/create-patient', patientData);
-export const createDoctor = (doctorData) => api.post('/auth/admin/create-doctor', doctorData);
+// ================= ADMIN =================
+export const getPatients = () =>
+  api.get("/admin/getpatients");
 
-// Queue APIs
-export const addToQueue = (queueData) => api.post('/queue/admin/add-to-queue', queueData);
-export const getLiveQueue = () => api.get('/queue/live');
+export const getDoctors = () =>
+  api.get("/admin/getdoctors");
 
-// Admin APIs
-export const getDoctors = () => api.get('/admin/doctors');
-export const getPatients = () => api.get('/admin/patients');
-export const getAppointments = () => api.get('/admin/appointments');
-export const bookAppointment = (appointmentData) => api.post('/admin/appointments', appointmentData);
+export const createPatient = (data) =>
+  api.post("/admin/create-patient", data);
 
-// Dashboard stats (assuming endpoints)
-export const getDashboardStats = () => api.get('/admin/stats');
+export const createDoctor = (data) =>
+  api.post("/admin/create-doctor", data);
+
+// ================= APPOINTMENTS =================
+export const getAppointments = () =>
+  api.get("/admin/appointments");
+
+export const bookAppointment = (data) =>
+  api.post("/admin/book-appointment", data);
+
+export const getMyAppointments = () =>
+  api.get("/appointments/my");
+
+// ================= DOCTOR FILTER (PATIENT SIDE) =================
+export const getDoctorsByDepartment = (department) =>
+  api.get(`/appointments/get-doctors?department=${department}`);
+
+// ================= DASHBOARD =================
+export const getDashboardStats = () =>
+  api.get("/admin/stats");
+
+// ================= QUEUE =================
+export const getLiveQueue = (doctorId) =>
+  api.get(`/queue/live?doctorId=${doctorId}`);
+
+export const addToQueue = (data) =>
+  api.post("/queue/admin/add-to-queue", data);
+
+// ================= PRESCRIPTIONS =================
+export const getPrescriptions = () =>
+  api.get("/prescriptions/all");
 
 export default api;

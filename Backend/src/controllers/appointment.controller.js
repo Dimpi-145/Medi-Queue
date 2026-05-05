@@ -1,27 +1,30 @@
 const Appointment = require("../models/appointment.model")
 
+// ================= BOOK =================
 async function bookAppointment(req, res) {
     try {
         const { doctorId, date, timeSlot } = req.body
 
-
-        // ✅ 1. CHECK DUPLICATE (ADD HERE)
+        // ✅ CHECK DUPLICATE (date + timeSlot)
         const existingAppointment = await Appointment.findOne({
             patientId: req.user.id,
-            doctorId: doctorId,
-            date: date,
+            doctorId,
+            date,
+            timeSlot,
             status: { $in: ["pending", "approved"] }
         })
 
         if (existingAppointment) {
             return res.status(400).json({
-                message: "You already have an appointment with this doctor on this date",
-                timeSlot: timeSlot
+                message: "You already booked this slot"
             })
         }
 
-        // get last queue number
-        const lastAppointment = await Appointment.findOne().sort({ queueNumber: -1 })
+        // ✅ QUEUE PER DOCTOR + DATE
+        const lastAppointment = await Appointment.findOne({
+            doctorId,
+            date
+        }).sort({ queueNumber: -1 })
 
         const queueNumber = lastAppointment ? lastAppointment.queueNumber + 1 : 1
 
@@ -31,11 +34,11 @@ async function bookAppointment(req, res) {
             date,
             timeSlot,
             queueNumber,
-            status: 'pending'
+            status: "pending"
         })
+
         return res.status(201).json({
             message: "Appointment booked successfully",
-            appointmentId: appointment._id,   
             appointment
         })
 
@@ -45,22 +48,28 @@ async function bookAppointment(req, res) {
         })
     }
 }
+
+
+// ================= PATIENT =================
 async function getMyAppointments(req, res) {
     try {
         const appointments = await Appointment.find({
             patientId: req.user.id
-        }).populate("doctorId", "username specialization")
+        })
+        .populate("doctorId", "username specialization")
+        .sort({ date: -1 }) // ✅ latest first
 
-         const formattedAppointments = appointments.map(app => ({
-            appointmentId: app._id,   
-            doctor: app.doctorId,
+        const formattedAppointments = appointments.map(app => ({
+            id: app._id,
+            doctor: app.doctorId?.username || "Doctor",
+            specialization: app.doctorId?.specialization || "",
             date: app.date,
             timeSlot: app.timeSlot,
             queueNumber: app.queueNumber,
             status: app.status
         }))
 
-        return res.status(200).json(appointments)
+        return res.status(200).json(formattedAppointments)
 
     } catch (error) {
         return res.status(500).json({
@@ -68,14 +77,19 @@ async function getMyAppointments(req, res) {
         })
     }
 }
+
+
+// ================= DOCTOR =================
 async function getDoctorAppointments(req, res) {
     try {
         const appointments = await Appointment.find({
             doctorId: req.user.id
-        }).populate("patientId", "username age gender")
+        })
+        .populate("patientId", "username age gender")
+        .sort({ queueNumber: 1 }) // queue order
 
         const formattedAppointments = appointments.map(app => ({
-            appointmentId: app._id,   
+            id: app._id,
             patient: app.patientId,
             date: app.date,
             timeSlot: app.timeSlot,
@@ -83,8 +97,7 @@ async function getDoctorAppointments(req, res) {
             status: app.status
         }))
 
-
-        return res.status(200).json(appointments)
+        return res.status(200).json(formattedAppointments)
 
     } catch (error) {
         return res.status(500).json({
@@ -92,6 +105,36 @@ async function getDoctorAppointments(req, res) {
         })
     }
 }
+const User = require("../models/user.model");
+
+// ================= GET DOCTORS =================
+async function getDoctors(req, res) {
+  try {
+    const { department } = req.query;
+
+    const filter = {
+      role: "doctor",
+    };
+
+    if (department) {
+      filter.specialization = department;
+    }
+
+    const doctors = await User.find(filter).select(
+      "username department specialization"
+    );
+
+    return res.status(200).json(doctors);
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+
+
+// ================= CANCEL =================
 async function cancelAppointment(req, res) {
     try {
         const appointment = await Appointment.findById(req.params.id)
@@ -117,6 +160,9 @@ async function cancelAppointment(req, res) {
         })
     }
 }
+
+
+// ================= CALL NEXT =================
 async function callNextPatient(req, res) {
     try {
         const nextAppointment = await Appointment.findOne({
@@ -144,6 +190,8 @@ async function callNextPatient(req, res) {
     }
 }
 
+
+// ================= COMPLETE =================
 async function completeAppointment(req, res) {
     try {
         const appointment = await Appointment.findById(req.params.id)
@@ -165,12 +213,11 @@ async function completeAppointment(req, res) {
 }
 
 
-
-
 module.exports = {
     bookAppointment,
     getMyAppointments,
     getDoctorAppointments,
+    getDoctors,
     cancelAppointment,
     callNextPatient,
     completeAppointment,

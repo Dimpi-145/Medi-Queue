@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getMyAppointments } from "../services/appointment.api";
 import "./History.scss";
 
 const History = () => {
@@ -12,12 +12,14 @@ const History = () => {
       try {
         setLoading(true);
 
-        const res = await axios.get(
-          "http://localhost:3000/api/history/my",
-          { withCredentials: true }
+        const res = await getMyAppointments();
+        
+        // Filter for completed appointments
+        const completedAppointments = (res.data || []).filter(
+          (apt) => apt.status === "completed" || apt.status === "cancelled"
         );
 
-        setHistory(res.data || []);
+        setHistory(completedAppointments || []);
       } catch (err) {
         console.error("History Fetch Error:", err);
         setHistory([]);

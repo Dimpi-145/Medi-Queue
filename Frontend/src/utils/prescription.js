@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 
-export const generatePrescriptionPDF = ({ patient, doctor, prescriptionText }) => {
+const buildPrescriptionPDF = ({ patient, doctor, prescriptionText }) => {
   const doc = new jsPDF();
 
   // 🏥 HEADER
@@ -30,5 +30,19 @@ export const generatePrescriptionPDF = ({ patient, doctor, prescriptionText }) =
   doc.setFontSize(10);
   doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280);
 
-  doc.save(`prescription_${patient?.name || "patient"}.pdf`);
+  return doc;
+};
+
+export const generatePrescriptionPDF = ({ patient, doctor, prescriptionText }) => {
+  const doc = buildPrescriptionPDF({ patient, doctor, prescriptionText });
+  const fileName = `prescription_${(patient?.name || patient?.username || "patient")
+    .replace(/\s+/g, "_")
+    .toLowerCase()}.pdf`;
+
+  doc.save(fileName);
+};
+
+export const createPrescriptionPdfBlob = ({ patient, doctor, prescriptionText }) => {
+  const doc = buildPrescriptionPDF({ patient, doctor, prescriptionText });
+  return doc.output("blob");
 };

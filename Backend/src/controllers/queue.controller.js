@@ -54,7 +54,8 @@ async function callNextPatient(req, res) {
         return res.json({
             message: "Next patient called",
             appointmentId: nextAppointment._id,
-            queueNumber: nextAppointment.queueNumber
+            queueNumber: nextAppointment.queueNumber,
+            patientId: nextAppointment.patientId
         })
 
     } catch (error) {
@@ -62,28 +63,30 @@ async function callNextPatient(req, res) {
     }
 }
 async function getLiveQueue(req, res) {
+  try {
+    let doctorId = req.user.id;
 
-    console.log("DOCTOR ID:", req.user.id)
-    console.log("ROLE:", req.user.role)
-    try {
-        const { date } = req.query
-        const queue = await Appointment.find({
-            doctorId: req.user.id,
-            status: "pending",
-            ...(date && { date })
-
-        }).sort({ queueNumber: 1 })
-            .populate("patientId", "username age gender")
-
-        return res.status(200).json({
-            doctorId: req.user.id,
-            totalWaiting: queue.length,
-            patients: queue
-        })
-
-    } catch (error) {
-        res.status(500).json({ message: error.message })
+    // ✅ If admin, use query doctorId
+    if (req.user.role === "admin") {
+      doctorId = req.query.doctorId;
     }
+
+    const queue = await Appointment.find({
+      doctorId,
+      status: "pending",
+    })
+      .sort({ queueNumber: 1 })
+      .populate("patientId", "username age gender");
+
+    return res.status(200).json({
+      doctorId,
+      totalWaiting: queue.length,
+      patients: queue,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 }
 async function getQueuePosition(req, res) {
     try {
@@ -140,10 +143,64 @@ async function addToQueue(req, res) {
   }
 }
 
+async function completeCurrent(req, res) {
+  try {
+    const current = await Appointment.findOne({
+      doctorId: req.user.id,
+      status: "called",
+    });
+
+    if (!current) {
+      return res.status(404).json({ message: "No active patient" });
+    }
+
+    current.status = "completed";
+    await current.save();
+
+    return res.json({
+      message: "Patient completed",
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+async function getPatientDetails(req, res) {
+  try {
+    const { patientId } = req.params;
+
+    // Find the appointment for this doctor and patient
+    const appointment = await Appointment.findOne({
+      doctorId: req.user.id,
+      patientId: patientId,
+      status: { $in: ["pending", "approved", "called"] }
+    }).populate("patientId", "username age gender email phone");
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Patient not found in your queue" });
+    }
+
+    return res.status(200).json({
+      patient: appointment.patientId,
+      appointment: {
+        id: appointment._id,
+        queueNumber: appointment.queueNumber,
+        status: appointment.status,
+        date: appointment.date
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+}
+
 module.exports = {
     getLiveQueue,
     getCurrentPatient,
     callNextPatient,
     getQueuePosition,
-    addToQueue
+    addToQueue,
+    completeCurrent,
+    getPatientDetails
 }

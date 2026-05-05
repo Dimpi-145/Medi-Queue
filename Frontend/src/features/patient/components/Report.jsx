@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getMyReports, uploadReport } from "../services/report.api";
 import "./Report.scss";
 
 const Reports = () => {
@@ -14,12 +14,9 @@ const Reports = () => {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        "http://localhost:3000/api/reports/my",
-        { withCredentials: true }
-      );
+      const res = await getMyReports();
 
-      setReports(res.data || []);
+      setReports(res.data.data || []);
     } catch (err) {
       console.error("Reports Fetch Error:", err);
       setReports([]);
@@ -42,13 +39,7 @@ const Reports = () => {
       const formData = new FormData();
       formData.append("report", file);
 
-      const res = await axios.post(
-        "http://localhost:3000/api/reports/upload",
-        formData,
-        {
-          withCredentials: true,
-        }
-      );
+      await uploadReport(formData);
 
       alert("Report uploaded successfully!");
 

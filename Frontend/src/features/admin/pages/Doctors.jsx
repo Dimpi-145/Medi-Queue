@@ -1,34 +1,37 @@
-// pages/Doctors.jsx
-import React, { useState, useEffect } from 'react';
-import { getDoctors, createDoctor } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { getDoctors, createDoctor } from "../services/api";
+import "./Doctors.scss";
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [showForm, setShowForm] = useState(false);
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    specialization: '',
+    username: "",
+    email: "",
+    password: "",
+    specialization: "",
   });
+
+  // ================= FETCH DOCTORS =================
+  const fetchDoctors = async () => {
+    try {
+      const res = await getDoctors();
+      const doctorsData = Array.isArray(res.data)
+        ? res.data
+        : res.data?.doctors || [];
+      setDoctors(doctorsData);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      setDoctors([]);
+    }
+  };
 
   useEffect(() => {
     fetchDoctors();
   }, []);
 
-  const fetchDoctors = async () => {
-    try {
-      const response = await getDoctors();
-      setDoctors(response.data);
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
-      // Mock data
-      setDoctors([
-        { id: 1, name: 'Dr. Smith', email: 'smith@example.com', specialization: 'Cardiology' },
-        { id: 2, name: 'Dr. Johnson', email: 'johnson@example.com', specialization: 'Neurology' },
-      ]);
-    }
-  };
-
+  // ================= INPUT CHANGE =================
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -36,94 +39,132 @@ const Doctors = () => {
     });
   };
 
+  // ================= CREATE DOCTOR =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       await createDoctor(formData);
+
       setFormData({
-        name: '',
-        email: '',
-        specialization: '',
+        username: "",
+        email: "",
+        specialization: "",
       });
+
       setShowForm(false);
       fetchDoctors();
     } catch (error) {
-      console.error('Error creating doctor:', error);
+      console.error("Error creating doctor:", error);
     }
   };
 
   return (
     <div className="doctors">
+
       <div className="header">
         <h2>Doctor Management</h2>
-        <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Add New Doctor'}
+
+        <button
+          className="btn-primary"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? "Cancel" : "Add New Doctor"}
         </button>
       </div>
 
+      {/* ================= FORM ================= */}
       {showForm && (
         <form className="form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name:</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Specialization:</label>
-            <input
-              type="text"
-              name="specialization"
-              value={formData.specialization}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary">Create Doctor</button>
+
+          <input
+            type="text"
+            name="username"
+            placeholder="Doctor Name"
+            value={formData.username}
+            onChange={handleInputChange}
+            required
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password (min 6 chars, optional)"
+            value={formData.password}
+            onChange={handleInputChange}
+          />
+
+          <select
+            name="specialization"
+            value={formData.specialization}
+            onChange={handleInputChange}
+            required
+          >
+            <option value="">Select Specialization</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Emergency Medicine">Emergency Medicine</option>
+            <option value="Family Medicine">Family Medicine</option>
+            <option value="Gastroenterology">Gastroenterology</option>
+            <option value="General Surgery">General Surgery</option>
+            <option value="Internal Medicine">Internal Medicine</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Obstetrics and Gynecology">Obstetrics and Gynecology</option>
+            <option value="Ophthalmology">Ophthalmology</option>
+            <option value="Orthopedic Surgery">Orthopedic Surgery</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Psychiatry">Psychiatry</option>
+            <option value="Radiology">Radiology</option>
+            <option value="Urology">Urology</option>
+          </select>
+
+          <button type="submit" className="btn-primary">
+            Create Doctor
+          </button>
+
         </form>
       )}
 
+      {/* ================= TABLE ================= */}
       <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Specialization</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {doctors.map(doctor => (
-              <tr key={doctor.id}>
-                <td>{doctor.id}</td>
-                <td>{doctor.name}</td>
-                <td>{doctor.email}</td>
-                <td>{doctor.specialization}</td>
-                <td>
-                  <button className="btn-secondary">Edit</button>
-                  <button className="btn-danger">Delete</button>
-                </td>
+
+        {doctors.length === 0 ? (
+          <p>No doctors found</p>
+        ) : (
+          <table className="table">
+
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Specialization</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {doctors.map((doc) => (
+                <tr key={doc._id || doc.id}>
+                  <td>{doc.username}</td>
+                  <td>{doc.email}</td>
+                  <td>{doc.specialization}</td>
+                </tr>
+              ))}
+            </tbody>
+
+          </table>
+        )}
+
       </div>
+
     </div>
   );
 };

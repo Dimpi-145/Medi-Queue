@@ -22,17 +22,34 @@ const DoctorPatientDetails = () => {
     const fetchPatient = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/queue/position/${patientId}`,
+          `http://localhost:3000/api/queue/patient/${patientId}`,
           { withCredentials: true }
         );
 
-        setPatient(res.data.patient || res.data);
+        // Transform the data to match component expectations
+        const patientData = res.data.patient;
+        const appointmentData = res.data.appointment;
+
+        const transformedPatient = {
+          name: patientData.username,
+          age: patientData.age,
+          gender: patientData.gender,
+          queueNumber: appointmentData.queueNumber,
+          status: appointmentData.status,
+          email: patientData.email,
+          phone: patientData.phone,
+          appointmentId: appointmentData.id
+        };
+
+        setPatient(transformedPatient);
       } catch (err) {
         console.error("Patient fetch error:", err);
       }
     };
 
-    fetchPatient();
+    if (patientId) {
+      fetchPatient();
+    }
   }, [patientId]);
 
   // ================= PDF GENERATE =================

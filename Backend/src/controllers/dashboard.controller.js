@@ -6,6 +6,10 @@ async function doctorDashboard(req, res) {
 
         const doctorId = req.user.id
 
+        const doctor = await User.findById(doctorId).select(
+          "username email specialization department profileImage role"
+        );
+
         const currentPatient = await Appointment.findOne({
             doctorId,
             status: "approved"
@@ -33,6 +37,7 @@ async function doctorDashboard(req, res) {
         })
 
         return res.json({
+            doctor,
             currentPatient,
             nextPatient,
             totalWaiting,
@@ -51,15 +56,15 @@ async function patientDashboard(req, res) {
   try {
     const patientId = req.user.id;
 
-    // 👤 Patient Info
+    //  Patient Info
     const patient = await User.findById(patientId).select("-password");
 
-    // 📅 All Appointments
+    //  All Appointments
     const appointments = await Appointment.find({ patientId })
       .populate("doctorId", "username specialization")
       .sort({ createdAt: -1 });
 
-    // 🎯 Active Appointment
+    //  Active Appointment
     const activeAppointment = await Appointment.findOne({
       patientId,
       status: { $in: ["pending", "approved"] },
@@ -83,7 +88,6 @@ async function patientDashboard(req, res) {
       };
     }
 
-    // ✅ FINAL RESPONSE (FRONTEND FRIENDLY)
     return res.status(200).json({
       patient,
       appointments,

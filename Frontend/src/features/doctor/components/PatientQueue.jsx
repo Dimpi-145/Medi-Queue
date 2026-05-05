@@ -30,7 +30,7 @@ const PatientQueue = ({ queue, selectedPatientId, onSelectPatient, loading }) =>
         {queue.map((patient) => (
           <button
             key={patient.id}
-            className={`queue-item ${selectedPatientId === patient.id ? "selected" : ""}`}
+            className={`queue-item ${selectedPatientId === patient.patientId ? "selected" : ""}`}
             onClick={() => onSelectPatient(patient)}
           >
             <div className="queue-number">{patient.queueNumber}</div>

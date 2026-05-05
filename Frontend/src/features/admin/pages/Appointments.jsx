@@ -1,187 +1,201 @@
-// pages/Appointments.jsx
-import React, { useState, useEffect } from 'react';
-import { getAppointments, bookAppointment, getPatients, getDoctors } from '../services/api';
+import React, { useState, useEffect } from "react";
+import {
+  getAppointments,
+  bookAppointment,
+  getDoctors,
+  getPatients,
+} from "../services/api";
+import { formatTimeWithAMPM } from "../../../utils/timeFormatter";
+import "./Appointments.scss";
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
-  const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+
   const [showForm, setShowForm] = useState(false);
+
   const [formData, setFormData] = useState({
-    patientId: '',
-    doctorId: '',
-    date: '',
-    time: '',
+    patientId: "",
+    doctorId: "",
+    date: "",
+    timeSlot: "",
   });
 
+  // ================= FETCH =================
   useEffect(() => {
     fetchAppointments();
-    fetchPatients();
     fetchDoctors();
+    fetchPatients();
   }, []);
 
   const fetchAppointments = async () => {
     try {
-      const response = await getAppointments();
-      setAppointments(response.data);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-      // Mock data
-      setAppointments([
-        { id: 1, patientName: 'John Doe', doctorName: 'Dr. Smith', date: '2024-04-27', time: '10:00', status: 'pending' },
-        { id: 2, patientName: 'Jane Smith', doctorName: 'Dr. Johnson', date: '2024-04-27', time: '11:00', status: 'approved' },
-      ]);
-    }
-  };
-
-  const fetchPatients = async () => {
-    try {
-      const response = await getPatients();
-      setPatients(response.data);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-      setPatients([
-        { id: 1, name: 'John Doe' },
-        { id: 2, name: 'Jane Smith' },
-      ]);
+      const res = await getAppointments();
+      setAppointments(res.data || []);
+    } catch (err) {
+      console.log("Error fetching appointments", err);
     }
   };
 
   const fetchDoctors = async () => {
     try {
-      const response = await getDoctors();
-      setDoctors(response.data);
-    } catch (error) {
-      console.error('Error fetching doctors:', error);
-      setDoctors([
-        { id: 1, name: 'Dr. Smith' },
-        { id: 2, name: 'Dr. Johnson' },
-      ]);
+      const res = await getDoctors();
+      setDoctors(res.data || []);
+    } catch (err) {
+      console.log("Error fetching doctors", err);
     }
   };
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // const fetchPatients = async () => {
+
+  //   console.log("🧨 PATIENT API RESPONSE:", res.data);
+
+  //   try {
+  //     const res = await getPatients();
+  //     setPatients(res.data || []);
+  //   } catch (err) {
+  //     console.log("Error fetching patients", err);
+  //   }
+  // };
+  const fetchPatients = async () => {
+  try {
+    const res = await getPatients();
+
+    const data = res.data;
+
+    const patientsArray = Array.isArray(data)
+      ? data
+      : data?.patients || data?.data || [];
+
+    setPatients(patientsArray);
+
+  } catch (err) {
+    console.log("Error fetching patients", err);
+  }
+};
+
+  // ================= INPUT =================
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       await bookAppointment(formData);
+
       setFormData({
-        patientId: '',
-        doctorId: '',
-        date: '',
-        time: '',
+        patientId: "",
+        doctorId: "",
+        date: "",
+        timeSlot: "",
       });
+
       setShowForm(false);
       fetchAppointments();
-    } catch (error) {
-      console.error('Error booking appointment:', error);
+    } catch (err) {
+      console.log("Booking error", err.response?.data || err.message);
     }
   };
 
   return (
     <div className="appointments">
+
       <div className="header">
         <h2>Appointment Management</h2>
+
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Book Appointment'}
+          {showForm ? "Cancel" : "Book Appointment"}
         </button>
       </div>
 
+      {/* ================= FORM ================= */}
       {showForm && (
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Patient:</label>
-            <select
-              name="patientId"
-              value={formData.patientId}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select Patient</option>
-              {patients.map(patient => (
-                <option key={patient.id} value={patient.id}>{patient.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Doctor:</label>
-            <select
-              name="doctorId"
-              value={formData.doctorId}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select Doctor</option>
-              {doctors.map(doctor => (
-                <option key={doctor.id} value={doctor.id}>{doctor.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Date:</label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Time:</label>
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary">Book Appointment</button>
+        <form onSubmit={handleSubmit} className="form">
+
+          {/* PATIENT */}
+          <select name="patientId" value={formData.patientId} onChange={handleChange} required>
+            <option value="">Select Patient</option>
+            {patients.map((p) => (
+              <option key={p._id} value={p._id}>
+                {p.username}
+              </option>
+            ))}
+          </select>
+
+          {/* DOCTOR */}
+          <select name="doctorId" value={formData.doctorId} onChange={handleChange} required>
+            <option value="">Select Doctor</option>
+            {doctors.map((doc) => (
+              <option key={doc._id} value={doc._id}>
+                {doc.username} ({doc.specialization})
+              </option>
+            ))}
+          </select>
+
+          {/* DATE */}
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            required
+          />
+
+          {/* TIME */}
+          <input
+            type="time"
+            name="timeSlot"
+            value={formData.timeSlot}
+            onChange={handleChange}
+            required
+          />
+          {formData.timeSlot && (
+            <div className="time-preview">
+              Formatted: {formatTimeWithAMPM(formData.timeSlot)}
+            </div>
+          )}
+
+          <button type="submit" className="btn-primary">
+            Book Appointment
+          </button>
         </form>
       )}
 
+      {/* ================= TABLE ================= */}
       <div className="table-container">
-        <table className="table">
+        <table>
           <thead>
             <tr>
-              <th>ID</th>
               <th>Patient</th>
               <th>Doctor</th>
               <th>Date</th>
               <th>Time</th>
               <th>Status</th>
-              <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {appointments.map(appointment => (
-              <tr key={appointment.id}>
-                <td>{appointment.id}</td>
-                <td>{appointment.patientName}</td>
-                <td>{appointment.doctorName}</td>
-                <td>{appointment.date}</td>
-                <td>{appointment.time}</td>
+            {appointments.map((a) => (
+              <tr key={a._id}>
+                <td>{a.patient}</td>
+                <td>{a.doctor}</td>
+                <td>{new Date(a.date).toLocaleDateString()}</td>
+                <td>{formatTimeWithAMPM(a.timeSlot)}</td>
                 <td>
-                  <span className={`status ${appointment.status}`}>
-                    {appointment.status}
+                  <span className={`status ${a.status}`}>
+                    {a.status}
                   </span>
-                </td>
-                <td>
-                  <button className="btn-secondary">Edit</button>
-                  <button className="btn-danger">Cancel</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
     </div>
   );
 };

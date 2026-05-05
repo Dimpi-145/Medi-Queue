@@ -20,5 +20,12 @@ PrescriptionRouter.get(
   role("patient"),
   controller.getPatientPrescriptions
 );
+// Admin gets all prescriptions
+PrescriptionRouter.get(
+  "/all",
+  auth,
+  role("admin"),
+  controller.getPrescriptions
+);
 
 module.exports = PrescriptionRouter;

@@ -37,8 +37,24 @@ const userSchema = new mongoose.Schema(
       enum: ["male", "female", "others"]
     },
     age: Number,
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
 
     specialization: String,
+    department: {
+  type: String,
+  enum: [
+    "General",
+    "Cardiology",
+    "Neurology",
+    "Orthopedics",
+    "Dermatology",
+    "Pediatrics",
+    "ENT",
+  ],
+},
 
     isVerified: {
       type: Boolean,

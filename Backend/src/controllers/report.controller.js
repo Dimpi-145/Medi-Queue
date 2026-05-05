@@ -90,93 +90,58 @@ async function uploadReport(req, res) {
   }
 }
 
-//   try {
-//     const patientId = req.user.id;
-
-//     if (!req.files || !req.files.report) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "No report file uploaded",
-//       });
-//     }
-
-//     const file = req.files.report;
-
-//     if (!file.mimetype.startsWith("image/")) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Only image files are allowed",
-//       });
-//     }
-
-//     const uploadedFile = await imagekit.upload({
-//       file: file.data.toString("base64"),
-//       fileName: `${Date.now()}-${file.name}`,
-//       folder: "/reports",
-//     });
-
-//     if (!uploadedFile || !uploadedFile.url) {
-//       return res.status(500).json({
-//         success: false,
-//         message: "ImageKit upload failed",
-//       });
-//     }
-
-//     const report = await Report.create({
-//       patientId,
-//       fileUrl: uploadedFile.url,
-//       token: generateToken(),
-//     });
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "Report uploaded successfully",
-//       data: report,
-//     });
-//   } catch (err) {
-//     console.error("REPORT UPLOAD ERROR:", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: err.message || "Server error during upload",
-//     });
-//   }
-// }
-
 // // ================= GET MY REPORTS =================
-// async function getMyReports(req, res) {
-//   try {
-//     const patientId = req.user.id;
+async function getMyReports(req, res) {
+  try {
+    const patientId = req.user.id;
 
-//     const reports = await Report.find({ patientId }).sort({ createdAt: -1 });
+    const reports = await ReportModel.find({ patientId }).sort({ createdAt: -1 });
 
-//     return res.json(reports);
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// }
+    return res.status(200).json({
+      success: true,
+      data: reports,
+    });
+  } catch (err) {
+    console.error("GET MY REPORTS ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error fetching reports",
+    });
+  }
+}
 
 // // ================= GET REPORT BY TOKEN =================
-// async function getReportByToken(req, res) {
-//   try {
-//     const { token } = req.params;
+async function getReportByToken(req, res) {
+  try {
+    const { token } = req.params;
 
-//     const report = await Report.findOne({ token }).populate("patientId", "username");
+    const report = await ReportModel.findOne({ token }).populate("patientId", "username");
 
-//     if (!report) {
-//       return res.status(404).json({ message: "Invalid token" });
-//     }
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
 
-//     res.json(report);
+    return res.status(200).json({
+      success: true,
+      data: report,
+    });
 
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// }
+  } catch (err) {
+    console.error("GET REPORT BY TOKEN ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error fetching report",
+    });
+  }
+}
 
 
 
 module.exports = {
   uploadReport,
-  // getMyReports,
-  // getReportByToken,
+  getMyReports,
+  getReportByToken,
 };

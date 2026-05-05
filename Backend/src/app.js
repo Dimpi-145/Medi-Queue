@@ -5,13 +5,14 @@ const appointmentRouter = require("./routes/appointment.routes")
 const QueueRouter = require("./routes/queue.routes");
 const DashboardRouter = require('./routes/dashboard.routes');
 const prescriptionRouter = require("./routes/prescription.routes");
+const adminRoutes = require("./routes/admin.routes");
 const cors = require("cors");
 const reportRouter = require("./routes/report.routes");
 
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [ "http://localhost:5173"],
   credentials: true
 }));
 
@@ -35,5 +36,7 @@ app.use("/api/Dashboard", DashboardRouter )
 app.use("/api/prescriptions", prescriptionRouter);
 
 app.use("/api/reports", reportRouter);
+
+app.use("/api/admin", adminRoutes);
 
 module.exports = app;

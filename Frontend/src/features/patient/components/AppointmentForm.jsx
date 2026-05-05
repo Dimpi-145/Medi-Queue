@@ -1,25 +1,65 @@
-import React, { useState } from 'react'
-import './AppointmentForm.scss'
+import React, { useState, useEffect } from "react";
+import { formatTimeWithAMPM } from "../../../utils/timeFormatter";
+import { getDoctors } from "../services/appointment.api";
+import "./AppointmentForm.scss";
 
 const AppointmentForm = ({ onBook, loading }) => {
-  const [doctor, setDoctor] = useState('Dr. Samuel King')
-  const [date, setDate] = useState('2026-05-20')
-  const [time, setTime] = useState('10:00')
-  const [reason, setReason] = useState('Routine check-up')
-  const [success, setSuccess] = useState('')
+  const [department, setDepartment] = useState("");
+  const [doctors, setDoctors] = useState([]);
+  const [doctorId, setDoctorId] = useState("");
+  const [date, setDate] = useState("");
+  const [timeSlot, setTimeSlot] = useState("");
+  const [reason, setReason] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    const newAppointment = {
-      doctor,
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      time: `${time}`,
-      status: 'waiting',
+  // ================= FETCH DOCTORS =================
+  useEffect(() => {
+    if (!department) return;
+
+    const fetchDoctors = async () => {
+      try {
+        const res = await getDoctors(department);
+        setDoctors(res.data || []);
+      } catch (err) {
+        console.error("Doctor Fetch Error:", err);
+        setDoctors([]);
+      }
+    };
+
+    fetchDoctors();
+  }, [department]);
+
+  // ================= SUBMIT =================
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!doctorId || !date || !timeSlot) {
+      alert("Please fill all required fields");
+      return;
     }
-    onBook(newAppointment)
-    setSuccess('Appointment request submitted successfully.')
-    setReason('Routine check-up')
-  }
+
+    try {
+      await onBook({
+        doctorId,
+        date,
+        timeSlot,
+        reason,
+      });
+
+      setSuccess("Appointment booked successfully ✅");
+
+      // reset
+      setDepartment("");
+      setDoctorId("");
+      setDate("");
+      setTimeSlot("");
+      setReason("");
+
+    } catch (err) {
+      console.error(err);
+      setSuccess("");
+    }
+  };
 
   return (
     <div className="booking-panel">
@@ -29,38 +69,94 @@ const AppointmentForm = ({ onBook, loading }) => {
           <h2>Schedule a Visit</h2>
         </div>
       </div>
+
       <form className="appointment-form" onSubmit={handleSubmit}>
+
+        {/* ✅ DEPARTMENT */}
         <label>
-          Doctor
-          <select value={doctor} onChange={(e) => setDoctor(e.target.value)}>
-            <option>Dr. Samuel King</option>
-            <option>Dr. Nina Patel</option>
-            <option>Dr. Lewis Carter</option>
+          Department
+          <select
+            value={department}
+            onChange={(e) => {
+              setDepartment(e.target.value);
+              setDoctorId(""); // reset doctor when department changes
+            }}
+          >
+            <option value="">Select Department</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Orthopedics">Orthopedics</option>
           </select>
         </label>
 
+        {/* ✅ DOCTOR (DYNAMIC) */}
+        <label>
+          Doctor
+          <select
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
+            disabled={!department}
+          >
+            <option value="">Select Doctor</option>
+
+            {doctors.map((doc) => (
+              <option key={doc._id} value={doc._id}>
+                {doc.username}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {/* DATE */}
         <label>
           Date
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </label>
 
+        {/* TIME */}
         <label>
-          Time
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          Time Slot
+          <div className="time-input-wrapper">
+            <input
+              type="time"
+              value={timeSlot}
+              onChange={(e) => setTimeSlot(e.target.value)}
+            />
+            {timeSlot && (
+              <span className="time-format">
+                {formatTimeWithAMPM(timeSlot)}
+              </span>
+            )}
+          </div>
         </label>
 
+        {/* REASON */}
         <label>
           Reason
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows="3" />
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows="3"
+          />
         </label>
 
-        <button type="submit" className="primary-button" disabled={loading}>
-          {loading ? 'Loading...' : 'Book Appointment'}
+        <button
+          type="submit"
+          className="primary-button"
+          disabled={loading}
+        >
+          {loading ? "Booking..." : "Book Appointment"}
         </button>
       </form>
+
       {success && <p className="success-note">{success}</p>}
     </div>
-  )
-}
+  );
+};
 
-export default AppointmentForm
+export default AppointmentForm;
