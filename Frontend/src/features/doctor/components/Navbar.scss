@@ -2,30 +2,57 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  margin: 20px 24px 0;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.06);
+
+  gap: 1rem;
+
+  padding: 18px 22px;
+
+  margin: 18px 20px 0;
+
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  border: 1px solid #e2e8f0;
+
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+
   min-width: 0;
 }
+
+/* ================= PROFILE ================= */
 
 .doctor-profile {
   display: flex;
   align-items: center;
-  gap: 16px;
+
+  gap: 14px;
+
   min-width: 0;
 }
 
 .avatar {
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
+
   border-radius: 50%;
-  background: #3b82f6;
-  display: grid;
-  place-items: center;
+
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #6366f1
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   color: white;
+
+  font-size: 0.95rem;
   font-weight: 700;
+
+  flex-shrink: 0;
 }
 
 .profile-meta {
@@ -33,30 +60,154 @@
 }
 
 .profile-meta h2 {
-  margin: 0;
-  font-size: 1.1rem;
+  margin: 0 0 0.3rem;
+
+  font-size: 1.2rem;
+  font-weight: 700;
+
+  color: #0f172a;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-meta .small-label {
   display: block;
-  color: #6b7280;
-  font-size: 13px;
-  margin-bottom: 4px;
+
+  color: #64748b;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  margin-bottom: 0.25rem;
+
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-.btn-logout {
-  padding: 12px 20px;
-  border-radius: 999px;
-  border: none;
-  background: #3b82f6;
-  color: white;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-  white-space: nowrap;
+/* ================= STATUS ================= */
+
+.doctor-status {
+  display: flex;
+  align-items: center;
+
+  gap: 0.45rem;
+
+  color: #64748b;
+
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+
   flex-shrink: 0;
 }
 
+/* ================= ACTIONS ================= */
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 0.8rem;
+
+  flex-shrink: 0;
+}
+
+.system-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  padding: 0.55rem 0.85rem;
+
+  border-radius: 999px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+/* ================= LOGOUT ================= */
+
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.45rem;
+
+  padding: 0.78rem 1.1rem;
+
+  border-radius: 12px;
+
+  border: none;
+
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #6366f1
+  );
+
+  color: white;
+
+  font-size: 0.88rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+  white-space: nowrap;
+}
+
 .btn-logout:hover {
-  background: #2563eb;
   transform: translateY(-1px);
+
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.18);
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 760px) {
+  .doctor-navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .system-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-meta h2 {
+    font-size: 1rem;
+  }
+
+  .btn-logout {
+    width: 100%;
+  }
+
+  .navbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

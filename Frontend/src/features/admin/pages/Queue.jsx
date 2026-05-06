@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from "react";
+import {
+  Activity,
+  ClipboardList,
+  Clock3,
+  PlusCircle,
+  UserRound,
+  Stethoscope,
+  CheckCircle2,
+} from "lucide-react";
+
 import api, {
   getLiveQueue,
   addToQueue,
   getPatients,
   getDoctors,
 } from "../services/api";
+
 import "./Queue.scss";
 
 const Queue = () => {
@@ -20,17 +31,14 @@ const Queue = () => {
 
   // ================= FETCH QUEUE =================
   const fetchQueue = async () => {
-  try {
-    const res = await getLiveQueue(formData.doctorId);
-
-    console.log("🧨 QUEUE RESPONSE:", res.data);
-
-    setQueue(res.data.patients || []);
-  } catch (err) {
-    console.error("Queue error:", err);
-    setQueue([]);
-  }
-};
+    try {
+      const res = await getLiveQueue(formData.doctorId);
+      setQueue(res.data.patients || []);
+    } catch (err) {
+      console.error("Queue error:", err);
+      setQueue([]);
+    }
+  };
 
   // ================= FETCH PATIENTS =================
   const fetchPatients = async () => {
@@ -69,48 +77,26 @@ const Queue = () => {
   };
 
   // ================= ADD TO QUEUE =================
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  //   try {
-  //     await addToQueue(formData);
+    try {
+      await addToQueue(formData);
 
-  //     setFormData({
-  //       patientId: "",
-  //       doctorId: "",
-  //     });
+      setFormData({
+        patientId: "",
+        doctorId: "",
+      });
 
-  //     setShowForm(false);
-  //     fetchQueue();
-  //   } catch (err) {
-  //     console.error("Add queue error:", err);
-  //   }
-  // };
-const handleSubmit = async (e) => {
-  e.preventDefault();
+      setShowForm(false);
+      fetchQueue();
 
-  try {
-    console.log("🧨 SENDING TO QUEUE:", formData);
+    } catch (err) {
+      console.error("Add queue error:", err);
+    }
+  };
 
-    const res = await addToQueue(formData);
-
-    console.log("✅ QUEUE RESPONSE:", res.data);
-
-    setFormData({
-      patientId: "",
-      doctorId: "",
-    });
-
-    setShowForm(false);
-    fetchQueue();
-
-  } catch (err) {
-    console.error("❌ Add queue error:", err);
-    console.error("❌ Backend response:", err.response?.data);
-  }
-};
-
-  // ================= CALL NEXT (FIXED) =================
+  // ================= CALL NEXT =================
   const callNext = async () => {
     try {
       await api.put("/queue/next");
@@ -130,100 +116,205 @@ const handleSubmit = async (e) => {
     }
   };
 
+  // ================= STATS =================
+  const waitingPatients = queue.filter(
+    (item) => item.status === "pending"
+  ).length;
+
+  const activePatients = queue.filter(
+    (item) => item.status === "approved"
+  ).length;
+
   return (
     <div className="queue">
 
-      {/* ================= HEADER ================= */}
-      <div className="header">
-        <h2>Queue Management</h2>
+ 
 
-        <button
-          className="btn-primary"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? "Cancel" : "Add to Queue"}
-        </button>
+      {/* ================= ANALYTICS ================= */}
+      <div className="queue-stats">
+
+        <div className="stat-card">
+          <div className="stat-icon blue">
+            <ClipboardList size={22} />
+          </div>
+
+          <div>
+            <h3>{queue.length}</h3>
+            <p>Total Queue</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon yellow">
+            <Clock3 size={22} />
+          </div>
+
+          <div>
+            <h3>{waitingPatients}</h3>
+            <p>Waiting Patients</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon green">
+            <CheckCircle2 size={22} />
+          </div>
+
+          <div>
+            <h3>{activePatients}</h3>
+            <p>In Consultation</p>
+          </div>
+        </div>
+
       </div>
 
-      {/* ================= FORM ================= */}
-      {showForm && (
-        <form className="form" onSubmit={handleSubmit}>
+      {/* ================= CONTROL PANEL ================= */}
+      <div className="queue-control-card">
 
-          <select
-            name="patientId"
-            value={formData.patientId}
-            onChange={handleInputChange}
-            required
+        <div className="section-header">
+          <div>
+            <h2>Queue Assignment</h2>
+            <p>Assign walk-in patients to doctor queues</p>
+          </div>
+
+          <button
+            className="btn-primary"
+            onClick={() => setShowForm(!showForm)}
           >
-            <option value="">Select Patient</option>
-            {patients.map((p) => (
-              <option key={p._id} value={p._id}>
-                {p.username}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="doctorId"
-            value={formData.doctorId}
-            onChange={handleInputChange}
-            required
-          >
-            <option value="">Select Doctor</option>
-            {doctors.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.username}
-              </option>
-            ))}
-          </select>
-
-          <button className="btn-primary" type="submit">
-            Add
+            {showForm ? "Close Form" : "Add to Queue"}
           </button>
-        </form>
-      )}
+        </div>
 
-      {/* ================= QUEUE LIST ================= */}
-      <div className="queue-list">
+        {showForm && (
+          <form className="queue-form" onSubmit={handleSubmit}>
 
-        {queue.map((item) => (
-          <div key={item._id} className={`queue-item ${item.status}`}>
+            <div className="input-group">
+              <label>Patient</label>
 
-            <div>
-              <b>#{item.queueNumber}</b>
-            </div>
+              <div className="input-wrapper">
+                <UserRound size={18} />
 
-            <div>
-              <p>{item.patientId?.username}</p>
-              <small>{item.status}</small>
-            </div>
-
-            <div>
-              {/* CALL NEXT (no doctorId needed) */}
-              {item.status === "pending" && (
-                <button
-                  className="btn-primary"
-                  onClick={callNext}
+                <select
+                  name="patientId"
+                  value={formData.patientId}
+                  onChange={handleInputChange}
+                  required
                 >
-                  Call Next
-                </button>
-              )}
+                  <option value="">Select Patient</option>
 
-              {/* COMPLETE VISIT */}
-              {item.status === "approved" && (
-                <button
-                  className="btn-success"
-                  onClick={() => completeVisit(item._id)}
-                >
-                  Complete
-                </button>
-              )}
+                  {patients.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            <div className="input-group">
+              <label>Doctor</label>
+
+              <div className="input-wrapper">
+                <Stethoscope size={18} />
+
+                <select
+                  name="doctorId"
+                  value={formData.doctorId}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select Doctor</option>
+
+                  {doctors.map((d) => (
+                    <option key={d._id} value={d._id}>
+                      {d.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button className="btn-primary full-btn" type="submit">
+              <PlusCircle size={18} />
+              Add Patient to Queue
+            </button>
+
+          </form>
+        )}
+      </div>
+
+      {/* ================= LIVE QUEUE ================= */}
+      <div className="queue-table-card">
+
+        <div className="section-header">
+          <div>
+            <h2>Live Queue Status</h2>
+            <p>Monitor current patient flow and consultations</p>
+          </div>
+        </div>
+
+        {queue.length === 0 ? (
+          <div className="empty-state">
+            No active queue entries available.
+          </div>
+        ) : (
+          <div className="queue-table">
+
+            <div className="table-head">
+              <span>Token</span>
+              <span>Patient</span>
+              <span>Status</span>
+              <span>Actions</span>
+            </div>
+
+            {queue.map((item) => (
+              <div key={item._id} className="table-row">
+
+                <div className="queue-token">
+                  #{item.queueNumber}
+                </div>
+
+                <div className="patient-info">
+                  <strong>{item.patientId?.username}</strong>
+                  <small>{item.doctorId?.username || "Assigned Doctor"}</small>
+                </div>
+
+                <div>
+                  <span className={`status-badge ${item.status}`}>
+                    {item.status}
+                  </span>
+                </div>
+
+                <div className="table-actions">
+
+                  {item.status === "pending" && (
+                    <button
+                      className="btn-call"
+                      onClick={callNext}
+                    >
+                      Call Next
+                    </button>
+                  )}
+
+                  {item.status === "approved" && (
+                    <button
+                      className="btn-complete"
+                      onClick={() => completeVisit(item._id)}
+                    >
+                      Complete
+                    </button>
+                  )}
+
+                </div>
+
+              </div>
+            ))}
 
           </div>
-        ))}
+        )}
 
       </div>
+
     </div>
   );
 };

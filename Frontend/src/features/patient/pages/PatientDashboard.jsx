@@ -22,6 +22,7 @@ import "../patientDashboard.scss";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Dashboard");
 
@@ -32,8 +33,12 @@ const PatientDashboard = () => {
   const [queueInfo, setQueueInfo] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
-
   const [chatContext, setChatContext] = useState(null);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   const openChat = (appointment) => {
     setChatContext({
@@ -43,43 +48,35 @@ const PatientDashboard = () => {
     });
   };
 
-  // ================= LOGOUT =================
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.clear();
-    navigate("/login");
-  };
-  
-  // ================= FETCH ALL DATA =================
   useEffect(() => {
-    fetchDashboard();
-    fetchAppointments();  
-    fetchPrescriptions();
-    fetchReportsCount();
+    fetchAllData();
   }, []);
 
-  // ================= DASHBOARD =================
+  const fetchAllData = async () => {
+    await Promise.all([
+      fetchDashboard(),
+      fetchAppointments(),
+      fetchPrescriptions(),
+      fetchReportsCount(),
+    ]);
+  };
+
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-
       const res = await getPatientDashboard();
-
       setPatient(res.data?.patient || null);
       setQueueInfo(res.data?.queueInfo || null);
-
     } catch (err) {
-      console.error("Dashboard Error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= APPOINTMENTS =================
   const fetchAppointments = async () => {
     try {
-      const res = await getMyAppointments(); // ✅ using service
-
+      const res = await getMyAppointments();
       const formatted = (res.data || []).map((item) => ({
         id: item._id,
         doctor: item.doctorId?.username || "Doctor",
@@ -87,68 +84,53 @@ const PatientDashboard = () => {
         time: item.timeSlot,
         status: item.status,
       }));
-
       setAppointments(formatted);
-
     } catch (err) {
-      console.error("Appointments Error:", err);
+      console.error(err);
     }
   };
 
-  // ================= PRESCRIPTIONS =================
   const fetchPrescriptions = async () => {
     try {
       const res = await getMyPrescriptions();
-
       setPrescriptions(res.data || []);
     } catch (err) {
-      console.error("Prescription Error:", err);
+      console.error(err);
     }
   };
 
-  // ================= REPORTS COUNT =================
   const fetchReportsCount = async () => {
     try {
       const res = await getMyReports();
       setReports(res.data.data || []);
     } catch (err) {
-      console.error("Reports Fetch Error:", err);
       setReports([]);
     }
   };
 
-  // ================= BOOK APPOINTMENT =================
   const handleBook = async (formData) => {
     try {
-      await bookAppointment(formData); 
-
+      await bookAppointment(formData);
       setShowModal(false);
-
-      fetchAppointments(); 
-      fetchDashboard();    
-
+      fetchAllData();
     } catch (err) {
-      console.error("Booking Error:", err);
+      console.error(err);
     }
   };
 
-  // ================= DERIVED =================
   const currentQueueNumber = queueInfo?.queueNumber || "-";
   const patientsAhead = queueInfo?.patientsAhead || 0;
 
-  // ================= UI =================
   return (
     <div className="patient-dashboard">
 
       <Navbar patient={patient} loading={loading} onLogout={handleLogout} />
 
       <div className="dashboard-shell">
-
         <Sidebar activeItem={activeTab} onSelect={setActiveTab} />
 
         <main className="dashboard-content">
 
-          {/* DASHBOARD */}
           {activeTab === "Dashboard" && (
             <ProfileCard
               patient={patient}
@@ -159,15 +141,14 @@ const PatientDashboard = () => {
             />
           )}
 
-          {/* APPOINTMENTS */}
           {activeTab === "My Appointments" && (
             <AppointmentTable
               appointments={appointments}
               loading={loading}
+              onChat={openChat}
             />
           )}
 
-          {/* PRESCRIPTIONS */}
           {activeTab === "Prescriptions" && (
             <PrescriptionList
               prescriptions={prescriptions}
@@ -176,17 +157,10 @@ const PatientDashboard = () => {
             />
           )}
 
-          {/* REPORTS */}
-          {activeTab === "Reports" && (
-            <Report />
-          )}
+          {activeTab === "Reports" && <Report />}
 
-          {/* HISTORY */}
-          {activeTab === "History" && (
-            <History />
-          )}
+          {activeTab === "History" && <History />}
 
-          {/* QUEUE */}
           {activeTab === "Queue Status" && (
             <QueueList
               queue={[]}
@@ -199,7 +173,6 @@ const PatientDashboard = () => {
         </main>
       </div>
 
-           {/* CHAT MODAL */}
       {chatContext && (
         <ChatBox
           chatContext={chatContext}
@@ -207,7 +180,6 @@ const PatientDashboard = () => {
         />
       )}
 
-      {/* MODAL */}
       {showModal && (
         <div
           className="appointment-modal-overlay"

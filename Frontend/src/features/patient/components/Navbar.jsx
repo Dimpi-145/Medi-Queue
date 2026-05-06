@@ -1,33 +1,42 @@
-import React from 'react'
-import './Navbar.scss'
+import React from "react";
+import "./Navbar.scss";
 
 const Navbar = ({ patient, loading, onLogout }) => {
   return (
     <header className="top-navbar">
+
+      {/* LEFT SECTION */}
       <div className="brand-section">
         <span className="brand-chip">MediQueue</span>
         <h1>Patient Portal</h1>
       </div>
+
+      {/* RIGHT SECTION */}
       <div className="profile-actions">
         {loading ? (
           <div className="navbar-loading">Loading profile...</div>
         ) : (
           <>
+            {/* ❌ Avatar removed */}
             <div className="profile-pill">
-              <img src={patient?.avatar} alt="Patient avatar" />
-              <div>
+              <div className="profile-text">
                 <p>Welcome back</p>
-                <strong>{patient?.name}</strong>
+                <strong>{patient?.name || "Patient"}</strong>
               </div>
             </div>
-            <button className="primary-button logout-button" onClick={onLogout}>
+
+            <button
+              className="primary-button logout-button"
+              onClick={onLogout}
+            >
               Logout
             </button>
           </>
         )}
       </div>
-    </header>
-  )
-}
 
-export default Navbar
+    </header>
+  );
+};
+
+export default Navbar;

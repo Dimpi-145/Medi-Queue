@@ -1,13 +1,96 @@
-.prescriptions {
-  h2 {
-    margin-bottom: 20px;
-  }
+.prescriptions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-  .table-container {
-    margin-top: 20px;
-  }
+/* HEADER */
+.panel-header .eyebrow {
+  color: #2563eb;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
 
-  .btn-primary {
-    margin-top: 8px;
-  }
+.panel-header h2 {
+  margin-top: 4px;
+}
+
+/* LIST */
+.prescription-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CARD */
+.prescription-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  transition: 0.25s;
+}
+
+.prescription-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+}
+
+/* TOP */
+.prescription-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prescription-top h3 {
+  margin: 0;
+}
+
+.meds {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.date {
+  font-size: 13px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* BOTTOM */
+.prescription-bottom {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+/* BUTTONS */
+.btn {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn.view {
+  background: #f1f5f9;
+}
+
+.btn.download {
+  background: #2563eb;
+  color: white;
+}
+
+/* EMPTY */
+.panel-empty {
+  padding: 30px;
+  text-align: center;
+  background: #f1f5f9;
+  border-radius: 12px;
 }

@@ -4,6 +4,7 @@ import "./Prescriptions.scss";
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchPrescriptions = async () => {
     try {
@@ -12,6 +13,8 @@ const Prescriptions = () => {
     } catch (error) {
       console.error("Error fetching prescriptions:", error);
       setPrescriptions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -19,45 +22,42 @@ const Prescriptions = () => {
     fetchPrescriptions();
   }, []);
 
-  const downloadPrescription = (fileUrl) => {
-    if (!fileUrl) return;
-    window.open(fileUrl, "_blank");
-  };
-
   return (
-    <div className="prescriptions">
-      <h2>Prescription Management</h2>
+    <div className="card-panel prescriptions-page">
 
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Patient</th>
-              <th>Doctor</th>
-              <th>Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+      <div className="panel-header">
+        <p className="eyebrow">Medical Records</p>
+        <h2> NEW PRESCRIPTIONS PAGE</h2>
+      </div>
 
-          <tbody>
-            {prescriptions.map((p) => (
-              <tr key={p.id}>
-                <td>{p.patientName}</td>
-                <td>{p.doctorName}</td>
-                <td>{new Date(p.date).toLocaleDateString()}</td>
-                <td>
-                  <button
-                    className="btn-primary"
-                    onClick={() => downloadPrescription(p.fileUrl)}
-                  >
-                    Download
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+      {loading && <div className="panel-empty">Loading prescriptions...</div>}
 
-        </table>
+      {!loading && prescriptions.length === 0 && (
+        <div className="panel-empty">No prescriptions available</div>
+      )}
+
+      <div className="prescription-list">
+        {prescriptions.map((p) => (
+          <div key={p.id} className="prescription-card">
+
+            <div className="prescription-top">
+              <div>
+                <h3>Dr. {p.doctorName}</h3>
+                <p className="meds">{p.medicines || "No details"}</p>
+              </div>
+
+              <span className="date">
+                {new Date(p.date).toLocaleDateString()}
+              </span>
+            </div>
+
+            <div className="prescription-bottom">
+              <button className="btn view">View</button>
+              <button className="btn download">Download</button>
+            </div>
+
+          </div>
+        ))}
       </div>
     </div>
   );

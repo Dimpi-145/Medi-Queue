@@ -3,10 +3,18 @@ import "./Sidebar.scss";
 
 const Sidebar = ({ activeSection, setActiveSection }) => {
   const navItems = [
-    { key: "Dashboard", label: "Dashboard" },
-    { key: "Appointments", label: "Appointments" },
-    { key: "Queue", label: "Queue" },
-    { key: "History", label: "History" },
+    {
+      key: "Dashboard",
+      label: "Dashboard",
+    },
+    {
+      key: "Appointments",
+      label: "Appointments",
+    },
+    {
+      key: "History",
+      label: "History",
+    },
   ];
 
   return (
@@ -16,15 +24,21 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
         <h3>Doctor Panel</h3>
       </div>
 
-      <nav>
+      <nav className="sidebar-nav">
         <ul>
           {navItems.map((item) => (
             <li
               key={item.key}
-              className={activeSection === item.key ? "active" : ""}
-              onClick={() => setActiveSection(item.key)}
+              className={
+                activeSection === item.key
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setActiveSection(item.key)
+              }
             >
-              {item.label}
+              <span>{item.label}</span>
             </li>
           ))}
         </ul>

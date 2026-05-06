@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { getDoctors, createDoctor } from "../services/api";
+
+import {
+  UserPlus,
+  Stethoscope,
+  Upload,
+  Eye,
+  BadgeCheck,
+  ShieldAlert,
+} from "lucide-react";
+
 import "./Doctors.scss";
 
 const Doctors = () => {
@@ -11,15 +21,18 @@ const Doctors = () => {
     email: "",
     password: "",
     specialization: "",
+    degreeFile: null,
   });
 
   // ================= FETCH DOCTORS =================
   const fetchDoctors = async () => {
     try {
       const res = await getDoctors();
+
       const doctorsData = Array.isArray(res.data)
         ? res.data
         : res.data?.doctors || [];
+
       setDoctors(doctorsData);
     } catch (error) {
       console.error("Error fetching doctors:", error);
@@ -39,6 +52,14 @@ const Doctors = () => {
     });
   };
 
+  // ================= FILE =================
+  const handleFileUpload = (e) => {
+    setFormData({
+      ...formData,
+      degreeFile: e.target.files[0],
+    });
+  };
+
   // ================= CREATE DOCTOR =================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,124 +70,330 @@ const Doctors = () => {
       setFormData({
         username: "",
         email: "",
+        password: "",
         specialization: "",
+        degreeFile: null,
       });
 
       setShowForm(false);
+
       fetchDoctors();
+
     } catch (error) {
       console.error("Error creating doctor:", error);
     }
   };
 
   return (
-    <div className="doctors">
+    <div className="doctors-page">
 
-      <div className="header">
-        <h2>Doctor Management</h2>
+      {/* ================= TOOLBAR ================= */}
+      <div className="doctors-toolbar">
+
+        <div>
+          <h2>Doctor Management</h2>
+
+          <p>
+            Manage hospital doctors and department assignments
+          </p>
+        </div>
 
         <button
           className="btn-primary"
           onClick={() => setShowForm(!showForm)}
         >
-          {showForm ? "Cancel" : "Add New Doctor"}
+          <UserPlus size={18} />
+
+          {showForm ? "Close Form" : "Add New Doctor"}
         </button>
+
       </div>
 
       {/* ================= FORM ================= */}
       {showForm && (
-        <form className="form" onSubmit={handleSubmit}>
+        <div className="doctor-form-card">
 
-          <input
-            type="text"
-            name="username"
-            placeholder="Doctor Name"
-            value={formData.username}
-            onChange={handleInputChange}
-            required
-          />
+          <div className="form-header">
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-          />
+            <div>
+              <h3>Register Doctor</h3>
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password (min 6 chars, optional)"
-            value={formData.password}
-            onChange={handleInputChange}
-          />
+              <p>
+                Add a verified doctor to the hospital system
+              </p>
+            </div>
 
-          <select
-            name="specialization"
-            value={formData.specialization}
-            onChange={handleInputChange}
-            required
+          </div>
+
+          <form
+            className="doctor-form"
+            onSubmit={handleSubmit}
           >
-            <option value="">Select Specialization</option>
-            <option value="Cardiology">Cardiology</option>
-            <option value="Dermatology">Dermatology</option>
-            <option value="Emergency Medicine">Emergency Medicine</option>
-            <option value="Family Medicine">Family Medicine</option>
-            <option value="Gastroenterology">Gastroenterology</option>
-            <option value="General Surgery">General Surgery</option>
-            <option value="Internal Medicine">Internal Medicine</option>
-            <option value="Neurology">Neurology</option>
-            <option value="Obstetrics and Gynecology">Obstetrics and Gynecology</option>
-            <option value="Ophthalmology">Ophthalmology</option>
-            <option value="Orthopedic Surgery">Orthopedic Surgery</option>
-            <option value="Pediatrics">Pediatrics</option>
-            <option value="Psychiatry">Psychiatry</option>
-            <option value="Radiology">Radiology</option>
-            <option value="Urology">Urology</option>
-          </select>
 
-          <button type="submit" className="btn-primary">
-            Create Doctor
-          </button>
+            <div className="form-grid">
 
-        </form>
+              {/* NAME */}
+              <div className="input-group">
+
+                <label>Doctor Name</label>
+
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Enter doctor name"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                />
+
+              </div>
+
+              {/* EMAIL */}
+              <div className="input-group">
+
+                <label>Email Address</label>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter email address"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+
+              </div>
+
+              {/* PASSWORD */}
+              <div className="input-group">
+
+                <label>Password</label>
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Create password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+
+              </div>
+
+              {/* SPECIALIZATION */}
+              <div className="input-group">
+
+                <label>Specialization</label>
+
+                <select
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">
+                    Select Specialization
+                  </option>
+
+                  <option value="Cardiology">
+                    Cardiology
+                  </option>
+
+                  <option value="Dermatology">
+                    Dermatology
+                  </option>
+
+                  <option value="Emergency Medicine">
+                    Emergency Medicine
+                  </option>
+
+                  <option value="Family Medicine">
+                    Family Medicine
+                  </option>
+
+                  <option value="Neurology">
+                    Neurology
+                  </option>
+
+                  <option value="Orthopedic Surgery">
+                    Orthopedic Surgery
+                  </option>
+
+                  <option value="Pediatrics">
+                    Pediatrics
+                  </option>
+
+                  <option value="Radiology">
+                    Radiology
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* DEGREE UPLOAD */}
+              <div className="input-group full-width">
+
+                <label>
+                  Degree / License Verification
+                </label>
+
+                <label className="upload-box">
+
+                  <Upload size={20} />
+
+                  <span>
+                    {formData.degreeFile
+                      ? formData.degreeFile.name
+                      : "Upload degree certificate (PDF/Image)"}
+                  </span>
+
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    hidden
+                    onChange={handleFileUpload}
+                  />
+
+                </label>
+
+              </div>
+
+            </div>
+
+            {/* ACTIONS */}
+            <div className="form-actions">
+
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="btn-primary"
+              >
+                <Stethoscope size={18} />
+
+                Create Doctor
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
       )}
 
       {/* ================= TABLE ================= */}
-      <div className="table-container">
+      <div className="doctors-table-card">
 
-        {doctors.length === 0 ? (
-          <p>No doctors found</p>
-        ) : (
-          <table className="table">
+        <div className="table-header">
 
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Specialization</th>
-              </tr>
-            </thead>
+          <div>
+            <h3>Hospital Doctors</h3>
 
-            <tbody>
-              {doctors.map((doc) => (
-                <tr key={doc._id || doc.id}>
-                  <td>{doc.username}</td>
-                  <td>{doc.email}</td>
-                  <td>{doc.specialization}</td>
+            <p>
+              Total Doctors: {doctors.length}
+            </p>
+          </div>
+
+        </div>
+
+        <div className="table-wrapper">
+
+          {doctors.length === 0 ? (
+            <div className="table-loading">
+              No doctors found
+            </div>
+          ) : (
+            <table className="doctors-table">
+
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Specialization</th>
+                  <th>Verification</th>
+                  <th>Degree</th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
 
-          </table>
-        )}
+              <tbody>
+
+                {doctors.map((doc) => (
+                  <tr key={doc._id || doc.id}>
+
+                    <td>
+                      <div className="doctor-cell">
+
+                        <div className="doctor-avatar">
+                          {doc.username?.charAt(0)}
+                        </div>
+
+                        <div>
+                          <strong>
+                            {doc.username}
+                          </strong>
+
+                          <span>
+                            Hospital Doctor
+                          </span>
+                        </div>
+
+                      </div>
+                    </td>
+
+                    <td>{doc.email}</td>
+
+                    <td>
+                      <span className="specialization-badge">
+                        {doc.specialization}
+                      </span>
+                    </td>
+
+                    {/* VERIFICATION */}
+                    <td>
+                      <span className="verification-badge pending">
+                        <ShieldAlert size={14} />
+                        Pending
+                      </span>
+                    </td>
+
+                    {/* DEGREE */}
+                    <td>
+
+                      <div className="degree-actions">
+
+                        <button className="btn-secondary">
+                          <Eye size={15} />
+                          View
+                        </button>
+
+                        <button className="btn-primary approve-btn">
+                          <BadgeCheck size={15} />
+                          Approve
+                        </button>
+
+                      </div>
+
+                    </td>
+
+                  </tr>
+                ))}
+
+              </tbody>
+
+            </table>
+          )}
+
+        </div>
 
       </div>
 
     </div>
   );
 };
-
 export default Doctors;

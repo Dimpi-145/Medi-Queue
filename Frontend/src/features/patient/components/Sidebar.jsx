@@ -1,35 +1,48 @@
-import React from 'react'
-import './Sidebar.scss'
+import React from "react";
+import "./Sidebar.scss";
 
-const navItems = [
-  'Dashboard',
-  'My Appointments',
-  'Prescriptions',
-  'Reports',
-  'Queue Status',
-  'History',
-]
+import {
+  FaTachometerAlt,
+  FaCalendarCheck,
+  FaFilePrescription,
+  FaFileMedical,
+  FaStream,
+  FaHistory,
+} from "react-icons/fa";
 
 const Sidebar = ({ activeItem, onSelect }) => {
+  const items = [
+    { name: "Dashboard", icon: <FaTachometerAlt /> },
+    { name: "My Appointments", icon: <FaCalendarCheck /> },
+    { name: "Prescriptions", icon: <FaFilePrescription /> },
+    { name: "Reports", icon: <FaFileMedical /> },
+    { name: "Queue Status", icon: <FaStream /> },
+    { name: "History", icon: <FaHistory /> },
+  ];
+
   return (
-    <aside className="patient-sidebar">
-      <div className="sidebar-brand">
+    <aside className="sidebar">
+      <div className="sidebar-header">
         <h2>MediQueue</h2>
-        <p>Patient portal</p>
+        <p>Patient Portal</p>
       </div>
-      <nav className="sidebar-nav">
-        {navItems.map((item) => (
-          <button
-            key={item}
-            className={`sidebar-link ${activeItem === item ? 'active' : ''}`}
-            onClick={() => onSelect(item)}
+
+      <nav className="sidebar-menu">
+        {items.map((item) => (
+          <div
+            key={item.name}
+            className={`sidebar-item ${
+              activeItem === item.name ? "active" : ""
+            }`}
+            onClick={() => onSelect(item.name)}
           >
-            {item}
-          </button>
+            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-label">{item.name}</span>
+          </div>
         ))}
       </nav>
     </aside>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

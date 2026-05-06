@@ -1,43 +1,112 @@
-.patient-sidebar {
-  background: #111827;
-  border-radius: 1.25rem;
-  padding: 1.5rem;
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: #0f172a;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  color: #e5e7eb;
-  height: fit-content;
+  padding: 28px 18px;
+  border-right: 1px solid #1e293b;
 }
 
-.sidebar-brand h2 {
-  margin-bottom: 0.25rem;
-  color: #fff;
+/* ================= HEADER ================= */
+
+.sidebar-header {
+  margin-bottom: 32px;
 }
 
-.sidebar-brand p {
-  color: #9ca3af;
+.sidebar-header h2 {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.sidebar-nav {
-  display: grid;
-  gap: 0.75rem;
+.sidebar-header p {
+  color: #94a3b8;
+  font-size: 13px;
 }
 
-.sidebar-link {
-  width: 100%;
-  text-align: left;
-  font-size: 0.95rem;
-  padding: 0.95rem 1rem;
-  border-radius: 1rem;
-  color: #d1d5db;
-  background: transparent;
-  border: none;
+/* ================= MENU ================= */
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ================= ITEMS ================= */
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  color: #cbd5e1;
   cursor: pointer;
-  transition: all 0.25s ease;
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.sidebar-link.active,
-.sidebar-link:hover {
-  color: #fff;
-  background: #1f2937;
+/* ICON */
+.sidebar-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+}
+
+/* LABEL */
+.sidebar-label {
+  flex: 1;
+}
+
+/* ================= HOVER ================= */
+
+.sidebar-item:hover {
+  background: #1e293b;
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.sidebar-item:hover .sidebar-icon {
+  color: #60a5fa;
+}
+
+/* ================= ACTIVE ================= */
+
+.sidebar-item.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: #ffffff;
+}
+
+/* 🔥 Left indicator bar (premium touch) */
+.sidebar-item.active::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 6px;
+  height: calc(100% - 12px);
+  width: 4px;
+  background: #3b82f6;
+  border-radius: 4px;
+}
+
+/* ===== ICON INTERACTION ===== */
+
+.sidebar-item.active .sidebar-icon {
+  transform: scale(1.1);
+}
+
+.sidebar-item:hover .sidebar-icon {
+  transform: scale(1.05);
+  transition: 0.2s;
 }

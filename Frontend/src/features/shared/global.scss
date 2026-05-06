@@ -1,20 +1,110 @@
 @use "./button.scss";
 
-*{
-    margin: 0%;
-    padding: 0%;
-    box-sizing: border-box;
+/* ================= RESET ================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-html, body
-#root{
-    width: 100%;
-    background-color: rgb(42, 42, 42);
-    color: whitesmoke;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+/* ================= DESIGN SYSTEM ================= */
+
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+
+  --bg: #f8fafc;
+  --card: #ffffff;
+
+  --text-main: #0f172a;
+  --text-secondary: #64748b;
+
+  --border: #e2e8f0;
+
+  --radius: 12px;
 }
 
-a{
-    color: #d20c3d;
-    text-decoration: none;
+/* ================= BASE ================= */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+    sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================= LINKS ================= */
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* ================= TYPOGRAPHY ================= */
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 🔥 IMPORTANT FIX → scoped paragraph styling */
+.app-root p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ================= SCROLLBAR ================= */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5f5;
+  border-radius: 10px;
+}
+
+/* ================= UTILITY ================= */
+
+.container {
+  width: 100%;
+  padding: 0 20px;
+}
+
+.flex {
+  display: flex;
+}
+
+.grid {
+  display: grid;
+}
+
+/* ================= ROOT WRAPPER ================= */
+
+.app-root {
+  min-height: 100vh;
+  background: var(--bg);
 }

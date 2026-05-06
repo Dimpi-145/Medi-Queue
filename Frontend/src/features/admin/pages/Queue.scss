@@ -1,29 +1,367 @@
 .queue {
-  .header {
-    margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ================= HERO ================= */
+
+.admin-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 2rem;
+  border-radius: 24px;
+
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #6366f1
+  );
+
+  color: white;
+}
+
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hero-icon {
+  width: 74px;
+  height: 74px;
+
+  border-radius: 22px;
+
+  background: rgba(255,255,255,0.14);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-eyebrow {
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.admin-hero h1 {
+  font-size: 2.2rem;
+  margin-bottom: 0.45rem;
+}
+
+.hero-subtext {
+  color: rgba(255,255,255,0.85);
+}
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.9rem 1.1rem;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.14);
+
+  font-weight: 600;
+}
+
+/* ================= STATS ================= */
+
+.queue-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+}
+
+.stat-card {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 1.4rem;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  border: 1px solid #e2e8f0;
+
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.stat-icon {
+  width: 54px;
+  height: 54px;
+
+  border-radius: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.stat-icon.yellow {
+  background: #fef3c7;
+  color: #ca8a04;
+}
+
+.stat-icon.green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.stat-card h3 {
+  font-size: 1.7rem;
+  margin-bottom: 0.2rem;
+}
+
+.stat-card p {
+  color: #64748b;
+}
+
+/* ================= CARDS ================= */
+
+.queue-control-card,
+.queue-table-card {
+  background: white;
+
+  border-radius: 24px;
+
+  padding: 1.8rem;
+
+  border: 1px solid #e2e8f0;
+
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+/* ================= SECTION HEADER ================= */
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.section-header p {
+  color: #64748b;
+}
+
+/* ================= FORM ================= */
+
+.queue-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+
+  border: 1px solid #dbe2ea;
+
+  background: #f8fafc;
+
+  border-radius: 14px;
+
+  padding: 0 1rem;
+}
+
+.input-wrapper select {
+  width: 100%;
+  border: none;
+  background: transparent;
+
+  padding: 1rem 0;
+
+  outline: none;
+}
+
+.full-btn {
+  grid-column: span 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+/* ================= TABLE ================= */
+
+.queue-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  grid-template-columns: 120px 1.5fr 160px 180px;
+
+  align-items: center;
+
+  padding: 1rem 0;
+
+  border-bottom: 1px solid #edf2f7;
+}
+
+.table-head {
+  font-weight: 700;
+  color: #475569;
+}
+
+.queue-token {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.patient-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-info small {
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* ================= BADGES ================= */
+
+.status-badge {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.approved {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ================= BUTTONS ================= */
+
+.btn-primary,
+.btn-call,
+.btn-complete {
+  border: none;
+  cursor: pointer;
+
+  border-radius: 12px;
+
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #6366f1
+  );
+
+  color: white;
+
+  padding: 0.95rem 1.3rem;
+}
+
+.btn-call {
+  background: #2563eb;
+  color: white;
+
+  padding: 0.7rem 1rem;
+}
+
+.btn-complete {
+  background: #16a34a;
+  color: white;
+
+  padding: 0.7rem 1rem;
+}
+
+.btn-primary:hover,
+.btn-call:hover,
+.btn-complete:hover {
+  transform: translateY(-1px);
+}
+
+/* ================= EMPTY ================= */
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 980px) {
+
+  .queue-form {
+    grid-template-columns: 1fr;
   }
 
-  .form {
-    max-width: 760px;
-    margin-bottom: 24px;
+  .full-btn {
+    grid-column: span 1;
   }
 
-  .queue-list {
-    margin-top: 20px;
+  .queue-stats {
+    grid-template-columns: 1fr;
   }
 
-  .doctor-queue {
-    padding: 20px;
+  .table-head,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
-  .queue-item {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .queue-number {
-    min-width: 70px;
+  .admin-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
   }
 }
