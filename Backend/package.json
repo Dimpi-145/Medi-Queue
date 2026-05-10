@@ -22,6 +22,7 @@
     "express": "^5.2.1",
     "install": "^0.13.0",
     "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.2.0",
     "mongoose": "^9.4.1",
     "parser": "^0.1.4",
     "socket.io": "^4.8.3"

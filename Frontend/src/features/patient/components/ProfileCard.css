@@ -1,0 +1,166 @@
+@charset "UTF-8";
+.profile-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+}
+
+/* 🔥 HEADER FIX */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* 🔥 BUTTON STYLE */
+.book-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+.book-btn:hover {
+  background: #2563eb;
+}
+
+.book-btn.secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+.book-btn.secondary:hover {
+  background: #d1d5db;
+}
+
+.profile-card .patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.patient-info-fields {
+  flex: 1;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.patient-info-fields label,
+.profile-image-field,
+.patient-details label {
+  display: grid;
+  gap: 0.45rem;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.patient-info-fields input,
+.profile-image-field input,
+.patient-details input,
+.patient-details select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.95rem;
+  padding: 0.75rem 0.9rem;
+  background: #f8fafc;
+  color: #111827;
+  width: 100%;
+}
+
+.profile-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-card .patient-info img {
+  width: 80px;
+  height: 80px;
+  border-radius: 1rem;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+.patient-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.patient-details div,
+.patient-details label {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.patient-details span {
+  display: block;
+  color: #6b7280;
+  margin-bottom: 0.45rem;
+}
+
+.patient-details strong {
+  color: #111827;
+  font-size: 1.05rem;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.metric-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #eff6ff;
+}
+
+.metric-card p {
+  color: #1d4ed8;
+  margin-bottom: 0.6rem;
+}
+
+.metric-card strong {
+  font-size: 1.5rem;
+  color: #111827;
+}
+
+.profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 0.95rem;
+  padding: 0.75rem 1rem;
+}
+
+@media (max-width: 760px) {
+  .profile-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .profile-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .patient-details {
+    grid-template-columns: 1fr;
+  }
+}/*# sourceMappingURL=ProfileCard.css.map */

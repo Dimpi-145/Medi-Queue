@@ -1,5 +1,5 @@
-import React from 'react'
-import './Navbar.scss'
+import React from "react";
+import "./Navbar.scss";
 
 const Navbar = ({ patient, loading, onLogout }) => {
   return (
@@ -20,14 +20,18 @@ const Navbar = ({ patient, loading, onLogout }) => {
                 <strong>{patient?.name}</strong>
               </div>
             </div>
-            <button className="primary-button logout-button" onClick={onLogout}>
+            <button
+              type="button"
+              className="primary-button logout-button"
+              onClick={onLogout}
+            >
               Logout
             </button>
           </>
         )}
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

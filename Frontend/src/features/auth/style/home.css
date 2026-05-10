@@ -1,0 +1,210 @@
+.home-page {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(280px, 42%) 1fr;
+  background: #f0f2f7;
+}
+
+.home-brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3.25rem 3rem;
+  background: linear-gradient(175deg, #2f6df7 0%, #1f54da 58%, #1548cd 100%);
+  color: #f8fbff;
+}
+.home-brand-panel .brand-title {
+  font-size: clamp(2.1rem, 3.2vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: 0.07em;
+  font-weight: 800;
+}
+.home-brand-panel .brand-copy {
+  max-width: 18ch;
+  font-size: clamp(1.2rem, 1.65vw, 1.85rem);
+  line-height: 1.45;
+  font-weight: 650;
+  margin-top: 2rem;
+}
+.home-brand-panel .brand-footer {
+  color: #d7e6ff;
+  font-size: 0.97rem;
+  margin-top: 2rem;
+}
+
+.home-portal-panel {
+  background: #f4f4f6;
+  padding: 3.2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.home-portal-panel h2 {
+  color: #0b1f43;
+  font-size: clamp(1.9rem, 2.2vw, 2.5rem);
+  font-weight: 760;
+}
+.home-portal-panel .subtitle {
+  color: #5f7092;
+  margin-top: -0.2rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.08rem;
+}
+
+.portal-card {
+  width: 100%;
+  border: 1px solid #d7dde7;
+  border-radius: 18px;
+  background: #fcfcfd;
+  padding: 1.3rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.portal-card .icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.portal-card .icon.patient {
+  background: #e9f0ff;
+  color: #2261ec;
+}
+.portal-card .icon.doctor {
+  background: #e5f6f4;
+  color: #08917f;
+}
+.portal-card .icon.admin {
+  background: #ecebff;
+  color: #5d56da;
+}
+.portal-card .content {
+  flex: 1;
+}
+.portal-card .content h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #102345;
+  font-size: 1.72rem;
+  font-weight: 760;
+  line-height: 1.2;
+}
+.portal-card .content p {
+  margin-top: 0.3rem;
+  color: #496182;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+.portal-card .arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #7688ab;
+  background: #f0f3f8;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.portal-card:hover {
+  transform: translateY(-2px);
+  border-color: #a9bfed;
+  box-shadow: 0 10px 24px rgba(29, 54, 97, 0.08);
+}
+
+.portal-card.muted {
+  cursor: default;
+  opacity: 0.88;
+}
+.portal-card.muted:hover {
+  transform: none;
+  border-color: #d7dde7;
+  box-shadow: none;
+}
+.portal-card.muted .content h3 {
+  color: #3f4f69;
+}
+.portal-card.muted .content p {
+  color: #7485a1;
+}
+
+.badge {
+  background: #eaecff;
+  color: #5e61ca;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  padding: 0.22rem 0.62rem;
+}
+
+@media (max-width: 1024px) {
+  .home-page {
+    grid-template-columns: 1fr;
+  }
+  .home-brand-panel {
+    min-height: 40vh;
+    padding: 2.5rem 1.5rem;
+  }
+  .home-brand-panel .brand-copy {
+    font-size: 1.18rem;
+    max-width: 34ch;
+  }
+  .home-portal-panel {
+    padding: 2rem 1.2rem 2.3rem;
+  }
+  .home-portal-panel h2 {
+    font-size: 2rem;
+  }
+  .home-portal-panel .subtitle {
+    font-size: 1rem;
+  }
+  .portal-card .content h3 {
+    font-size: 1.42rem;
+  }
+  .portal-card .content p {
+    font-size: 1.04rem;
+  }
+}
+@media (max-width: 640px) {
+  .home-brand-panel .brand-title {
+    font-size: 2.1rem;
+  }
+  .home-brand-panel .brand-copy {
+    font-size: 1.05rem;
+    margin-top: 1.4rem;
+  }
+  .home-brand-panel .brand-footer {
+    font-size: 0.86rem;
+  }
+  .portal-card {
+    padding: 1rem;
+  }
+  .portal-card .icon {
+    width: 44px;
+    height: 44px;
+    font-size: 0.95rem;
+  }
+  .portal-card .arrow {
+    width: 34px;
+    height: 34px;
+    font-size: 0.86rem;
+  }
+  .portal-card .content h3 {
+    font-size: 1.12rem;
+    flex-wrap: wrap;
+  }
+  .portal-card .content p {
+    font-size: 0.94rem;
+  }
+}/*# sourceMappingURL=home.css.map */

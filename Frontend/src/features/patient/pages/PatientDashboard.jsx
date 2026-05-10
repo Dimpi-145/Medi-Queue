@@ -1,82 +1,182 @@
-import React, { useEffect, useState } from 'react'
-import Navbar from '../components/Navbar'
-import Sidebar from '../components/Sidebar'
-import ProfileCard from '../components/ProfileCard'
-import QueueList from '../components/QueueList'
-import AppointmentTable from '../components/AppointmentTable'
-import PrescriptionList from '../components/PrescriptionList'
-import AppointmentForm from '../components/AppointmentForm'
-import '../../shared/global.scss'
-import '../patientDashboard.scss'
+import React, { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
+import ProfileCard from "../components/ProfileCard";
+import QueueList from "../components/QueueList";
+import AppointmentTable from "../components/AppointmentTable";
+import PrescriptionList from "../components/PrescriptionList";
+import AppointmentForm from "../components/AppointmentForm";
+import { getMyProfile, updateMyProfile } from "../../auth/services/auth.api";
+import "../../shared/global.scss";
+import "../patientDashboard.scss";
 
 const PatientDashboard = () => {
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('Dashboard')
-  const [patient, setPatient] = useState(null)
-  const [appointments, setAppointments] = useState([])
-  const [prescriptions, setPrescriptions] = useState([])
-  const [reports, setReports] = useState([])
-  const [history, setHistory] = useState([])
-  const [queue, setQueue] = useState([])
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("Dashboard");
+  const [patient, setPatient] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPatient({
-        name: 'Amara Johnson',
-        email: 'amara.johnson@example.com',
-        age: 29,
-        gender: 'Female',
-        phone: '+1 (555) 781-2234',
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80',
-      })
+    let isMounted = true;
 
-      setAppointments([
-        { doctor: 'Dr. Samuel King', date: 'May 8, 2026', time: '10:30 AM', status: 'approved' },
-        { doctor: 'Dr. Nina Patel', date: 'Jun 1, 2026', time: '02:00 PM', status: 'waiting' },
-        { doctor: 'Dr. Lewis Carter', date: 'Jun 20, 2026', time: '09:15 AM', status: 'waiting' },
-      ])
+    const loadDashboard = async () => {
+      try {
+        const [profileResponse] = await Promise.all([
+          getMyProfile(),
+          new Promise((resolve) => setTimeout(resolve, 700)),
+        ]);
 
-      setPrescriptions([
-        { doctor: 'Dr. Samuel King', date: 'Apr 10, 2026', preview: 'Take one tablet twice daily for blood pressure control.', id: 'RX-9182' },
-        { doctor: 'Dr. Nina Patel', date: 'Mar 25, 2026', preview: 'Apply cream to affected area once daily for 7 days.', id: 'RX-8427' },
-      ])
+        if (!isMounted) {
+          return;
+        }
 
-      setReports([
-        { name: 'Lab Work Summary', date: 'Apr 5, 2026', type: 'Blood panel' },
-        { name: 'X-Ray Report', date: 'Mar 18, 2026', type: 'Chest scan' },
-      ])
+        const profileUser = profileResponse.user;
 
-      setHistory([
-        { doctor: 'Dr. Samuel King', date: 'Apr 10, 2026', status: 'completed' },
-        { doctor: 'Dr. Nina Patel', date: 'Mar 25, 2026', status: 'completed' },
-        { doctor: 'Dr. Lewis Carter', date: 'Feb 14, 2026', status: 'completed' },
-      ])
+        setPatient({
+          name: profileUser.username,
+          email: profileUser.email,
+          age: profileUser.age ?? "",
+          gender: profileUser.gender ?? "",
+          phone: profileUser.phone ?? "",
+          avatar:
+            profileUser.profileImage ||
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+        });
 
-      setQueue([
-        { name: 'Jade Walker', number: '12', status: 'waiting' },
-        { name: 'Amara Johnson', number: '13', status: 'called' },
-        { name: 'Marcus Reed', number: '14', status: 'waiting' },
-        { name: 'Sara Kim', number: '15', status: 'waiting' },
-        { name: 'Liam Brooks', number: '16', status: 'completed' },
-      ])
+        setAppointments([
+          {
+            doctor: "Dr. Samuel King",
+            date: "May 8, 2026",
+            time: "10:30 AM",
+            status: "approved",
+          },
+          {
+            doctor: "Dr. Nina Patel",
+            date: "Jun 1, 2026",
+            time: "02:00 PM",
+            status: "waiting",
+          },
+          {
+            doctor: "Dr. Lewis Carter",
+            date: "Jun 20, 2026",
+            time: "09:15 AM",
+            status: "waiting",
+          },
+        ]);
 
-      setLoading(false)
-    }, 700)
+        setPrescriptions([
+          {
+            doctor: "Dr. Samuel King",
+            date: "Apr 10, 2026",
+            preview: "Take one tablet twice daily for blood pressure control.",
+            id: "RX-9182",
+          },
+          {
+            doctor: "Dr. Nina Patel",
+            date: "Mar 25, 2026",
+            preview: "Apply cream to affected area once daily for 7 days.",
+            id: "RX-8427",
+          },
+        ]);
 
-    return () => clearTimeout(timer)
-  }, [])
+        setReports([
+          {
+            name: "Lab Work Summary",
+            date: "Apr 5, 2026",
+            type: "Blood panel",
+          },
+          { name: "X-Ray Report", date: "Mar 18, 2026", type: "Chest scan" },
+        ]);
 
-  const appointmentsCount = appointments.length
-  const reportsAvailable = reports.length
-  const currentQueueNumber = queue.find((item) => item.name === patient?.name)?.number || '-'
+        setHistory([
+          {
+            doctor: "Dr. Samuel King",
+            date: "Apr 10, 2026",
+            status: "completed",
+          },
+          {
+            doctor: "Dr. Nina Patel",
+            date: "Mar 25, 2026",
+            status: "completed",
+          },
+          {
+            doctor: "Dr. Lewis Carter",
+            date: "Feb 14, 2026",
+            status: "completed",
+          },
+        ]);
+
+        setQueue([
+          { name: "Jade Walker", number: "12", status: "waiting" },
+          { name: "Amara Johnson", number: "13", status: "called" },
+          { name: "Marcus Reed", number: "14", status: "waiting" },
+          { name: "Sara Kim", number: "15", status: "waiting" },
+          { name: "Liam Brooks", number: "16", status: "completed" },
+        ]);
+
+        setLoading(false);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to load patient profile:", error);
+
+        setPatient({
+          name: "Unknown Patient",
+          email: "",
+          age: "",
+          gender: "",
+          phone: "",
+          avatar:
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+        });
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const appointmentsCount = appointments.length;
+  const reportsAvailable = reports.length;
+  const currentQueueNumber =
+    queue.find((item) => item.name === patient?.name)?.number || "-";
   const patientsAhead = queue.filter(
-    (item) => item.status === 'waiting' && patient?.name && Number(item.number) < Number(currentQueueNumber),
-  ).length
+    (item) =>
+      item.status === "waiting" &&
+      patient?.name &&
+      Number(item.number) < Number(currentQueueNumber),
+  ).length;
 
   const handleBookAppointment = (newAppointment) => {
-    setAppointments((previous) => [newAppointment, ...previous])
-  }
+    setAppointments((previous) => [newAppointment, ...previous]);
+  };
+
+  const handleSaveProfile = async (updates) => {
+    const response = await updateMyProfile(updates);
+    const updatedUser = response.user;
+
+    setPatient({
+      name: updatedUser.username,
+      email: updatedUser.email,
+      age: updatedUser.age ?? "",
+      gender: updatedUser.gender ?? "",
+      phone: updatedUser.phone ?? "",
+      avatar:
+        updatedUser.profileImage ||
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+    });
+  };
 
   return (
     <div className="patient-dashboard">
@@ -85,7 +185,7 @@ const PatientDashboard = () => {
         <Sidebar activeItem={activeTab} onSelect={setActiveTab} />
 
         <main className="dashboard-content">
-          {activeTab === 'Dashboard' && (
+          {activeTab === "Dashboard" && (
             <div className="dashboard-main-grid">
               <ProfileCard
                 patient={patient}
@@ -93,19 +193,20 @@ const PatientDashboard = () => {
                 appointmentsCount={appointmentsCount}
                 reportsAvailable={reportsAvailable}
                 onBookClick={() => setShowAppointmentModal(true)}
+                onSaveProfile={handleSaveProfile}
               />
             </div>
           )}
 
-          {activeTab === 'My Appointments' && (
+          {activeTab === "My Appointments" && (
             <AppointmentTable appointments={appointments} loading={loading} />
           )}
 
-          {activeTab === 'Prescriptions' && (
+          {activeTab === "Prescriptions" && (
             <PrescriptionList prescriptions={prescriptions} loading={loading} />
           )}
 
-          {activeTab === 'Reports' && (
+          {activeTab === "Reports" && (
             <section className="card-panel reports-panel">
               <div className="panel-header">
                 <div>
@@ -133,11 +234,16 @@ const PatientDashboard = () => {
             </section>
           )}
 
-          {activeTab === 'Queue Status' && (
-            <QueueList queue={queue} loading={loading} currentQueueNumber={currentQueueNumber} patientsAhead={patientsAhead} />
+          {activeTab === "Queue Status" && (
+            <QueueList
+              queue={queue}
+              loading={loading}
+              currentQueueNumber={currentQueueNumber}
+              patientsAhead={patientsAhead}
+            />
           )}
 
-          {activeTab === 'History' && (
+          {activeTab === "History" && (
             <section className="card-panel history-panel">
               <div className="panel-header">
                 <div>
@@ -157,7 +263,9 @@ const PatientDashboard = () => {
                         <h4>{entry.doctor}</h4>
                         <p>{entry.date}</p>
                       </div>
-                      <span className={`status-badge ${entry.status}`}>{entry.status}</span>
+                      <span className={`status-badge ${entry.status}`}>
+                        {entry.status}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -168,17 +276,28 @@ const PatientDashboard = () => {
       </div>
 
       {showAppointmentModal && (
-        <div className="appointment-modal-overlay" onClick={() => setShowAppointmentModal(false)}>
-          <div className="appointment-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="appointment-modal-overlay"
+          onClick={() => setShowAppointmentModal(false)}
+        >
+          <div
+            className="appointment-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="appointment-modal-header">
               <h2>Book Appointment</h2>
-              <button className="close-modal" onClick={() => setShowAppointmentModal(false)}>×</button>
+              <button
+                className="close-modal"
+                onClick={() => setShowAppointmentModal(false)}
+              >
+                ×
+              </button>
             </div>
             <div className="appointment-modal-content">
               <AppointmentForm
                 onBook={(appointment) => {
-                  handleBookAppointment(appointment)
-                  setShowAppointmentModal(false)
+                  handleBookAppointment(appointment);
+                  setShowAppointmentModal(false);
                 }}
                 loading={loading}
               />
@@ -187,7 +306,7 @@ const PatientDashboard = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default PatientDashboard
+export default PatientDashboard;

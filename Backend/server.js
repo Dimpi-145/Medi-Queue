@@ -6,9 +6,7 @@ const { Server } = require("socket.io")
 
 const server = http.createServer(app)
 
-
 connectToDatabase()
-
 
 const io = new Server(server, {
     cors: {

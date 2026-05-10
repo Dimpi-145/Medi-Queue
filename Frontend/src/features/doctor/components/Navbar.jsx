@@ -1,8 +1,9 @@
 import React from "react";
 import "./Navbar.scss";
 
-const Navbar = ({ doctorName, onLogout }) => {
-  const initials = doctorName
+const Navbar = ({ doctorName = "Doctor", onLogout }) => {
+  const displayName = doctorName || "Doctor";
+  const initials = displayName
     .split(" ")
     .map((word) => word[0])
     .join("")
@@ -15,10 +16,10 @@ const Navbar = ({ doctorName, onLogout }) => {
         <div className="avatar">{initials}</div>
         <div className="profile-meta">
           <span className="small-label">Doctor</span>
-          <h2>{doctorName}</h2>
+          <h2>{displayName}</h2>
         </div>
       </div>
-      <button className="btn-logout" onClick={onLogout}>
+      <button type="button" className="btn-logout" onClick={onLogout}>
         Logout
       </button>
     </div>

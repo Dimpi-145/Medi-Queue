@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import PatientQueue from "../components/PatientQueue";
 import PatientDetails from "../components/PatientDetails";
 import PrescriptionBox from "../components/PrescriptionBox";
+import { getMyProfile, logout } from "../../auth/services/auth.api";
+import { useAuth } from "../../auth/hooks/useAuth";
 import "../doctorDashboard.scss";
 
 const initialQueue = [
@@ -37,13 +40,39 @@ const initialQueue = [
 ];
 
 const appointmentList = [
-  { id: 1, patientName: "Aarav Patel", date: "2026-05-01", time: "10:30 AM", status: "Confirmed" },
-  { id: 2, patientName: "Nisha Verma", date: "2026-05-01", time: "11:15 AM", status: "Pending" },
-  { id: 3, patientName: "Sonal Mehta", date: "2026-05-01", time: "12:00 PM", status: "Completed" },
-  { id: 4, patientName: "Rohan Jain", date: "2026-05-01", time: "01:30 PM", status: "Confirmed" },
+  {
+    id: 1,
+    patientName: "Aarav Patel",
+    date: "2026-05-01",
+    time: "10:30 AM",
+    status: "Confirmed",
+  },
+  {
+    id: 2,
+    patientName: "Nisha Verma",
+    date: "2026-05-01",
+    time: "11:15 AM",
+    status: "Pending",
+  },
+  {
+    id: 3,
+    patientName: "Sonal Mehta",
+    date: "2026-05-01",
+    time: "12:00 PM",
+    status: "Completed",
+  },
+  {
+    id: 4,
+    patientName: "Rohan Jain",
+    date: "2026-05-01",
+    time: "01:30 PM",
+    status: "Confirmed",
+  },
 ];
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [queue, setQueue] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -51,8 +80,11 @@ const DoctorDashboard = () => {
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [appointments, setAppointments] = useState([]);
+  const [doctorName, setDoctorName] = useState("Doctor");
 
   useEffect(() => {
+    let isMounted = true;
+
     const timer = setTimeout(() => {
       setQueue(initialQueue);
       setSelectedPatient(initialQueue[0]);
@@ -64,14 +96,40 @@ const DoctorDashboard = () => {
       setLoadingAppointments(false);
     }, 300);
 
+    const loadDoctorProfile = async () => {
+      try {
+        const response = await getMyProfile();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setDoctorName(response.user?.username || "Doctor");
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to load doctor profile:", error);
+      }
+    };
+
+    loadDoctorProfile();
+
     return () => {
+      isMounted = false;
       clearTimeout(timer);
       clearTimeout(appointmentTimer);
     };
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logout clicked");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      setUser(null);
+      navigate("/login", { replace: true });
+    }
   };
 
   const handleSelectPatient = (patient) => {
@@ -104,7 +162,7 @@ const DoctorDashboard = () => {
     if (!selectedPatient) return;
 
     const updatedQueue = queue.map((item) =>
-      item.id === selectedPatient.id ? { ...item, status: "completed" } : item
+      item.id === selectedPatient.id ? { ...item, status: "completed" } : item,
     );
 
     const nextPatient = updatedQueue.find((item) => item.status === "waiting");
@@ -137,7 +195,9 @@ const DoctorDashboard = () => {
               <tbody>
                 {loadingAppointments ? (
                   <tr>
-                    <td colSpan="4" className="empty-row">Loading appointments...</td>
+                    <td colSpan="4" className="empty-row">
+                      Loading appointments...
+                    </td>
                   </tr>
                 ) : appointments.length ? (
                   appointments.map((item) => (
@@ -146,7 +206,9 @@ const DoctorDashboard = () => {
                       <td>{item.date}</td>
                       <td>{item.time}</td>
                       <td>
-                        <span className={`status-badge ${item.status.toLowerCase()}`}>
+                        <span
+                          className={`status-badge ${item.status.toLowerCase()}`}
+                        >
                           {item.status}
                         </span>
                       </td>
@@ -154,7 +216,9 @@ const DoctorDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="empty-row">No appointments scheduled.</td>
+                    <td colSpan="4" className="empty-row">
+                      No appointments scheduled.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -172,7 +236,10 @@ const DoctorDashboard = () => {
             <p>Review completed patients and medical notes.</p>
           </div>
           <div className="empty-card">
-            <p>History view is currently empty. Completed patients will appear here soon.</p>
+            <p>
+              History view is currently empty. Completed patients will appear
+              here soon.
+            </p>
           </div>
         </div>
       );
@@ -205,12 +272,13 @@ const DoctorDashboard = () => {
 
   return (
     <div className="doctor-dashboard">
-      <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+      <Sidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      />
       <div className="doctor-main">
-        <Navbar doctorName="Dr. Sharma" onLogout={handleLogout} />
-        <div className="doctor-content">
-          {renderContent()}
-        </div>
+        <Navbar doctorName={doctorName} onLogout={handleLogout} />
+        <div className="doctor-content">{renderContent()}</div>
       </div>
     </div>
   );
