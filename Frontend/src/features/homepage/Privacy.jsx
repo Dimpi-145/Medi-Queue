@@ -1,4 +1,5 @@
 import React from "react";
+import "./Privacy.scss";
 
 const Privacy = () => {
   return (
