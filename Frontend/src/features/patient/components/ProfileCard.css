@@ -7,7 +7,6 @@
 }
 
 /* ================= HEADER ================= */
-
 .profile-header {
   display: flex;
   justify-content: space-between;
@@ -33,7 +32,6 @@
 }
 
 /* ================= PATIENT INFO (TEXT ONLY) ================= */
-
 .patient-name {
   margin-top: 10px;
   font-size: 18px;
@@ -47,7 +45,6 @@
 }
 
 /* ================= BUTTON ================= */
-
 .book-btn {
   background: #2563eb;
   color: #fff;
@@ -64,7 +61,6 @@
 }
 
 /* ================= DETAILS GRID ================= */
-
 .patient-details {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -96,7 +92,6 @@
 }
 
 /* ================= METRICS ================= */
-
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -126,7 +121,6 @@
 }
 
 /* ================= EMPTY STATE ================= */
-
 .panel-empty {
   padding: 1.5rem;
   text-align: center;
@@ -171,7 +165,7 @@
 }
 
 .form-actions {
-  grid-column: 1 / -1;
+  grid-column: 1/-1;
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
@@ -192,4 +186,4 @@
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
   cursor: pointer;
-}
+}/*# sourceMappingURL=ProfileCard.css.map */

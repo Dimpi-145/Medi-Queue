@@ -12,7 +12,10 @@ import History from "../components/History";
 import Report from "../components/Report";
 import ChatBox from "../components/chat/ChatBox";
 
-import { getMyAppointments, bookAppointment } from "../services/appointment.api";
+import {
+  getMyAppointments,
+  bookAppointment,
+} from "../services/appointment.api";
 import { getPatientDashboard } from "../services/dashboard.api";
 import { getMyPrescriptions } from "../services/prescription.api";
 import { getMyReports } from "../services/report.api";
@@ -123,14 +126,12 @@ const PatientDashboard = () => {
 
   return (
     <div className="patient-dashboard">
-
       <Navbar patient={patient} loading={loading} onLogout={handleLogout} />
 
       <div className="dashboard-shell">
         <Sidebar activeItem={activeTab} onSelect={setActiveTab} />
 
         <main className="dashboard-content">
-
           {activeTab === "Dashboard" && (
             <ProfileCard
               patient={patient}
@@ -138,6 +139,7 @@ const PatientDashboard = () => {
               appointmentsCount={appointments.length}
               reportsAvailable={reports.length}
               onBookClick={() => setShowModal(true)}
+              onProfileUpdate={fetchDashboard}
             />
           )}
 
@@ -169,7 +171,6 @@ const PatientDashboard = () => {
               patientsAhead={patientsAhead}
             />
           )}
-
         </main>
       </div>
 
