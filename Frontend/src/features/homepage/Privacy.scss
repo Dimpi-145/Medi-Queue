@@ -1,0 +1,49 @@
+.privacy-container {
+  min-height: 100vh;
+  font-family: "Inter", sans-serif;
+  color: white;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  padding: 60px 40px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    color: white;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #e0e7ff;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: justify;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 20px;
+
+    h1 {
+      font-size: 1.8rem;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+    }
+
+    p {
+      font-size: 0.95rem;
+    }
+  }
+}
