@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 
 import {
   getMyReports,
+  deleteReport,
+  renameReport,
   uploadReport,
 } from "../services/report.api";
 
@@ -16,6 +18,8 @@ const Reports = () => {
 
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [renamingReportId, setRenamingReportId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
 
   /* ================= FETCH REPORTS ================= */
   const fetchReports = async () => {
@@ -63,6 +67,53 @@ const Reports = () => {
     return "Image";
   };
 
+  const startRename = (item) => {
+    setRenamingReportId(item._id);
+    setRenameValue(item.fileName || item.title || "Medical Report");
+  };
+
+  const cancelRename = () => {
+    setRenamingReportId(null);
+    setRenameValue("");
+  };
+
+  const handleRename = async (item) => {
+    if (!renameValue.trim()) {
+      return toast.error("Please enter a file name");
+    }
+
+    try {
+      await renameReport(item._id, { newFileName: renameValue });
+      toast.success("Report renamed successfully");
+      cancelRename();
+      fetchReports();
+    } catch (err) {
+      console.error("Rename Error:", err);
+      const serverMsg = err?.response?.data?.message || err?.response?.data?.details || err?.message;
+      toast.error(serverMsg || "Failed to rename report");
+    }
+  };
+
+  const handleDelete = async (item) => {
+    const confirmed = window.confirm(
+      `Delete ${item.fileName || "this report"}? This cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteReport(item._id);
+      toast.success("Report deleted successfully");
+      fetchReports();
+    } catch (err) {
+      console.error("Delete Error:", err);
+      const serverMsg = err?.response?.data?.message || err?.response?.data?.details || err?.message;
+      toast.error(serverMsg || "Failed to delete report");
+    }
+  };
+
   /* ================= UPLOAD REPORT ================= */
   const handleUpload = async () => {
 
@@ -101,9 +152,11 @@ const Reports = () => {
         err
       );
 
-      toast.error(
-        "Failed to upload report"
-      );
+      // Prefer server-provided message/details when available
+      const serverMsg = err?.response?.data?.message || err?.response?.data?.details || err?.message;
+      console.error("Upload response data:", err?.response?.data);
+
+      toast.error(serverMsg || "Failed to upload report");
 
     } finally {
 
@@ -265,7 +318,8 @@ const Reports = () => {
               <div className="report-body">
 
                 <h4>
-                  {item.title ||
+                  {item.fileName ||
+                    item.title ||
                     "Medical Report"}
                 </h4>
 
@@ -278,14 +332,71 @@ const Reports = () => {
 
               <div className="report-footer">
 
-                <a
-                  href={item.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="secondary-button"
-                >
-                  View Report
-                </a>
+                {renamingReportId === item._id ? (
+
+                  <div className="rename-panel">
+
+                    <input
+                      className="rename-input"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      placeholder="New file name"
+                    />
+
+                    <div className="rename-actions">
+
+                      <button
+                        type="button"
+                        className="secondary-button rename-save-button"
+                        onClick={() => handleRename(item)}
+                      >
+                        Save Name
+                      </button>
+
+                      <button
+                        type="button"
+                        className="rename-cancel-button"
+                        onClick={cancelRename}
+                      >
+                        Cancel
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                ) : (
+
+                  <div className="report-actions">
+
+                    <a
+                      href={item.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="secondary-button"
+                    >
+                      View Report
+                    </a>
+
+                    <button
+                      type="button"
+                      className="rename-button"
+                      onClick={() => startRename(item)}
+                    >
+                      Rename
+                    </button>
+
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() => handleDelete(item)}
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                )}
 
               </div>
 

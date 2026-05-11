@@ -7,9 +7,32 @@ const reportSchema = new mongoose.Schema({
     required: true,
   },
 
+  fileName: {
+    type: String,
+    required: true,
+  },
+
   fileUrl: {
     type: String,
     required: true,
+  },
+
+  fileId: {
+    type: String,
+  },
+
+  filePath: {
+    type: String,
+  },
+
+  storageType: {
+    type: String,
+    enum: ["imagekit", "local"],
+    default: "local",
+  },
+
+  localPath: {
+    type: String,
   },
 
   token: {

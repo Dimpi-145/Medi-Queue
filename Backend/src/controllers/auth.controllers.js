@@ -29,9 +29,16 @@ async function registerController(req, res) {
         privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
         urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
       });
-      const uploaded = await client.upload({
-        file: req.file.buffer,
-        fileName: Date.now() + "-profile",
+      const fileBase64 = req.file.buffer.toString("base64");
+      
+      // Sanitize filename
+      const sanitizedName = req.file.originalname
+        .replace(/[^a-zA-Z0-9._-]/g, "_")
+        .toLowerCase();
+      
+      const uploaded = await client.files.upload({
+        file: fileBase64,
+        fileName: `${Date.now()}-${sanitizedName}`,
       });
 
       profileImage = uploaded.url;

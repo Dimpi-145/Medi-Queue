@@ -8,6 +8,7 @@ const prescriptionRouter = require("./routes/prescription.routes");
 const adminRoutes = require("./routes/admin.routes");
 const cors = require("cors");
 const reportRouter = require("./routes/report.routes");
+const path = require("path");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 
 /**
