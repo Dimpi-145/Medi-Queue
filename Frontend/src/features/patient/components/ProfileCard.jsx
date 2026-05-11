@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./ProfileCard.scss";
-import { updateMyProfile } from "../../auth/services/auth.api";
+import { updateProfile } from "../../auth/services/auth.api";
 
 const ProfileCard = ({
   patient,
@@ -37,7 +37,7 @@ const ProfileCard = ({
 
   const handleSave = async () => {
     try {
-      await updateMyProfile(form);
+      await updateProfile(form);
       setEditMode(false);
     } catch (err) {
       console.error("Failed to update profile", err);

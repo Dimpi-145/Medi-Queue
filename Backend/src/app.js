@@ -1,5 +1,6 @@
 const express = require ('express');
 const cookieParser = require ("cookie-parser")
+const path = require('path');
 const authRouter = require("./routes/auth.routes")
 const appointmentRouter = require("./routes/appointment.routes")
 const QueueRouter = require("./routes/queue.routes");
@@ -10,6 +11,7 @@ const chatRouter = require("./routes/chat.routes");
 const videoRouter = require("./routes/video.routes");
 const cors = require("cors");
 const reportRouter = require("./routes/report.routes");
+const doctorRouter = require("./routes/doctor.routes");
 
 const app = express();
 

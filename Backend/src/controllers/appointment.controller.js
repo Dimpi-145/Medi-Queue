@@ -354,4 +354,5 @@ module.exports = {
     rescheduleAppointment,
     callNextPatient,
     completeAppointment,
+    getDoctorHistory,
 }
