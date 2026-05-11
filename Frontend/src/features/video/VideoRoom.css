@@ -1,0 +1,48 @@
+.video-room-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+  padding: 2rem;
+}
+
+.video-room-card {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  text-align: center;
+}
+
+.video-room-card h1 {
+  margin-bottom: 0.75rem;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.video-room-card p {
+  margin-bottom: 1rem;
+  color: #475569;
+}
+
+.video-room-id {
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  background: #f8fafc;
+  border-radius: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.video-room-card button {
+  border: none;
+  border-radius: 14px;
+  padding: 0.95rem 1.3rem;
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}/*# sourceMappingURL=VideoRoom.css.map */

@@ -5,6 +5,7 @@ async function doctorDashboard(req, res) {
     try {
 
         const doctorId = req.user.id
+        const selectedDate = req.query.date || new Date().toISOString().split("T")[0]
 
         const doctor = await User.findById(doctorId).select(
           "username email specialization department profileImage role"
@@ -12,32 +13,38 @@ async function doctorDashboard(req, res) {
 
         const currentPatient = await Appointment.findOne({
             doctorId,
+            date: selectedDate,
             status: "approved"
         }).populate("patientId", "username age gender")
 
         const nextPatient = await Appointment.findOne({
             doctorId,
+            date: selectedDate,
             status: "pending"
         }).sort({ queueNumber: 1 })
         .populate("patientId", "username age gender")
 
         const totalWaiting = await Appointment.countDocuments({
             doctorId,
+            date: selectedDate,
             status: "pending"
         })
 
         const completedToday = await Appointment.countDocuments({
             doctorId,
+            date: selectedDate,
             status: "completed"
         })
 
         const cancelledToday = await Appointment.countDocuments({
             doctorId,
+            date: selectedDate,
             status: "cancelled"
         })
 
         return res.json({
             doctor,
+            date: selectedDate,
             currentPatient,
             nextPatient,
             totalWaiting,
@@ -55,6 +62,7 @@ async function doctorDashboard(req, res) {
 async function patientDashboard(req, res) {
   try {
     const patientId = req.user.id;
+    const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
 
     //  Patient Info
     const patient = await User.findById(patientId).select("-password");
@@ -64,9 +72,10 @@ async function patientDashboard(req, res) {
       .populate("doctorId", "username specialization")
       .sort({ createdAt: -1 });
 
-    //  Active Appointment
+    //  Active Appointment for selected date
     const activeAppointment = await Appointment.findOne({
       patientId,
+      date: selectedDate,
       status: { $in: ["pending", "approved"] },
     }).populate("doctorId", "username specialization");
 
@@ -93,6 +102,7 @@ async function patientDashboard(req, res) {
       appointments,
       activeAppointment,
       queueInfo,
+      selectedDate,
       prescriptions: [], // add later
     });
 

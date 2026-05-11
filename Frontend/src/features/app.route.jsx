@@ -8,6 +8,7 @@ import AdminDashboard from "../features/admin/pages/AdminDashboard"
 import Homepage from "./homepage/homepage"
 import Terms from "./homepage/Terms"
 import Privacy from "./homepage/Privacy"
+import VideoRoom from "./video/VideoRoom"
 
 
 export const router = createBrowserRouter([
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
     {
         path: "/admin-dashboard",
         element: <AdminDashboard />
+    },
+    {
+        path: "/video-room/:roomId",
+        element: <VideoRoom />
     },
     {
         path: "/terms",

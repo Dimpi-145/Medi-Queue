@@ -6,92 +6,103 @@ import { login } from '../services/auth.api'
 
 const Login = () => {
 
-    const navigate = useNavigate()
-    const { handleLogin } = useAuth()
+  const navigate = useNavigate()
+  const { handleLogin } = useAuth()
 
-    const [formData, setFormData] = useState({
-        username: "",
-        password: ""
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  })
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
     })
+  }
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        })
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await login(
+        formData.username,
+        formData.password
+      );
+
+      const user = response.user;
+
+      // ✅ STORE USER (IMPORTANT FIX)
+      handleLogin(user);
+
+      // 🔥 STORE FOR SOCKET + SESSION
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("userId", user._id);
+
+      // optional (only for doctor queue system)
+      if (user.role === "doctor") {
+        localStorage.setItem("doctorId", user._id);
+      }
+
+      const routes = {
+        doctor: "/doctor-dashboard",
+        patient: "/patient-dashboard",
+        admin: "/admin-dashboard"
+      };
+
+      navigate(routes[user?.role] || "/");
+
+    } catch (err) {
+      console.log("LOGIN ERROR:", err.response?.data);
     }
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  return (
+    <div className="auth-container">
+      <div className="auth-card">
 
-        try {
-            const response = await login(
-                formData.username,
-                formData.password
-            );
+        <h2>Welcome Back</h2>
+        <p>Login to continue to MediQueue</p>
 
-            handleLogin(response.user);
+        <form onSubmit={handleSubmit}>
 
-            const routes = {
-                doctor: "/doctor-dashboard",
-                patient: "/patient-dashboard",
-                admin: "/admin-dashboard"
-            };
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              placeholder="Enter username"
+              value={formData.username}
+              onChange={handleChange}
+            />
+          </div>
 
-            navigate(routes[response.user?.role] || "/");
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </div>
 
-        } catch (err) {
-            console.log("LOGIN ERROR:", err.response?.data);
-        }
-    };
+          <button className="auth-btn">
+            Login
+          </button>
 
-return (
-  <div className="auth-container">
+        </form>
 
-    <div className="auth-card">
-
-      <h2>Welcome Back</h2>
-      <p>Login to continue to MediQueue</p>
-
-      <form onSubmit={handleSubmit}>
-
-        <div className="form-group">
-          <label>Username</label>
-          <input
-            type="text"
-            name="username"
-            placeholder="Enter username"
-            value={formData.username}
-            onChange={handleChange}
-          />
+        <div className="auth-footer">
+          Don’t have an account?{" "}
+          <Link to="/register">Create one</Link>
         </div>
 
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button className="auth-btn">
-          Login
-        </button>
-
-      </form>
-
-      <div className="auth-footer">
-        Don’t have an account?{" "}
-        <Link to="/register">Create one</Link>
       </div>
-
     </div>
-
-  </div>
-);
+  );
 }
 
-export default Login
+export default Login;

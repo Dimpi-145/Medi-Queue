@@ -6,8 +6,11 @@ const QueueRouter = require("./routes/queue.routes");
 const DashboardRouter = require('./routes/dashboard.routes');
 const prescriptionRouter = require("./routes/prescription.routes");
 const adminRoutes = require("./routes/admin.routes");
+const chatRouter = require("./routes/chat.routes");
+const videoRouter = require("./routes/video.routes");
 const cors = require("cors");
 const reportRouter = require("./routes/report.routes");
+const doctorRouter = require("./routes/doctor.routes");
 
 const app = express();
 
@@ -38,5 +41,11 @@ app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/reports", reportRouter);
 
 app.use("/api/admin", adminRoutes);
+
+app.use("/api/chat", chatRouter);
+
+app.use("/api/video", videoRouter);
+
+app.use("/api/doctor", doctorRouter);
 
 module.exports = app;

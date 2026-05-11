@@ -68,4 +68,6 @@ authRouter.get("/doctor-dashboard", authMiddleware, (req, res) => {
  */
 authRouter.get("/patients/:id", authMiddleware, roleMiddleware("doctor"), authController.getPatientById);
 
+authRouter.put("/profile", authMiddleware, authController.updateProfileController);
+
 module.exports = authRouter;

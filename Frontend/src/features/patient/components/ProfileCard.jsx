@@ -7,6 +7,7 @@ const ProfileCard = ({
   appointmentsCount,
   reportsAvailable,
   onBookClick,
+  onEditClick,
 }) => {
   return (
     <section className="card-panel profile-card">
@@ -19,16 +20,21 @@ const ProfileCard = ({
 
           {/* ✅ Clean text-only identity */}
           <h3 className="patient-name">
-            {patient?.name || "Patient"}
+            {patient?.username || patient?.name || "Patient"}
           </h3>
           <p className="patient-email">
             {patient?.email}
           </p>
         </div>
 
-        <button className="book-btn" onClick={onBookClick}>
-          Book Appointment
-        </button>
+        <div className="header-actions">
+          <button className="book-btn" onClick={onBookClick}>
+            Book Appointment
+          </button>
+          <button className="edit-btn" onClick={onEditClick}>
+            ✎ Edit Profile
+          </button>
+        </div>
       </div>
 
       {/* CONTENT */}

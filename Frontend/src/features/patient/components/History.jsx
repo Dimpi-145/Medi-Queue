@@ -9,7 +9,7 @@ import {
 
 import "./History.scss";
 
-const History = () => {
+const History = ({ onChat }) => {
 
   const [history, setHistory] =
     useState([]);
@@ -222,6 +222,21 @@ const History = () => {
                         : "Appointment was cancelled before consultation."}
 
                     </p>
+
+                    {item.status === "completed" && onChat && (
+                      <button
+                        className="history-chat-button"
+                        onClick={() =>
+                          onChat({
+                            id: item.id,
+                            doctorId: item.doctorId,
+                            doctor: item.doctor,
+                          })
+                        }
+                      >
+                        Open Chat
+                      </button>
+                    )}
 
                   </div>
 

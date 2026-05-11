@@ -39,6 +39,14 @@ appointmentRouter.get(
     appointmentController.getDoctorAppointments
 )
 
+// doctor history
+appointmentRouter.get(
+    "/doctor/history",
+    authMiddleware,
+    roleMiddleware("doctor"),
+    appointmentController.getDoctorHistory
+)
+
 // cancel
 appointmentRouter.put(
     "/cancel/:id",
@@ -47,6 +55,13 @@ appointmentRouter.put(
     appointmentController.cancelAppointment
 )
 
+// reschedule
+appointmentRouter.post(
+    "/reschedule",
+    authMiddleware,
+    roleMiddleware("patient"),
+    appointmentController.rescheduleAppointment
+)
 
 appointmentRouter.put(
     "/complete/:id",

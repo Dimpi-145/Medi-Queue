@@ -9,7 +9,7 @@ const api = axios.create({
 export const bookAppointment = (data) =>
   api.post("/book", data);
 
-//get-doctors
+// GET DOCTORS
 export const getDoctors = (department) =>
   api.get(`/get-doctors?department=${department}`);
 
@@ -20,3 +20,12 @@ export const getMyAppointments = () =>
 // CANCEL
 export const cancelAppointment = (id) =>
   api.put(`/cancel/${id}`);
+
+// RESCHEDULE
+export const rescheduleAppointment = (appointmentId, newDate, newTimeSlot) =>
+  api.post(`/reschedule`, {
+    appointmentId,
+    newDate,
+    newTimeSlot,
+  });
+

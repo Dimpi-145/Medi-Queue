@@ -5,4 +5,5 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export const getPatientDashboard = () => api.get("/patient");
+export const getPatientDashboard = (date) =>
+  api.get(`/patient${date ? `?date=${date}` : ""}`);

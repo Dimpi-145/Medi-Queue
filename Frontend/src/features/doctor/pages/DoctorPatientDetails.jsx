@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import io from "socket.io-client";
+import toast from "react-hot-toast";
 import {generatePrescriptionPDF} from "../../../utils/prescription";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import PatientDetails from "../components/PatientDetails";
 import PrescriptionBox from "../components/PrescriptionBox";
+import {completeCurrent, callNextPatient} from "../services/doctor.api";
 
 import "../doctorDashboard.scss";
 
@@ -16,6 +19,13 @@ const DoctorPatientDetails = () => {
   const [patient, setPatient] = useState(null);
   const [prescriptionText, setPrescriptionText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [queue, setQueue] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(
+    localStorage.getItem("doctorQueueDate") ||
+      new Date().toISOString().split("T")[0]
+  );
+
+  const socketRef = React.useRef(null);
 
   // ================= FETCH PATIENT =================
   useEffect(() => {
@@ -51,6 +61,49 @@ const DoctorPatientDetails = () => {
       fetchPatient();
     }
   }, [patientId]);
+
+  // ================= FETCH QUEUE =================
+  const fetchQueue = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:3000/api/queue/live",
+        { withCredentials: true }
+      );
+      const queueData = res.data?.patients || res.data || [];
+      setQueue(Array.isArray(queueData) ? queueData : []);
+    } catch (err) {
+      console.error("Queue fetch error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchQueue();
+  }, []);
+
+  // ================= SOCKET SETUP =================
+  useEffect(() => {
+    const socket = io("http://localhost:3000");
+    socketRef.current = socket;
+
+    // Join doctor room
+    socket.on("connect", () => {
+      const doctorId = localStorage.getItem("doctorId");
+      if (doctorId) {
+        socket.emit("joinDoctorRoom", doctorId);
+      }
+    });
+
+    // Listen for queue updates
+    socket.on("queueUpdated", (data) => {
+      console.log("Queue updated:", data);
+      // Refresh queue when updates happen
+      fetchQueue();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   // ================= PDF GENERATE =================
   const handleGeneratePdf = () => {
@@ -97,9 +150,35 @@ const DoctorPatientDetails = () => {
 };
 
   // ================= NEXT PATIENT =================
-  const handleNextPatient = () => {
-    setPrescriptionText("");
-    navigate("/doctor-dashboard");
+  const handleNextPatient = async () => {
+    try {
+      const response = await callNextPatient(selectedDate);
+
+      if (response.data && response.data.patientId) {
+        toast.success("Opened next patient profile.");
+        setPrescriptionText("");
+        navigate(`/doctor-dashboard/patient/${response.data.patientId}`);
+      } else {
+        toast.error("No patients left in queue");
+        setPrescriptionText("");
+        navigate("/doctor-dashboard");
+      }
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        "No patients left in queue";
+      toast.error(message);
+      console.error("Error calling next patient:", err);
+
+      const approvedPatient = queue.find((q) => q.status === "approved");
+      if (approvedPatient) {
+        setPrescriptionText("");
+        navigate(`/doctor-dashboard/patient/${approvedPatient.patientId?._id}`);
+      } else {
+        setPrescriptionText("");
+        navigate("/doctor-dashboard");
+      }
+    }
   };
 
   return (

@@ -8,9 +8,10 @@ import toast from "react-hot-toast";
 import "./QueueList.scss";
 
 const statusLabel = {
-  waiting: "Waiting",
-  called: "Called",
+  pending: "Waiting",
+  approved: "In Consultation",
   completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 const QueueList = ({
@@ -264,82 +265,87 @@ const QueueList = ({
         </div>
 
       ) : queue.length === 0 ? (
-
-        <div className="panel-empty queue-empty">
-
-          <div className="empty-icon">
-            🏥
+        currentQueueNumber ? (
+          <div className="panel-empty queue-empty">
+            <div className="empty-icon">🩺</div>
+            <h3>Your appointment is active</h3>
+            <p>
+              Token #{currentQueueNumber} is in the queue.
+              {patientsAhead > 0
+                ? ` ${patientsAhead} patient${patientsAhead === 1 ? "" : "s"} ahead of you.`
+                : " You are next."}
+            </p>
+          </div>
+        ) : (
+          <div className="panel-empty queue-empty">
+            <div className="empty-icon">🏥</div>
+            <h3>No Active Queue</h3>
+            <p>
+              Queue entries will appear here once appointments are active.
+            </p>
+          </div>
+        )
+      ) : (
+        <>
+          <div className="queue-summary-card">
+            <h3>Current Active Patient</h3>
+            {queue.some((item) => item.status === "approved") ? (
+              (() => {
+                const activePatient = queue.find(
+                  (item) => item.status === "approved"
+                );
+                return (
+                  <div className="queue-row active-patient" key={activePatient._id}>
+                    <div className="queue-user">
+                      <div className="queue-avatar">
+                        {activePatient.patientId?.username
+                          ? activePatient.patientId.username.charAt(0).toUpperCase()
+                          : "A"}
+                      </div>
+                      <div>
+                        <h4>{activePatient.patientId?.username || "Active Patient"}</h4>
+                        <p>Queue #{activePatient.queueNumber}</p>
+                      </div>
+                    </div>
+                    <span className="status-badge approved">In Consultation</span>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="panel-empty queue-empty">
+                <p>No active patient is currently in consultation.</p>
+              </div>
+            )}
           </div>
 
-          <h3>
-            No Active Queue
-          </h3>
-
-          <p>
-            Queue entries will appear
-            here once appointments
-            are active.
-          </p>
-
-        </div>
-
-      ) : (
-
-        <div className="queue-list">
-
-          {queue.map((item, index) => (
-
-            <div
-              key={index}
-              className={`queue-row ${
-                item.number ===
-                currentQueueNumber
-                  ? "current"
-                  : ""
-              }`}
-            >
-
-              <div className="queue-user">
-
-                <div className="queue-avatar">
-
-                  {item.name
-                    ?.charAt(0)
-                    ?.toUpperCase()}
-
+          <div className="queue-list">
+            {queue
+              .filter((item) => item.status !== "approved")
+              .map((item) => (
+                <div
+                  key={item._id}
+                  className={`queue-row ${
+                    item.queueNumber === currentQueueNumber ? "current" : ""
+                  }`}
+                >
+                  <div className="queue-user">
+                    <div className="queue-avatar">
+                      {item.patientId?.username
+                        ? item.patientId.username.charAt(0).toUpperCase()
+                        : "P"}
+                    </div>
+                    <div>
+                      <h4>{item.patientId?.username || item.name || "Patient"}</h4>
+                      <p>Queue #{item.queueNumber}</p>
+                    </div>
+                  </div>
+                  <span className={`status-badge ${item.status}`}>
+                    {statusLabel[item.status] || item.status}
+                  </span>
                 </div>
-
-                <div>
-
-                  <h4>
-                    {item.name}
-                  </h4>
-
-                  <p>
-                    Queue #
-                    {item.number}
-                  </p>
-
-                </div>
-
-              </div>
-
-              <span
-                className={`status-badge ${item.status}`}
-              >
-
-                {
-                  statusLabel[
-                    item.status
-                  ]
-                }
-
-              </span>
-
-            </div>
-          ))}
-
-        </div>
+              ))}
+          </div>
+        </>
       )}
 
     </section>

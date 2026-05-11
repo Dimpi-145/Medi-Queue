@@ -1,142 +1,263 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import DoctorHistory from "../components/DoctorHistory";
+import ChatBox from "../../patient/components/chat/ChatBox";
 
 import "../doctorDashboard.scss";
 
 import {
   getDoctorDashboard,
   getDoctorAppointments,
+  getDoctorHistory,
+  getLiveQueue,
+  callNextPatient,
+  completeCurrent,
 } from "../services/doctor.api";
 
 const DoctorDashboard = () => {
-  const [activeSection, setActiveSection] =
-    useState("Dashboard");
+  const [activeSection, setActiveSection] = useState("Dashboard");
+  const [appointments, setAppointments] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState(null);
+  const [queue, setQueue] = useState([]);
 
-  const [appointments, setAppointments] =
-    useState([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalWaiting: 0,
+    completedToday: 0,
+    cancelledToday: 0,
+    currentPatient: null,
+    nextPatient: null,
+  });
 
-  const [doctorInfo, setDoctorInfo] =
-    useState(null);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [chatContext, setChatContext] = useState(null);
 
-  const [dashboardStats, setDashboardStats] =
-    useState({
-      totalWaiting: 0,
-      completedToday: 0,
-      cancelledToday: 0,
-      currentPatient: null,
-      nextPatient: null,
-    });
-
-  const [loadingAppointments, setLoadingAppointments] =
-    useState(true);
-
-  const [loadingDashboard, setLoadingDashboard] =
-    useState(true);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
+  const [loadingQueue, setLoadingQueue] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const navigate = useNavigate();
 
-  // ================= SOCKET =================
-  const [socket, setSocket] = useState(null);
+  const socketRef = React.useRef(null);
 
-  // ================= FETCH DATA =================
+  // ================= FETCH DATA (IMPORTANT FIX) =================
+  const fetchData = useCallback(async (date = selectedDate) => {
+    try {
+      const [dashboardRes, appointmentRes] = await Promise.all([
+        getDoctorDashboard(date),
+        getDoctorAppointments(date),
+      ]);
+
+      const doctor = dashboardRes.data?.doctor || null;
+
+      const stats = {
+        totalWaiting: dashboardRes.data?.totalWaiting || 0,
+        completedToday: dashboardRes.data?.completedToday || 0,
+        cancelledToday: dashboardRes.data?.cancelledToday || 0,
+        currentPatient: dashboardRes.data?.currentPatient || null,
+        nextPatient: dashboardRes.data?.nextPatient || null,
+      };
+
+      const appointmentData =
+        appointmentRes.data?.data ||
+        appointmentRes.data ||
+        [];
+
+      setDoctorInfo(doctor);
+      setDashboardStats(stats);
+      setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+    } catch (err) {
+      console.error("Error fetching doctor data:", err);
+    } finally {
+      setLoadingDashboard(false);
+      setLoadingAppointments(false);
+    }
+  }, [selectedDate]);
+
+  const fetchQueue = useCallback(async (date = selectedDate) => {
+    try {
+      setLoadingQueue(true);
+      const queueRes = await getLiveQueue(
+        doctorInfo?._id || localStorage.getItem("doctorId"),
+        date
+      );
+      const queueData = queueRes.data?.patients || queueRes.data || [];
+      setQueue(Array.isArray(queueData) ? queueData : []);
+    } catch (err) {
+      console.error("Error fetching live queue:", err);
+      setQueue([]);
+    } finally {
+      setLoadingQueue(false);
+    }
+  }, [doctorInfo?._id, selectedDate]);
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      setLoadingHistory(true);
+      const res = await getDoctorHistory();
+      setHistory(res.data.consultations || []);
+    } catch (err) {
+      console.error("Error fetching doctor history:", err);
+      setHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  const handleCompleteCurrent = async () => {
+    try {
+      await completeCurrent();
+      fetchData(selectedDate);
+      fetchQueue(selectedDate);
+    } catch (err) {
+      console.error("Error completing current patient:", err);
+    }
+  };
+
+  const handleDateChange = (event) => {
+    const date = event.target.value;
+    setSelectedDate(date);
+    localStorage.setItem("doctorQueueDate", date);
+    fetchData(date);
+    fetchQueue(date);
+  };
+
+  const openChat = (appointment) => {
+    setChatContext({
+      appointmentId: appointment.id,
+      contactName: appointment.patient?.username || "Patient",
+      patientName: appointment.patient?.username,
+      currentUserRole: "doctor",
+      isDoctor: true,
+    });
+  };
+
+  // ================= INIT =================
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dashboardRes, appointmentRes] =
-          await Promise.all([
-            getDoctorDashboard(),
-            getDoctorAppointments(),
-          ]);
+    fetchData();
+    fetchQueue();
+    fetchHistory();
 
-        const doctor =
-          dashboardRes.data?.doctor || null;
+    const socket = io("http://localhost:3000");
+    socketRef.current = socket;
 
-        const stats = {
-          totalWaiting:
-            dashboardRes.data?.totalWaiting || 0,
-
-          completedToday:
-            dashboardRes.data?.completedToday || 0,
-
-          cancelledToday:
-            dashboardRes.data?.cancelledToday || 0,
-
-          currentPatient:
-            dashboardRes.data?.currentPatient || null,
-
-          nextPatient:
-            dashboardRes.data?.nextPatient || null,
-        };
-
-        const appointmentData =
-          appointmentRes.data?.data ||
-          appointmentRes.data ||
-          [];
-
-        setDoctorInfo(doctor);
-
-        setDashboardStats(stats);
-
-        setAppointments(
-          Array.isArray(appointmentData)
-            ? appointmentData
-            : []
-        );
-      } catch (err) {
-        console.error(
-          "Error fetching doctor data:",
-          err
-        );
-      } finally {
-        setLoadingDashboard(false);
-        setLoadingAppointments(false);
-      }
+    const joinDoctorRoom = () => {
+      const doctorId = localStorage.getItem("doctorId");
+      if (doctorId) socket.emit("joinDoctorRoom", doctorId);
     };
 
-    fetchData();
+    socket.on("connect", joinDoctorRoom);
 
-    // ================= SOCKET =================
-    const newSocket = io("http://localhost:3000");
+    socket.on("queueUpdated", (data) => {
+      if (!doctorInfo?._id) {
+        fetchData();
+        fetchQueue();
+        return;
+      }
 
-    setSocket(newSocket);
+      if (data.doctorId === doctorInfo._id) {
+        fetchData();
+        fetchQueue();
+      }
+    });
 
-    newSocket.on("queueUpdated", () => {
-      fetchData();
+    socket.on("videoRequestReceived", () => {
+      fetchHistory();
     });
 
     return () => {
-      newSocket.disconnect();
+      socket.off("connect", joinDoctorRoom);
+      socket.off("queueUpdated");
+      socket.off("videoRequestReceived");
+      socket.disconnect();
     };
-  }, []);
+  }, [fetchData, fetchQueue, fetchHistory]);
 
+  useEffect(() => {
+    if (socketRef.current && doctorInfo?._id) {
+      socketRef.current.emit("joinDoctorRoom", doctorInfo._id);
+    }
+  }, [doctorInfo?._id]);
   // ================= LOGOUT =================
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("doctorId");
     navigate("/login");
   };
 
-  // ================= CONTENT =================
+  // ================= UI =================
+  const renderQueueList = () => {
+    if (loadingQueue) {
+      return <p>Loading queue...</p>;
+    }
+
+    if (!queue.length) {
+      return (
+        <div className="empty-card">
+          <p>No patients are waiting in the queue right now.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="table-container">
+        <table className="appointment-table">
+          <thead>
+            <tr>
+              <th>Queue #</th>
+              <th>Patient</th>
+              <th>Age</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {queue.map((item) => (
+              <tr 
+                key={item._id}
+                onClick={() => navigate(`/doctor-dashboard/patient/${item.patientId?._id}`)}
+                style={{ cursor: "pointer", transition: "0.2s" }}
+                onMouseEnter={(e) => e.target.parentElement.style.backgroundColor = "#f0f4f8"}
+                onMouseLeave={(e) => e.target.parentElement.style.backgroundColor = "transparent"}
+              >
+                <td>{item.queueNumber}</td>
+                <td>{item.patientId?.username || "N/A"}</td>
+                <td>{item.patientId?.age ?? "—"}</td>
+                <td>
+                  <span className={`status-badge ${item.status}`}>
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   const renderContent = () => {
-    // ================= APPOINTMENTS =================
     if (activeSection === "Appointments") {
       return (
         <div className="appointments-panel">
           <div className="panel-header">
-            <h3>Appointments</h3>
-            <p>
-              Today's scheduled appointments.
-            </p>
+            <div>
+              <h3>My Appointments</h3>
+              <p>Upcoming and past appointment details</p>
+            </div>
           </div>
 
           <div className="table-container">
             <table className="appointment-table">
               <thead>
                 <tr>
-                  <th>Patient Name</th>
+                  <th>Patient</th>
                   <th>Date</th>
                   <th>Time</th>
                   <th>Status</th>
@@ -146,56 +267,31 @@ const DoctorDashboard = () => {
               <tbody>
                 {loadingAppointments ? (
                   <tr>
-                    <td
-                      colSpan="4"
-                      className="empty-row"
-                    >
-                      Loading appointments...
-                    </td>
+                    <td colSpan="4">Loading...</td>
                   </tr>
                 ) : appointments.length > 0 ? (
                   appointments.map((item) => (
                     <tr key={item._id}>
                       <td>
                         {item.patient?.username ||
-                          item.patient?.name ||
                           item.patientId?.username ||
-                          item.patientId?.name ||
                           "N/A"}
                       </td>
 
                       <td>
                         {item.date
-                          ? new Date(
-                              item.date
-                            ).toLocaleDateString()
+                          ? new Date(item.date).toLocaleDateString()
                           : "N/A"}
                       </td>
 
-                      <td>
-                        {item.timeSlot || "N/A"}
-                      </td>
+                      <td>{item.timeSlot || "N/A"}</td>
 
-                      <td>
-                        <span
-                          className={`status-badge ${
-                            item.status?.toLowerCase() ||
-                            "pending"
-                          }`}
-                        >
-                          {item.status || "Pending"}
-                        </span>
-                      </td>
+                      <td>{item.status}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan="4"
-                      className="empty-row"
-                    >
-                      No appointments found.
-                    </td>
+                    <td colSpan="4">No appointments</td>
                   </tr>
                 )}
               </tbody>
@@ -205,127 +301,177 @@ const DoctorDashboard = () => {
       );
     }
 
-    // ================= HISTORY =================
-    if (activeSection === "History") {
+    if (activeSection === "Queue") {
       return (
-        <div className="history-panel">
-          <div className="panel-header">
-            <h3>Patient History</h3>
+        <div className="dashboard-grid">
+          <div className="profile-card">
+            <div className="panel-header">
+              <div>
+                <h3>Doctor Queue</h3>
+                <p>Manage your current queue and patients waiting.</p>
+              </div>
+              <div className="date-control">
+                <label htmlFor="queue-date">Queue Date</label>
+                <input
+                  id="queue-date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                />
+              </div>
+            </div>
 
-            <p>
-              Completed consultation records.
-            </p>
+            <div className="stats-row">
+              <div className="stat-box">
+                <span>{queue.length}</span>
+                <p>Waiting</p>
+              </div>
+              <div className="stat-box">
+                <span>{dashboardStats.currentPatient?.username ? 1 : 0}</span>
+                <p>Being Treated</p>
+              </div>
+              <div className="stat-box">
+                <span>{dashboardStats.nextPatient?.username ? dashboardStats.nextPatient.username : "N/A"}</span>
+                <p>Next Patient</p>
+              </div>
+            </div>
+
+            <div className="queue-actions">
+              <button
+                className="action-btn"
+                onClick={handleCompleteCurrent}
+                disabled={loadingQueue || !dashboardStats.currentPatient}
+              >
+                Complete Current Patient
+              </button>
+            </div>
           </div>
 
-          <div className="empty-card">
-            <p>
-              <p>Completed patient consultation history will appear here.</p>
-            </p>
+          <div className="appointments-panel">
+            <div className="panel-header">
+              <div>
+                <h3>Waiting Patients</h3>
+                <p>Ordered by queue number.</p>
+              </div>
+            </div>
+            {renderQueueList()}
           </div>
         </div>
       );
     }
 
-    // ================= DASHBOARD =================
+    if (activeSection === "History") {
+      return (
+        <DoctorHistory
+          onChat={openChat}
+          socket={socketRef.current}
+        />
+      );
+    }
+
     return (
       <div className="dashboard-grid">
         <div className="profile-card">
           <div className="panel-header">
             <div>
               <h3>Doctor Profile</h3>
-
-              <p>
-                Professional overview and
-                consultation statistics.
-              </p>
+              <p>Overview of your practice activity and today's queue.</p>
             </div>
           </div>
 
           {loadingDashboard ? (
-            <p>Loading doctor info...</p>
+            <p>Loading...</p>
           ) : doctorInfo ? (
-            <div className="profile-body">
+            <>
               <div className="doctor-profile-top">
-                <div className="doctor-avatar">
-                  {doctorInfo.username?.charAt(0) ||
-                    "D"}
-                </div>
-
                 <div>
-                  <h2>
-                    {doctorInfo.username}
-                  </h2>
-
+                  <h3>{doctorInfo.username}</h3>
                   <p>{doctorInfo.email}</p>
-
-                  <span className="specialization-tag">
-                    {doctorInfo.specialization ||
-                      doctorInfo.department ||
-                      "General"}
-                  </span>
                 </div>
+                <span className="specialization-tag">
+                  {doctorInfo.specialization || "General"}
+                </span>
               </div>
 
               <div className="stats-row">
                 <div className="stat-box">
-                  <span>
-                    {
-                      dashboardStats.totalWaiting
-                    }
-                  </span>
-
-                  <p>Waiting Patients</p>
+                  <span>{dashboardStats.totalWaiting}</span>
+                  <p>Total Waiting</p>
                 </div>
-
                 <div className="stat-box">
-                  <span>
-                    {
-                      dashboardStats.completedToday
-                    }
-                  </span>
-
+                  <span>{dashboardStats.completedToday}</span>
                   <p>Completed Today</p>
                 </div>
-
                 <div className="stat-box">
-                  <span>
-                    {
-                      dashboardStats.cancelledToday
-                    }
-                  </span>
-
-                  <p>Cancelled</p>
+                  <span>{dashboardStats.cancelledToday}</span>
+                  <p>Cancelled Today</p>
                 </div>
               </div>
 
               <div className="doctor-info-grid">
                 <div className="info-card">
-                  <p className="info-label">
-                    Current Patient
-                  </p>
-
-                  <strong>
-                    {dashboardStats
-                      .currentPatient
-                      ?.username || "None"}
-                  </strong>
+                  <p className="info-label">Current Patient</p>
+                  <strong>{dashboardStats.currentPatient?.username || "None"}</strong>
                 </div>
-
                 <div className="info-card">
-                  <p className="info-label">
-                    Next Patient
-                  </p>
-
-                  <strong>
-                    {dashboardStats.nextPatient
-                      ?.username || "None"}
-                  </strong>
+                  <p className="info-label">Next Patient</p>
+                  <strong>{dashboardStats.nextPatient?.username || "None"}</strong>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
-            <p>No doctor profile found.</p>
+            <p>No doctor found</p>
           )}
+        </div>
+
+        <div className="appointments-panel">
+          <div className="panel-header">
+            <div>
+              <h3>Upcoming Appointments</h3>
+              <p>Review your today's scheduled appointments.</p>
+            </div>
+          </div>
+
+          <div className="table-container">
+            <table className="appointment-table">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingAppointments ? (
+                  <tr>
+                    <td colSpan="4">Loading...</td>
+                  </tr>
+                ) : appointments.length > 0 ? (
+                  appointments.map((item) => (
+                    <tr key={item._id}>
+                      <td>
+                        {item.patient?.username ||
+                          item.patientId?.username ||
+                          "N/A"}
+                      </td>
+                      <td>
+                        {item.date
+                          ? new Date(item.date).toLocaleDateString()
+                          : "N/A"}
+                      </td>
+                      <td>{item.timeSlot || "N/A"}</td>
+                      <td>{item.status}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4">No appointments</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -340,16 +486,18 @@ const DoctorDashboard = () => {
 
       <div className="doctor-main">
         <Navbar
-          doctorName={
-            doctorInfo?.username || "Doctor"
-          }
+          doctorName={doctorInfo?.username || "Doctor"}
           onLogout={handleLogout}
         />
 
-        <div className="doctor-content">
-          {renderContent()}
-        </div>
+        <div className="doctor-content">{renderContent()}</div>
       </div>
+      {chatContext && (
+        <ChatBox
+          chatContext={chatContext}
+          onClose={() => setChatContext(null)}
+        />
+      )}
     </div>
   );
 };

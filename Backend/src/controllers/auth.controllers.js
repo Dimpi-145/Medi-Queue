@@ -56,6 +56,7 @@ async function registerController(req, res) {
         res.status(201).json({
             message: "User Registered successfully",
             user: {
+                _id: user._id,
                 email: user.email,
                 username: user.username,
                 role: user.role,
@@ -106,12 +107,11 @@ async function loginController (req, res){
     res.status(200).json({
         message:"User login successfully.",
         user:{
+            _id: user._id,
             username:user.username,
             email:user.email,
             role: user.role,
             profileImage: user.profileImage
-
-
         }
     })
 }
@@ -134,11 +134,39 @@ async function getPatientById(req, res) {
     }
 }
 
+async function updateProfileController(req, res) {
+    try {
+        const { username, age, gender, phone } = req.body;
+        const userId = req.user.id;
 
+        const updates = {};
+        if (username) updates.username = username;
+        if (age !== undefined) updates.age = age;
+        if (gender) updates.gender = gender;
+        if (phone) updates.phone = phone;
 
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            updates,
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'Profile updated successfully',
+            user: updatedUser
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+}
 
 module.exports = {
     registerController,
     loginController,
     getPatientById,
+    updateProfileController,
 }

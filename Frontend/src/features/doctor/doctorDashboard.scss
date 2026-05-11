@@ -387,6 +387,40 @@
   color: #0f172a;
 }
 
+.queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.action-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.action-btn.blue {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ================= TABLE ================= */
 
 .table-container {

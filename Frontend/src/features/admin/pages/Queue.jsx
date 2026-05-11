@@ -96,25 +96,7 @@ const Queue = () => {
     }
   };
 
-  // ================= CALL NEXT =================
-  const callNext = async () => {
-    try {
-      await api.put("/queue/next");
-      fetchQueue();
-    } catch (err) {
-      console.error("Call next error:", err);
-    }
-  };
 
-  // ================= COMPLETE VISIT =================
-  const completeVisit = async (id) => {
-    try {
-      await api.put(`/queue/complete/${id}`);
-      fetchQueue();
-    } catch (err) {
-      console.error("Complete error:", err);
-    }
-  };
 
   // ================= STATS =================
   const waitingPatients = queue.filter(
@@ -264,7 +246,7 @@ const Queue = () => {
               <span>Token</span>
               <span>Patient</span>
               <span>Status</span>
-              <span>Actions</span>
+              <span>Info</span>
             </div>
 
             {queue.map((item) => (
@@ -286,25 +268,9 @@ const Queue = () => {
                 </div>
 
                 <div className="table-actions">
-
-                  {item.status === "pending" && (
-                    <button
-                      className="btn-call"
-                      onClick={callNext}
-                    >
-                      Call Next
-                    </button>
-                  )}
-
-                  {item.status === "approved" && (
-                    <button
-                      className="btn-complete"
-                      onClick={() => completeVisit(item._id)}
-                    >
-                      Complete
-                    </button>
-                  )}
-
+                  <span className="admin-hint">
+                    Queue actions are handled by doctors.
+                  </span>
                 </div>
 
               </div>
