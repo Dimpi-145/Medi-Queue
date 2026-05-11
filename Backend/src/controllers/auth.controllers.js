@@ -1,19 +1,18 @@
-const userModel = require('../models/user.model')
-const jwt = require("jsonwebtoken")
-const bcrypt = require("bcryptjs")
-const authRouter = require('../routes/auth.routes')
+const userModel = require("../models/user.model");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const authRouter = require("../routes/auth.routes");
 const generateToken = require("../utils/jwt");
-const ImageKit = require('@imagekit/nodejs')
-const Appointment = require("../models/appointment.model")
+const ImageKit = require("@imagekit/nodejs");
+const Appointment = require("../models/appointment.model");
 
 async function registerController(req, res) {
-    try {
-        let { username, email, password, gender, age, profileImage } = req.body;
+  try {
+    let { username, email, password, gender, age, profileImage } = req.body;
 
-        const isUserAlreadyExists = await userModel.findOne({
-            $or: [{ username }, { email }]
-        });
-
+    const isUserAlreadyExists = await userModel.findOne({
+      $or: [{ username }, { email }],
+    });
         if (isUserAlreadyExists) {
             return res.status(409).json({
                 message: "User already exists"
@@ -90,9 +89,9 @@ async function loginController (req, res){
         })
     }
 
-     const isPasswordValid = await bcrypt.compare(password, user.password)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if(!isPasswordValid){
+    if (!isPasswordValid) {
         return res.status(401).json({
             message: "Password invalid"
         })
@@ -116,22 +115,17 @@ async function loginController (req, res){
     })
 }
 
-
-
-
-
-
 async function getPatientById(req, res) {
-    try {
-        const { id } = req.params;
-        const patient = await userModel.findById(id).select('-password');
-        if (!patient || patient.role !== 'patient') {
-            return res.status(404).json({ message: 'Patient not found' });
-        }
-        res.status(200).json(patient);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error });
+  try {
+    const { id } = req.params;
+    const patient = await userModel.findById(id).select("-password");
+    if (!patient || patient.role !== "patient") {
+      return res.status(404).json({ message: "Patient not found" });
     }
+    res.status(200).json(patient);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
 }
 
 async function updateProfileController(req, res) {
@@ -170,3 +164,5 @@ module.exports = {
     getPatientById,
     updateProfileController,
 }
+
+

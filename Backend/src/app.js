@@ -10,7 +10,6 @@ const chatRouter = require("./routes/chat.routes");
 const videoRouter = require("./routes/video.routes");
 const cors = require("cors");
 const reportRouter = require("./routes/report.routes");
-const doctorRouter = require("./routes/doctor.routes");
 
 const app = express();
 
@@ -22,6 +21,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 
 /**

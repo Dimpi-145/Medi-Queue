@@ -1,5 +1,6 @@
 require('dotenv').config();
 const ImageKit = require('@imagekit/nodejs');
+const { toFile } = require('@imagekit/nodejs');
 
 const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -19,12 +20,16 @@ async function testImageKit() {
     console.log('\n✅ Auth Parameters Generated (credentials valid):');
     console.log(authParams);
 
-    // Test upload with a small base64 image
+    // Test upload with a small in-memory file
     console.log('\nTesting file upload...');
-    const testImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='; // 1x1 transparent PNG
+    const testImageBase64 = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      'base64'
+    ); // 1x1 transparent PNG
+    const testFile = await toFile(testImageBase64, 'test-image.png');
 
     const uploadResult = await imagekit.files.upload({
-      file: testImageBase64,
+      file: testFile,
       fileName: 'test-image.png',
       folder: '/test',
     });

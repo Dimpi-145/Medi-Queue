@@ -13,6 +13,14 @@ export const uploadReport = (data) =>
 export const getMyReports = () =>
   api.get("/my");
 
+// Rename report
+export const renameReport = (id, data) =>
+  api.patch(`/${id}/rename`, data);
+
+// Delete report
+export const deleteReport = (id) =>
+  api.delete(`/${id}`);
+
 // Doctor view by token
 export const getReportByToken = (token) =>
   api.get(`/view/${token}`);

@@ -196,14 +196,12 @@ const PatientDashboard = () => {
 
   return (
     <div className="patient-dashboard">
-
       <Navbar patient={patient} loading={loading} onLogout={handleLogout} />
 
       <div className="dashboard-shell">
         <Sidebar activeItem={activeTab} onSelect={setActiveTab} />
 
         <main className="dashboard-content">
-
           {activeTab === "Dashboard" && (
             <ProfileCard
               patient={patient}
@@ -264,7 +262,6 @@ const PatientDashboard = () => {
               />
             </>
           )}
-
         </main>
       </div>
 

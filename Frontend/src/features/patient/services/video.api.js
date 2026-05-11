@@ -22,10 +22,3 @@ export const getVideoRequests = (status = "pending") => {
 export const getVideoRequestStatus = (appointmentId) => {
   return axios.get(`/video/status/${appointmentId}`);
 };
-
-export const respondToVideoRequest = (videoRequestId, action) => {
-  return axios.post("/video/respond", {
-    videoRequestId,
-    action,
-  });
-};
