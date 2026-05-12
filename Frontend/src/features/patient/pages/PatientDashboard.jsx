@@ -14,7 +14,11 @@ import History from "../components/History";
 import Report from "../components/Report";
 
 import API from "../../../utils/axios";
-import { getMyAppointments, bookAppointment, cancelAppointment } from "../services/appointment.api";
+import {
+  getMyAppointments,
+  bookAppointment,
+  cancelAppointment,
+} from "../services/appointment.api";
 import { getPatientDashboard } from "../services/dashboard.api";
 import { getMyPrescriptions } from "../services/prescription.api";
 import { getMyReports } from "../services/report.api";
@@ -40,7 +44,7 @@ const PatientDashboard = () => {
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [queuePosition, setQueuePosition] = useState(null);
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   const [showModal, setShowModal] = useState(false);
@@ -55,9 +59,7 @@ const PatientDashboard = () => {
     dashboardCtxRef.current = {
       date: activeAppointment?.date || selectedDate,
       doctorId:
-        activeAppointment?.doctorId?._id ||
-        activeAppointment?.doctorId ||
-        null,
+        activeAppointment?.doctorId?._id || activeAppointment?.doctorId || null,
     };
   }, [activeAppointment, selectedDate]);
 
@@ -74,7 +76,7 @@ const PatientDashboard = () => {
     try {
       setLoadingQueue(true);
       const res = await API.get(
-        `/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`
+        `/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`,
       );
       const queueData = res.data?.patients || [];
       setQueue(Array.isArray(queueData) ? queueData : []);
@@ -97,31 +99,34 @@ const PatientDashboard = () => {
     }
   }, [activeAppointment?._id]);
 
-  const fetchDashboard = useCallback(async (dateOverride) => {
-    try {
-      setLoading(true);
-      const dateToQuery =
-        dateOverride !== undefined && dateOverride !== null
-          ? dateOverride
-          : selectedDate;
-      const res = await getPatientDashboard(dateToQuery);
-      setPatient(res.data?.patient || null);
-      setQueueInfo(res.data?.queueInfo || null);
-      const aa = res.data?.activeAppointment || null;
-      setActiveAppointment(aa);
-      const effectiveDate = aa?.date || dateToQuery;
-      if (aa?.date) {
-        setSelectedDate(aa.date);
+  const fetchDashboard = useCallback(
+    async (dateOverride) => {
+      try {
+        setLoading(true);
+        const dateToQuery =
+          dateOverride !== undefined && dateOverride !== null
+            ? dateOverride
+            : selectedDate;
+        const res = await getPatientDashboard(dateToQuery);
+        setPatient(res.data?.patient || null);
+        setQueueInfo(res.data?.queueInfo || null);
+        const aa = res.data?.activeAppointment || null;
+        setActiveAppointment(aa);
+        const effectiveDate = aa?.date || dateToQuery;
+        if (aa?.date) {
+          setSelectedDate(aa.date);
+        }
+        const docId = aa?.doctorId?._id || aa?.doctorId || null;
+        await fetchLiveQueue(effectiveDate, docId);
+        await fetchQueueStatus();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      const docId = aa?.doctorId?._id || aa?.doctorId || null;
-      await fetchLiveQueue(effectiveDate, docId);
-      await fetchQueueStatus();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedDate, fetchLiveQueue]);
+    },
+    [selectedDate, fetchLiveQueue],
+  );
 
   useEffect(() => {
     if (activeTab !== "Queue Status") return;
@@ -154,8 +159,7 @@ const PatientDashboard = () => {
 
     socket.on("queueUpdated", (data) => {
       const matchesDoctor =
-        doctorDocId != null &&
-        String(data.doctorId) === String(doctorDocId);
+        doctorDocId != null && String(data.doctorId) === String(doctorDocId);
       const matchesPatient =
         data.patientId &&
         patientId &&
@@ -252,7 +256,7 @@ const PatientDashboard = () => {
     try {
       console.log("🗑️ Cancelling appointment:", appointmentId);
       const activeAppointmentId = activeAppointment?._id?.toString();
-      
+
       await cancelAppointment(appointmentId);
       await fetchAppointments();
       await fetchDashboard(dashboardCtxRef.current.date);
@@ -268,10 +272,10 @@ const PatientDashboard = () => {
   };
 
   const patientKey = String(
-    patient?._id || localStorage.getItem("userId") || ""
+    patient?._id || localStorage.getItem("userId") || "",
   );
   const myQueueRow = queue.find(
-    (q) => String(q.patientId?._id || q.patientId) === patientKey
+    (q) => String(q.patientId?._id || q.patientId) === patientKey,
   );
   const currentQueueNumber =
     queuePosition?.yourQueueNumber ??
@@ -279,7 +283,8 @@ const PatientDashboard = () => {
     queueInfo?.queueNumber ??
     myQueueRow?.queueNumber ??
     "-";
-  const patientsAhead = queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
+  const patientsAhead =
+    queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
 
   return (
     <div className="patient-dashboard">
@@ -368,10 +373,10 @@ const PatientDashboard = () => {
             </div>
 
             <AppointmentForm
-        onBook={handleBook}
-        loading={loading}
-        onClose={() => setShowModal(false)}
-      />
+              onBook={handleBook}
+              loading={loading}
+              onClose={() => setShowModal(false)}
+            />
           </div>
         </div>
       )}

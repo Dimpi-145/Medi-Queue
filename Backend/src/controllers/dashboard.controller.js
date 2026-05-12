@@ -10,13 +10,13 @@ async function doctorDashboard(req, res) {
   try {
     const doctorId = req.user.id;
     const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0]
+      req.query.date || new Date().toISOString().split("T")[0],
     );
 
     await syncActiveQueueSequential(doctorId, selectedDate);
 
     const doctor = await User.findById(doctorId).select(
-      "username email specialization department profileImage role"
+      "username email specialization department profileImage role",
     );
 
     const currentPatient = await Appointment.findOne({
@@ -69,7 +69,7 @@ async function patientDashboard(req, res) {
   try {
     const patientId = req.user.id;
     const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0]
+      req.query.date || new Date().toISOString().split("T")[0],
     );
 
     // Patient Info
@@ -100,13 +100,12 @@ async function patientDashboard(req, res) {
 
     if (activeAppointment) {
       const metrics = await computeLiveQueueInfoForAppointmentId(
-        activeAppointment._id
+        activeAppointment._id,
       );
 
-      activeAppointment = await Appointment.findById(activeAppointment._id).populate(
-        "doctorId",
-        "username specialization"
-      );
+      activeAppointment = await Appointment.findById(
+        activeAppointment._id,
+      ).populate("doctorId", "username specialization");
 
       if (metrics) {
         queueInfo = {

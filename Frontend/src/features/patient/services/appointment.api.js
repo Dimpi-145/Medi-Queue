@@ -1,31 +1,22 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "/api/appointments",
-  withCredentials: true,
-});
+import API from "../../../utils/axios";
 
 // BOOK
-export const bookAppointment = (data) =>
-  api.post("/book", data);
+export const bookAppointment = (data) => API.post("/appointments/book", data);
 
 // GET DOCTORS
 export const getDoctors = (department) =>
-  api.get(`/get-doctors?department=${department}`);
+  API.get(`/appointments/get-doctors?department=${department}`);
 
 // GET MY APPOINTMENTS
-export const getMyAppointments = () =>
-  api.get("/my");
+export const getMyAppointments = () => API.get("/appointments/my");
 
 // CANCEL
-export const cancelAppointment = (id) =>
-  api.put(`/cancel/${id}`);
+export const cancelAppointment = (id) => API.put(`/appointments/cancel/${id}`);
 
 // RESCHEDULE
 export const rescheduleAppointment = (appointmentId, newDate, newTimeSlot) =>
-  api.post(`/reschedule`, {
+  API.post(`/appointments/reschedule`, {
     appointmentId,
     newDate,
     newTimeSlot,
   });
-
