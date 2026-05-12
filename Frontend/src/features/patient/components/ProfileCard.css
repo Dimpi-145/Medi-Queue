@@ -15,7 +15,6 @@
   margin-bottom: 1.5rem;
 }
 
-<<<<<<< HEAD
 .header-actions {
   display: flex;
   gap: 10px;
@@ -23,8 +22,6 @@
   justify-content: flex-end;
 }
 
-=======
->>>>>>> cc5c4dd8189f29d5a5146c27ec3fbd1c0766ddef
 .eyebrow {
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -68,7 +65,6 @@
 
 .book-btn:hover {
   background: #1d4ed8;
-<<<<<<< HEAD
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
@@ -91,8 +87,6 @@
 
 .book-btn:hover {
   background: #1d4ed8;
-=======
->>>>>>> cc5c4dd8189f29d5a5146c27ec3fbd1c0766ddef
 }
 
 /* ================= DETAILS GRID ================= */
@@ -162,8 +156,6 @@
   background: #f1f5f9;
   border-radius: 12px;
   color: #64748b;
-<<<<<<< HEAD
-=======
 }
 
 .profile-actions {
@@ -173,11 +165,16 @@
 }
 
 .edit-btn {
-  background: transparent;
-  border: 1px solid #e2e8f0;
+  background: #000000;
+  color: #ffffff;
+  border: none;
   padding: 0.45rem 0.9rem;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: #1f2937;
 }
 
 .profile-edit-form {
@@ -223,5 +220,4 @@
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
   cursor: pointer;
->>>>>>> cc5c4dd8189f29d5a5146c27ec3fbd1c0766ddef
 }/*# sourceMappingURL=ProfileCard.css.map */

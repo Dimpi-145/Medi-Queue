@@ -20,51 +20,105 @@ async function bookAppointment(req, res) {
     }
 
     if (!doctorId || !date || !timeSlot) {
+      console.warn("[bookAppointment] missing required fields:", {
+        doctorId,
+        date,
+        timeSlot,
+      });
       return res.status(400).json({
         message: "doctorId, date, and timeSlot are required",
       });
     }
 
-    const normalizedDate = normalizeAppointmentDate(date);
+    let normalizedDate;
+    try {
+      normalizedDate = normalizeAppointmentDate(date);
+      console.log("[bookAppointment] normalized date:", normalizedDate);
+    } catch (err) {
+      console.error("[bookAppointment] date normalization error:", err.message);
+      return res.status(400).json({ message: err.message });
+    }
 
     // ✅ CHECK DUPLICATE (date + timeSlot)
-    const existingAppointment = await Appointment.findOne({
-      patientId: req.user.id,
-      doctorId,
-      date: normalizedDate,
-      timeSlot,
-      status: { $in: ["pending", "approved"] },
-    });
+    try {
+      const existingAppointment = await Appointment.findOne({
+        patientId: req.user.id,
+        doctorId,
+        date: normalizedDate,
+        timeSlot,
+        status: { $in: ["pending", "approved"] },
+      });
 
-    if (existingAppointment) {
-      return res.status(400).json({
-        message: "You already booked this slot",
+      if (existingAppointment) {
+        console.log("[bookAppointment] duplicate appointment found");
+        return res.status(400).json({
+          message: "You already booked this slot",
+        });
+      }
+    } catch (err) {
+      console.error("[bookAppointment] duplicate check error:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Database error checking duplicates" });
+    }
+
+    let queueNumber;
+    try {
+      queueNumber = await allocateNextQueueNumber(doctorId, normalizedDate);
+      console.log("[bookAppointment] allocated queue number:", queueNumber);
+    } catch (err) {
+      console.error("[bookAppointment] queue allocation error:", err.message);
+      return res.status(500).json({
+        message: "Error allocating queue number",
+        error: err.message,
       });
     }
 
-    const queueNumber = await allocateNextQueueNumber(doctorId, normalizedDate);
+    let appointment;
+    try {
+      appointment = await Appointment.create({
+        patientId: req.user.id,
+        doctorId,
+        date: normalizedDate,
+        timeSlot,
+        queueNumber,
+        status: "pending",
+      });
+      console.log("[bookAppointment] appointment created:", appointment._id);
+    } catch (err) {
+      console.error(
+        "[bookAppointment] appointment creation error:",
+        err.message,
+      );
+      return res.status(500).json({
+        message: "Error creating appointment",
+        error: err.message,
+      });
+    }
 
-    const appointment = await Appointment.create({
-      patientId: req.user.id,
-      doctorId,
-      date: normalizedDate,
-      timeSlot,
-      queueNumber,
-      status: "pending",
-    });
+    try {
+      const io = req.app.get("io");
+      if (io) {
+        await broadcastQueueUpdated(io, {
+          doctorId,
+          date: normalizedDate,
+        });
+        console.log("[bookAppointment] queue update broadcast sent");
+      } else {
+        console.warn("[bookAppointment] io not available for broadcasting");
+      }
+    } catch (err) {
+      console.error("[bookAppointment] broadcast error:", err.message);
+      // Don't fail the request if broadcast fails
+    }
 
-    const io = req.app.get("io");
-    await broadcastQueueUpdated(io, {
-      doctorId,
-      date: normalizedDate,
-    });
-
+    console.log("[bookAppointment] success - appointment created");
     return res.status(201).json({
       message: "Appointment booked successfully",
       appointment,
     });
   } catch (error) {
-    console.error("[bookAppointment] error:", error);
+    console.error("[bookAppointment] unexpected error:", error);
     return res.status(500).json({
       message: "Server error",
       error: error.message,

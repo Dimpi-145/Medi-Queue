@@ -58,7 +58,7 @@ async function allocateNextQueueNumber(doctorId, dateInput) {
         },
       },
     ],
-    { upsert: true, new: true }
+    { upsert: true, new: true, updatePipeline: true },
   );
 
   return doc.seq;
@@ -104,7 +104,7 @@ async function reconcileDuplicateQueueNumbers(doctorId, dateInput) {
   await QueueCounter.findOneAndUpdate(
     { doctorId: oid, date },
     { $max: { seq: apps.length } },
-    { upsert: true }
+    { upsert: true },
   );
 
   return true;
@@ -150,7 +150,7 @@ async function syncActiveQueueSequential(doctorId, dateInput) {
   await QueueCounter.findOneAndUpdate(
     { doctorId: oid, date },
     { $max: { seq: sorted.length } },
-    { upsert: true }
+    { upsert: true },
   );
 
   return true;
@@ -188,11 +188,11 @@ async function computeLiveQueueInfoForAppointmentId(appointmentId) {
     .lean();
 
   const idx = sorted.findIndex(
-    (a) => String(a._id) === String(appointment._id)
+    (a) => String(a._id) === String(appointment._id),
   );
 
   const liveQueueNumber =
-    idx >= 0 ? idx + 1 : appointment.queueNumber ?? null;
+    idx >= 0 ? idx + 1 : (appointment.queueNumber ?? null);
 
   const patientsAhead = await Appointment.countDocuments({
     doctorId,

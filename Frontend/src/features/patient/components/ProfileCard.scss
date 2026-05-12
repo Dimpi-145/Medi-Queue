@@ -171,11 +171,16 @@
 }
 
 .edit-btn {
-  background: transparent;
-  border: 1px solid #e2e8f0;
+  background: #000000;
+  color: #ffffff;
+  border: none;
   padding: 0.45rem 0.9rem;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: #1f2937;
 }
 
 .profile-edit-form {
