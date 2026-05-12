@@ -7,6 +7,14 @@ export const sendChatMessage = (appointmentId, message) => {
   });
 };
 
+export const sendChatMessageWithFile = (formData) => {
+  return axios.post("/chat/send-with-file", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
 export const getChatHistory = (consultationId) => {
   return axios.get(`/chat/history/${consultationId}`);
 };

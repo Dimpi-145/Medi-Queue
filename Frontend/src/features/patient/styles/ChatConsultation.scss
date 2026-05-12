@@ -721,3 +721,153 @@
     }
   }
 }
+.chat-footer {
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 14px;
+
+  padding: 16px !important;
+
+  min-height: auto !important;
+}
+
+.video-consultation-section {
+  width: 100%;
+
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 14px;
+
+  border-radius: 18px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(79, 70, 229, 0.08),
+    rgba(124, 58, 237, 0.08)
+  );
+
+  border: 1px solid rgba(99, 102, 241, 0.18);
+}
+
+.video-consultation-btn {
+  width: 100%;
+
+  padding: 14px 18px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #4f46e5,
+    #7c3aed
+  );
+
+  transition: 0.25s ease;
+}
+
+.video-consultation-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 10px 25px
+    rgba(79, 70, 229, 0.35);
+}
+
+.video-consultation-btn:disabled {
+  opacity: 0.7;
+
+  cursor: not-allowed;
+}
+
+.video-consultation-info {
+  margin: 0;
+
+  font-size: 13px;
+
+  text-align: center;
+
+  color: #6b7280;
+}
+
+.video-message {
+  color: #4f46e5;
+
+  font-weight: 500;
+}
+
+.video-status.pending {
+  padding: 12px 16px;
+
+  border-radius: 12px;
+
+  background: #fef3c7;
+
+  color: #92400e;
+
+  text-align: center;
+
+  font-size: 14px;
+}
+
+.video-status.rejected {
+  padding: 12px 16px;
+
+  border-radius: 12px;
+
+  background: #fee2e2;
+
+  color: #991b1b;
+
+  text-align: center;
+
+  font-size: 14px;
+}
+
+.cancel-video-btn {
+  width: 100%;
+
+  padding: 14px 18px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #ef4444,
+    #dc2626
+  );
+
+  transition: 0.25s ease;
+}
+
+.cancel-video-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 10px 25px
+    rgba(239, 68, 68, 0.35);
+}
+
+.cancel-video-btn:disabled {
+  opacity: 0.7;
+
+  cursor: not-allowed;
+}

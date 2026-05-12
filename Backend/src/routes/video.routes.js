@@ -1,40 +1,89 @@
 const express = require("express");
+
 const videoRouter = express.Router();
 
 const authMiddleware = require("../middleware.js/auth.middleware");
+
 const roleMiddleware = require("../middleware.js/role.middleware");
+
 const videoController = require("../controllers/video.controller");
 
-// Patient requests video consultation
+// ================= REQUEST VIDEO CONSULTATION =================
+
 videoRouter.post(
   "/request",
+
   authMiddleware,
-  roleMiddleware("patient"),
+
+  // Allow both patient and doctor to initiate a request
+  roleMiddleware("doctor", "patient"),
+
   videoController.requestVideoConsultation
 );
 
-// Doctor responds to video request
+// ================= CANCEL VIDEO CONSULTATION =================
+
+videoRouter.post(
+  "/cancel",
+
+  authMiddleware,
+
+  // Allow either party to cancel a pending request
+  roleMiddleware("doctor", "patient"),
+
+  videoController.cancelVideoRequest
+);
+
+// ================= DOCTOR RESPONDS =================
+
 videoRouter.post(
   "/respond",
+
   authMiddleware,
-  roleMiddleware("doctor"),
+
+  // Allow either party to respond (accept/reject) depending on initiator
+  roleMiddleware("doctor", "patient"),
+
   videoController.respondToVideoRequest
 );
 
-// Get all video requests for doctor
+// ================= GET ALL VIDEO REQUESTS =================
+
 videoRouter.get(
   "/requests",
+
   authMiddleware,
+
   roleMiddleware("doctor"),
+
   videoController.getVideoRequests
 );
 
-// Get status of video request for appointment
+// ================= GET VIDEO STATUS =================
+
 videoRouter.get(
   "/status/:appointmentId",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   videoController.getVideoRequestStatus
+);
+
+// ================= END VIDEO CALL =================
+
+videoRouter.post(
+  "/end",
+
+  authMiddleware,
+
+  roleMiddleware("doctor", "patient"),
+
+  videoController.endVideoCall
 );
 
 module.exports = videoRouter;

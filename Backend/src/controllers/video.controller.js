@@ -3,75 +3,142 @@ const Appointment = require("../models/appointment.model");
 const { v4: uuidv4 } = require("uuid");
 
 // ================= REQUEST VIDEO CONSULTATION =================
+
 async function requestVideoConsultation(req, res) {
+
   try {
+
     const { appointmentId } = req.body;
-    const patientId = req.user.id;
+
+    const userId = req.user.id;
+
     const io = req.app.get("io");
 
     if (!appointmentId) {
-      return res.status(400).json({ message: "appointmentId is required" });
+
+      return res.status(400).json({
+        message: "appointmentId is required",
+      });
     }
 
-    const appointment = await Appointment.findById(appointmentId)
-      .populate("doctorId", "_id username email")
-      .populate("patientId", "_id username email");
+    const appointment =
+      await Appointment.findById(
+        appointmentId
+      )
+        .populate(
+          "doctorId",
+          "_id username email"
+        )
+        .populate(
+          "patientId",
+          "_id username email"
+        );
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
+
+      return res.status(404).json({
+        message: "Appointment not found",
+      });
     }
 
-    // Only allow if patient owns this appointment and it's completed
-    if (appointment.patientId._id.toString() !== patientId) {
+    // Determine initiator (must be either patient or doctor on the appointment)
+    let initiator = null;
+
+    if (appointment.patientId._id.toString() === userId) {
+      initiator = "patient";
+    } else if (appointment.doctorId._id.toString() === userId) {
+      initiator = "doctor";
+    } else {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    if (appointment.status !== "completed") {
+    // Only after completion
+
+    if (
+      appointment.status !==
+      "completed"
+    ) {
+
       return res.status(400).json({
-        message: "Video consultation can only be requested after consultation completion",
+        message:
+          "Video consultation can only be requested after consultation completion",
       });
     }
 
-    // Check if request already exists and is pending
-    const existingRequest = await VideoRequest.findOne({
-      appointmentId,
-      status: "pending",
-    });
+    // Existing pending request
+
+    const existingRequest =
+      await VideoRequest.findOne({
+        appointmentId,
+        status: "pending",
+      });
 
     if (existingRequest) {
+
       return res.status(400).json({
-        message: "Video consultation request already pending",
+        message:
+          "Video consultation request already pending",
       });
     }
+
+    // Create request
+
 
     const videoRequest = await VideoRequest.create({
       appointmentId,
       doctorId: appointment.doctorId._id,
-      patientId,
+      patientId: appointment.patientId._id,
+      initiator,
     });
 
-    // Notify doctor via socket
-    io.to(appointment.doctorId._id.toString()).emit("videoRequestReceived", {
+    // Notify the other party depending on initiator
+    const payload = {
       videoRequestId: videoRequest._id,
       appointmentId,
-      patientName: appointment.patientId.username,
-      message: `${appointment.patientId.username} requested a video consultation`,
-    });
+      initiator,
+      message:
+        initiator === "patient"
+          ? `${appointment.patientId.username} requested a video consultation`
+          : `${appointment.doctorId.username || "Doctor"} initiated a video consultation`,
+    };
+
+    if (initiator === "patient") {
+      io.to(appointment.doctorId._id.toString()).emit("videoRequestReceived", payload);
+    } else {
+      io.to(appointment.patientId._id.toString()).emit("videoRequestReceived", payload);
+    }
 
     return res.status(201).json({
-      message: "Video consultation request sent",
+      message:
+        "Video consultation request sent",
+
       videoRequest,
     });
+
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 }
 
 // ================= RESPOND TO VIDEO REQUEST =================
-async function respondToVideoRequest(req, res) {
+
+async function respondToVideoRequest(
+  req,
+  res
+) {
+
   try {
-    const { videoRequestId, action } = req.body;
-    const doctorId = req.user.id;
+
+    const {
+      videoRequestId,
+      action,
+    } = req.body;
+
+    const userId = req.user.id;
+
     const io = req.app.get("io");
 
     if (!videoRequestId || !action) {
@@ -90,110 +157,278 @@ async function respondToVideoRequest(req, res) {
       return res.status(404).json({ message: "Video request not found" });
     }
 
-    // Only doctor can respond
-    if (videoRequest.doctorId.toString() !== doctorId) {
-      return res.status(403).json({ message: "Not authorized" });
+    if (videoRequest.status !== "pending") {
+      return res.status(400).json({ message: "Video request is not pending" });
     }
 
-    if (videoRequest.status !== "pending") {
-      return res.status(400).json({
-        message: "Video request is not pending",
-      });
+    // Only the non-initiator can respond
+    if (videoRequest.initiator === "patient") {
+      // patient initiated -> only doctor can respond
+      if (userId !== videoRequest.doctorId.toString()) {
+        return res.status(403).json({ message: "Not authorized to respond" });
+      }
+    } else {
+      // doctor initiated -> only patient can respond
+      if (userId !== videoRequest.patientId._id.toString()) {
+        return res.status(403).json({ message: "Not authorized to respond" });
+      }
     }
 
     if (action === "accept") {
-      // Generate unique room ID
       const roomId = `video-${videoRequest._id}`;
+
       videoRequest.status = "accepted";
       videoRequest.roomId = roomId;
       videoRequest.respondedAt = new Date();
+
       await videoRequest.save();
 
-      // Notify patient via socket - emit to patient's user room and doctor's room
       const acceptedPayload = {
         videoRequestId: videoRequest._id,
         roomId,
         doctorId: videoRequest.doctorId,
         patientId: videoRequest.patientId._id,
-        message: "Doctor accepted your video consultation request",
+        message: "Video consultation accepted",
       };
 
-      // Emit to patient's user room
+      // Notify both parties
       io.to(videoRequest.patientId._id.toString()).emit("videoRequestAccepted", acceptedPayload);
-      
-      // Emit to doctor's user room
-      io.to(doctorId).emit("videoRequestAccepted", acceptedPayload);
+      io.to(videoRequest.doctorId.toString()).emit("videoRequestAccepted", acceptedPayload);
 
-      return res.status(200).json({
-        message: "Video consultation accepted",
-        videoRequest,
-      });
+      return res.status(200).json({ message: "Video consultation accepted", videoRequest });
     } else {
-      // Reject
+      // reject
       videoRequest.status = "rejected";
       videoRequest.respondedAt = new Date();
+
       await videoRequest.save();
 
-      // Notify patient via socket
-      const rejectedPayload = {
-        videoRequestId: videoRequest._id,
-        message: "Doctor rejected your video consultation request",
-      };
+      const rejectedPayload = { videoRequestId: videoRequest._id, message: "Video consultation rejected" };
 
       io.to(videoRequest.patientId._id.toString()).emit("videoRequestRejected", rejectedPayload);
-      io.to(doctorId).emit("videoRequestRejected", rejectedPayload);
+      io.to(videoRequest.doctorId.toString()).emit("videoRequestRejected", rejectedPayload);
 
-      return res.status(200).json({
-        message: "Video consultation rejected",
-        videoRequest,
-      });
+      return res.status(200).json({ message: "Video consultation rejected", videoRequest });
     }
+
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 }
 
-// ================= GET VIDEO REQUESTS FOR DOCTOR =================
-async function getVideoRequests(req, res) {
-  try {
-    const doctorId = req.user.id;
-    const { status = "pending" } = req.query;
+// ================= CANCEL VIDEO REQUEST =================
 
-    const filter = { doctorId };
+async function cancelVideoRequest(
+  req,
+  res
+) {
+
+  try {
+
+    const appointmentId = req.body?.appointmentId || req.params?.appointmentId;
+
+    const patientId = req.user.id;
+
+    const io = req.app.get("io");
+
+    if (!appointmentId) {
+
+      return res.status(400).json({
+        message:
+          "appointmentId is required",
+      });
+    }
+
+    const videoRequest = await VideoRequest.findOne({
+      appointmentId,
+      status: "pending",
+    });
+
+    if (!videoRequest) {
+
+      return res.status(404).json({
+        message:
+          "No pending video request found",
+      });
+    }
+
+
+    // Allow either party (patient or doctor) to cancel a pending request
+    const requesterId = req.user.id;
+
+    if (
+      requesterId !== videoRequest.patientId.toString() &&
+      requesterId !== videoRequest.doctorId.toString()
+    ) {
+      return res.status(403).json({ message: "Not authorized to cancel this request" });
+    }
+
+    // Update status
+    videoRequest.status = "cancelled";
+    videoRequest.respondedAt = new Date();
+    await videoRequest.save();
+
+    const payload = {
+      videoRequestId: videoRequest._id,
+      appointmentId,
+      cancelledBy: requesterId,
+      message: "Video consultation request cancelled",
+    };
+
+    // Notify both parties so UIs can update
+    io.to(videoRequest.doctorId.toString()).emit("videoRequestCancelled", payload);
+    io.to(videoRequest.patientId.toString()).emit("videoRequestCancelled", payload);
+
+    return res.status(200).json({
+      message:
+        "Video consultation request cancelled",
+
+      videoRequest,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+// ================= GET VIDEO REQUESTS =================
+
+async function getVideoRequests(
+  req,
+  res
+) {
+
+  try {
+
+    const doctorId = req.user.id;
+
+    const {
+      status = "pending",
+    } = req.query;
+
+    const filter = {
+      doctorId,
+    };
+
     if (status) {
+
       filter.status = status;
     }
 
-    const videoRequests = await VideoRequest.find(filter)
-      .populate("appointmentId")
-      .populate("patientId", "username email profileImage")
-      .sort({ createdAt: -1 });
+    const videoRequests =
+      await VideoRequest.find(filter)
+        .populate("appointmentId")
+        .populate(
+          "patientId",
+          "username email profileImage"
+        )
+        .sort({
+          createdAt: -1,
+        });
 
     return res.status(200).json({
       videoRequests,
     });
+
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 }
 
 // ================= GET VIDEO REQUEST STATUS =================
-async function getVideoRequestStatus(req, res) {
-  try {
-    const { appointmentId } = req.params;
 
-    const videoRequest = await VideoRequest.findOne({
-      appointmentId,
-      status: { $in: ["pending", "accepted"] },
-    });
+async function getVideoRequestStatus(
+  req,
+  res
+) {
+
+  try {
+
+    const { appointmentId } =
+      req.params;
+
+    const videoRequest =
+      await VideoRequest.findOne({
+        appointmentId,
+
+        status: {
+          $in: [
+            "pending",
+            "accepted",
+          ],
+        },
+      });
 
     if (!videoRequest) {
-      return res.status(404).json({ message: "No active video request" });
+
+      return res.status(404).json({
+        message:
+          "No active video request",
+      });
     }
 
     return res.status(200).json({
       videoRequest,
     });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
+// ================= END ACTIVE VIDEO CALL =================
+
+async function endVideoCall(req, res) {
+  try {
+    const { videoRequestId } = req.body;
+
+    const userId = req.user.id;
+
+    const io = req.app.get("io");
+
+    if (!videoRequestId) {
+      return res.status(400).json({ message: "videoRequestId is required" });
+    }
+
+    const videoRequest = await VideoRequest.findById(videoRequestId);
+
+    if (!videoRequest) {
+      return res.status(404).json({ message: "Video request not found" });
+    }
+
+    // Only participants can end the call
+    if (userId !== videoRequest.patientId.toString() && userId !== videoRequest.doctorId.toString()) {
+      return res.status(403).json({ message: "Not authorized to end this call" });
+    }
+
+    // Mark as completed (ended)
+    videoRequest.status = "completed";
+    videoRequest.respondedAt = new Date();
+    await videoRequest.save();
+
+    const payload = {
+      videoRequestId: videoRequest._id,
+      roomId: videoRequest.roomId,
+      message: "Video call ended",
+    };
+
+    // Notify both parties
+    io.to(videoRequest.doctorId.toString()).emit("videoCallEnded", payload);
+    io.to(videoRequest.patientId.toString()).emit("videoCallEnded", payload);
+
+    return res.status(200).json({ message: "Video call ended", videoRequest });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -202,6 +437,8 @@ async function getVideoRequestStatus(req, res) {
 module.exports = {
   requestVideoConsultation,
   respondToVideoRequest,
+  cancelVideoRequest,
   getVideoRequests,
   getVideoRequestStatus,
+  endVideoCall,
 };

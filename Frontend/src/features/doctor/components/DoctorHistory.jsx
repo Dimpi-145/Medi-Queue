@@ -80,8 +80,24 @@ const DoctorHistory = ({ socket }) => {
 
     socket.on("videoRequestReceived", handleVideoRequest);
 
+    const handleVideoCancelled = (payload) => {
+      // remove from pending list and clear from history items
+      setVideoRequests((prev) => prev.filter((r) => r._id !== payload.videoRequestId));
+
+      setHistory((prev) =>
+        prev.map((item) =>
+          item.id?.toString() === payload.appointmentId?.toString()
+            ? { ...item, videoRequest: null }
+            : item
+        )
+      );
+    };
+
+    socket.on("videoRequestCancelled", handleVideoCancelled);
+
     return () => {
       socket.off("videoRequestReceived", handleVideoRequest);
+      socket.off("videoRequestCancelled", handleVideoCancelled);
     };
   }, [socket]);
 

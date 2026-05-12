@@ -7,7 +7,7 @@ import {
   getVideoRequestStatus,
   respondToVideoRequest,
 } from "../../services/video.api";
-import { getChatHistory, sendChatMessage } from "../../services/chat.api";
+import { getChatHistory, sendChatMessage, sendChatMessageWithFile } from "../../services/chat.api";
 
 const ChatBox = ({ chatContext, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -84,22 +84,33 @@ const ChatBox = ({ chatContext, onClose }) => {
     });
 
     const handleNewMessage = (newMessage) => {
-      // Convert both to strings for safe comparison (handle both string and ObjectId formats)
-      const msgAppointmentId = String(newMessage.appointmentId || newMessage.consultationId);
-      const currentAppointmentId = String(chatContext.appointmentId);
-      
-      if (msgAppointmentId === currentAppointmentId) {
-        setMessages((prev) => {
-          // Prevent duplicates by checking both _id and ensuring it's not already in the list
-          const msgId = String(newMessage._id);
-          if (prev.some((msg) => String(msg._id) === msgId)) {
-            console.log("[Chat] Duplicate message ignored:", msgId);
-            return prev;
-          }
-          console.log("[Chat] Adding new message:", msgId);
-          return [...prev, newMessage];
-        });
-      }
+      const msgAppointmentId = String(newMessage.appointmentId || newMessage.consultationId || "");
+      const currentAppointmentId = String(chatContext.appointmentId || "");
+
+      if (msgAppointmentId !== currentAppointmentId) return;
+
+      setMessages((prev) => {
+        // Exact-match dedupe
+        if (prev.some((msg) => String(msg._id) === String(newMessage._id))) {
+          return prev;
+        }
+
+        // Replace optimistic local message if matching (same sender, text, within 10s)
+        const localIndex = prev.findIndex((msg) =>
+          String(msg._id).startsWith("local-") &&
+          String(msg.senderId) === String(newMessage.senderId) &&
+          msg.message === newMessage.message &&
+          Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 10000
+        );
+
+        if (localIndex !== -1) {
+          const copy = [...prev];
+          copy[localIndex] = newMessage;
+          return copy;
+        }
+
+        return [...prev, newMessage];
+      });
     };
 
     const handleVideoAccepted = (payload) => {
@@ -161,29 +172,36 @@ const ChatBox = ({ chatContext, onClose }) => {
 
     try {
       if (selectedFile) {
-        // Send with file
+        const tempId = `local-${Date.now()}`;
+
+        const optimistic = {
+          _id: tempId,
+          appointmentId: chatContext.appointmentId,
+          consultationId: chatContext.appointmentId,
+          senderId: localStorage.getItem("userId"),
+          senderName: localStorage.getItem("username") || "You",
+          receiverId: null,
+          receiverName: "",
+          senderRole: localStorage.getItem("role") || (chatContext?.isDoctor ? "doctor" : "patient"),
+          message: text,
+          attachment: {
+            originalName: selectedFile.name,
+            size: selectedFile.size,
+            mimetype: selectedFile.type,
+            url: filePreview || null,
+          },
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages((prev) => [...prev, optimistic]);
+
         const formData = new FormData();
         formData.append("appointmentId", chatContext.appointmentId);
         formData.append("message", text);
         formData.append("file", selectedFile);
 
-        console.log("[Chat] Sending file:", selectedFile.name);
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:3000/api/chat/send-with-file", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
+        await sendChatMessageWithFile(formData);
 
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(responseData.message || "Failed to send file");
-        }
-
-        console.log("[Chat] File sent successfully:", responseData);
         setSelectedFile(null);
         setFilePreview(null);
       } else {
@@ -193,7 +211,8 @@ const ChatBox = ({ chatContext, onClose }) => {
     } catch (error) {
       console.error("Send message failed", error);
       setInput(text); // Restore input on failure
-      alert("Failed to send message: " + error.message);
+      const serverMsg = error?.response?.data?.message;
+      alert("Failed to send message: " + (serverMsg || error.message));
     } finally {
       setUploading(false);
     }
