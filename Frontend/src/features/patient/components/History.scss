@@ -379,6 +379,13 @@
     }
   }
 
+  .history-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
 

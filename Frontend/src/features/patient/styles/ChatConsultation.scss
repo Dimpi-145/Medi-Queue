@@ -115,6 +115,73 @@
     }
   }
 
+  .video-consultation-section {
+    padding: 20px 28px;
+    margin: 12px 28px 0;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .video-consultation-btn {
+      border: none;
+      background: #4f46e5;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+      max-width: fit-content;
+    }
+
+    .video-consultation-btn:hover:not(:disabled) {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+
+    .video-consultation-btn:disabled {
+      background: rgba(79, 70, 229, 0.35);
+      cursor: not-allowed;
+    }
+
+    .video-consultation-info {
+      margin: 0;
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.5;
+      max-width: 620px;
+    }
+  }
+
+  .video-status {
+    margin: 16px 28px 0;
+    padding: 16px 20px;
+    border-radius: 18px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .video-status.pending {
+    background: rgba(254, 243, 199, 0.9);
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  .video-status.rejected {
+    background: rgba(254, 226, 226, 0.9);
+    color: #991b1b;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
   .messages-container {
     flex: 1;
     min-height: 0;

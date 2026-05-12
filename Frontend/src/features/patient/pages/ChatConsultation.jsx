@@ -23,6 +23,7 @@ const ChatConsultation = () => {
   const [videoLoading, setVideoLoading] = useState(false);
   const [onlineStatus, setOnlineStatus] = useState("offline");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [videoMessage, setVideoMessage] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   
@@ -198,12 +199,21 @@ const ChatConsultation = () => {
   };
 
   const handleVideoRequest = async () => {
+    if (!appointmentId) return;
+
     setVideoLoading(true);
+    setVideoMessage("");
+
     try {
       const res = await requestVideoConsultation(appointmentId);
-      setVideoStatus("pending");
+      setVideoStatus(res.data.videoRequest?.status || "pending");
+      setVideoMessage("Video consultation request sent to your doctor.");
     } catch (error) {
       console.error("Failed to request video:", error);
+      setVideoMessage(
+        error.response?.data?.message ||
+          "Unable to send a video consultation request right now."
+      );
     } finally {
       setVideoLoading(false);
     }
@@ -269,16 +279,6 @@ const ChatConsultation = () => {
           </div>
         </div>
         <div className="header-right">
-          {videoStatus !== "accepted" && (
-            <button
-              className="video-btn"
-              onClick={handleVideoRequest}
-              disabled={videoLoading || videoStatus === "pending"}
-              title="Request Video Consultation"
-            >
-              📹
-            </button>
-          )}
           <button
             className="close-btn"
             onClick={() => navigate(-1)}
@@ -348,69 +348,80 @@ const ChatConsultation = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Video Status Info */}
-      {videoStatus === "pending" && (
-        <div className="video-status pending">
-          ⏳ Video request sent. Waiting for doctor to accept...
-        </div>
-      )}
-      {videoStatus === "rejected" && (
-        <div className="video-status rejected">
-          ❌ Doctor declined the video consultation request.
-        </div>
-      )}
-
       <div className="chat-footer">
-        {selectedFile && (
-          <div className="attachment-preview">
-            {filePreview ? (
-              <div className="attachment-image-card">
-                <img
-                  src={filePreview}
-                  alt={selectedFile.name}
-                  className="attachment-preview-image"
-                />
-                <div className="attachment-meta">
-                  <div>
-                    <p className="attachment-title">Selected image</p>
-                    <p className="attachment-subtitle">{selectedFile.name}</p>
-                  </div>
-                  <button
-                    className="remove-preview"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setFilePreview(null);
-                    }}
-                    aria-label="Remove attachment"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="attachment-file-card">
-                <div className="attachment-file-icon">{selectedFile.type === "application/pdf" ? "📄" : "📎"}</div>
-                <div className="attachment-file-info">
-                  <p className="attachment-title">{selectedFile.name}</p>
-                  <p className="attachment-subtitle">{formatFileSize(selectedFile.size)}</p>
-                </div>
-                <button
-                  className="remove-preview"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setFilePreview(null);
-                  }}
-                  aria-label="Remove attachment"
-                >
-                  ✕
-                </button>
-              </div>
+        {videoStatus === "pending" && (
+          <div className="video-status pending">
+            ⏳ Video request sent. Waiting for doctor to accept...
+          </div>
+        )}
+        {videoStatus === "rejected" && (
+          <div className="video-status rejected">
+            ❌ Doctor declined the video consultation request.
+          </div>
+        )}
+
+        {videoStatus !== "accepted" && (
+          <div className="video-consultation-section">
+            <button
+              className="video-consultation-btn"
+              onClick={handleVideoRequest}
+              disabled={videoLoading || videoStatus === "pending"}
+              title="Request Video Consultation"
+            >
+              {videoLoading ? (
+                <>
+                  <span className="loading-spinner">⏳</span>
+                  Sending Request...
+                </>
+              ) : videoStatus === "pending" ? (
+                <>
+                  <span>⏳</span>
+                  Request Pending
+                </>
+              ) : (
+                <>
+                  <span>📹</span>
+                  Request Video Consultation
+                </>
+              )}
+            </button>
+            <p className="video-consultation-info">
+              Request a live video consultation with your doctor for immediate medical assistance.
+            </p>
+            {videoMessage && (
+              <p className="video-consultation-info video-message">
+                {videoMessage}
+              </p>
             )}
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="chat-input-area">
+        {selectedFile && (
+          <div className="attachment-file-card">
+            <div className="attachment-file-icon">
+              {selectedFile.type === "application/pdf" ? "📄" : "📎"}
+            </div>
+            <div className="attachment-file-info">
+              <p className="attachment-title">{selectedFile.name}</p>
+              <p className="attachment-subtitle">
+                {formatFileSize(selectedFile.size)}
+              </p>
+            </div>
+            <button
+              className="remove-preview"
+              onClick={() => {
+                setSelectedFile(null);
+                setFilePreview(null);
+              }}
+              aria-label="Remove attachment"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="chat-input-area">
         <input
           ref={fileInputRef}
           type="file"
@@ -443,7 +454,6 @@ const ChatConsultation = () => {
             {sending ? "↻" : "→"}
           </button>
         </div>
-      </div>
       </div>
     </div>
   );
