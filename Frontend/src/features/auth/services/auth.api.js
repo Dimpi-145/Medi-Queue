@@ -24,7 +24,7 @@ export const getPatientDashboard = async () => {
   return response.data;
 };
 
-export const updateMyProfile = async (data) => {
-  const response = await api.put("/patients/me", data);
+export const updateProfile = async (data) => {
+  const response = await api.put("/profile", data);
   return response.data;
-};
+}

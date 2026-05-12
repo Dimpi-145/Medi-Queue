@@ -45,7 +45,7 @@ export const getDashboardStats = () =>
 
 // ================= QUEUE =================
 export const getLiveQueue = (doctorId) =>
-  api.get(`/queue/live?doctorId=${doctorId}`);
+  api.get(`/queue/live${doctorId ? `?doctorId=${doctorId}` : ""}`);
 
 export const addToQueue = (data) =>
   api.post("/queue/admin/add-to-queue", data);

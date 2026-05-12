@@ -16,6 +16,13 @@
   margin-bottom: 1.5rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .eyebrow {
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -57,6 +64,28 @@
   cursor: pointer;
   font-weight: 500;
   transition: 0.2s;
+}
+
+.book-btn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.edit-btn {
+  background: #f97316;
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+  font-size: 14px;
+}
+
+.edit-btn:hover {
+  background: #ea580c;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .book-btn:hover {

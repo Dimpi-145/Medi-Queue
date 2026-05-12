@@ -1,6 +1,7 @@
 import React from "react";
 import "./homepage.scss";
 import logo from "../../assets/logo.png";
+import { Link } from "react-router-dom";
 
 const Homepage = () => {
   return (
@@ -9,22 +10,23 @@ const Homepage = () => {
       {/* NAVBAR */}
       <nav className="home-navbar">
 
-  <div className="nav-links">
-    <a href="#services">Services</a>
-    <a href="#about">About</a>
-    <a href="#contact">Contact</a>
-  </div>
+        <div className="nav-links">
+          <a href="#services">Services</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </div>
 
-  <div className="logo">
-    <img src={logo} alt="MediQueue" />
-  </div>
+        <div className="logo">
+          <img src={logo} alt="MediQueue" />
+        </div>
 
-  <div className="nav-actions">
-    <a href="/login" className="btn-outline">Login</a>
-    <a href="/register" className="btn-primary">Register</a>
-  </div>
+        <div className="nav-actions">
+          <a href="/login" className="btn-outline">Login</a>
+          <a href="/register" className="btn-primary">Register</a>
+        </div>
 
-</nav>
+      </nav>
+
       {/* HERO */}
       <section className="hero">
         <h1>Smart Queue Management for Healthcare</h1>
@@ -61,6 +63,7 @@ const Homepage = () => {
       {/* ABOUT */}
       <section id="about" className="section">
         <h2>About MediQueue</h2>
+
         <p>
           MediQueue helps hospitals and clinics reduce waiting time, improve patient flow,
           and deliver better healthcare experiences using smart queue management.
@@ -70,7 +73,14 @@ const Homepage = () => {
       {/* CONTACT */}
       <section id="contact" className="section">
         <h2>Contact Us</h2>
-        <p>Email: support@mediqueue.com</p>
+
+        <p>
+          Email:{" "}
+          <Link to="/support" className="support-link">
+            mediqueue876@gmail.com
+          </Link>
+        </p>
+
         <p>Phone: +91 XXXXX XXXXX</p>
       </section>
 

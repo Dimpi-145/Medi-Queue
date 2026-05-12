@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./ProfileCard.scss";
-import { updateMyProfile } from "../../auth/services/auth.api";
+import { updateProfile } from "../../auth/services/auth.api";
 
 const ProfileCard = ({
   patient,
@@ -8,7 +8,8 @@ const ProfileCard = ({
   appointmentsCount,
   reportsAvailable,
   onBookClick,
-  onProfileUpdate,
+  onEditClick,
+
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
@@ -36,9 +37,8 @@ const ProfileCard = ({
 
   const handleSave = async () => {
     try {
-      await updateMyProfile(form);
+      await updateProfile(form);
       setEditMode(false);
-      if (onProfileUpdate) onProfileUpdate();
     } catch (err) {
       console.error("Failed to update profile", err);
     }
@@ -63,21 +63,22 @@ const ProfileCard = ({
           <h2>My Health Summary</h2>
 
           {/* ✅ Clean text-only identity */}
-          <h3 className="patient-name">{patient?.name || "Patient"}</h3>
-          <p className="patient-email">{patient?.email}</p>
+
+          <h3 className="patient-name">
+            {patient?.username || patient?.name || "Patient"}
+          </h3>
+          <p className="patient-email">
+            {patient?.email}
+          </p>
         </div>
 
-        <div className="profile-actions">
+        <div className="header-actions">
           <button className="book-btn" onClick={onBookClick}>
             Book Appointment
           </button>
+          <button className="edit-btn" onClick={onEditClick}>
+            ✎ Edit Profile
 
-          <button
-            className="edit-btn"
-            onClick={() => setEditMode((v) => !v)}
-            aria-pressed={editMode}
-          >
-            {editMode ? "Close" : "Edit"}
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   getMyAppointments,
@@ -9,13 +10,27 @@ import {
 
 import "./History.scss";
 
-const History = () => {
+const History = ({ onChat }) => {
+  const navigate = useNavigate();
 
   const [history, setHistory] =
     useState([]);
 
   const [loading, setLoading] =
     useState(true);
+
+  const handleOpenChat = (item) => {
+    if (onChat) {
+      onChat(item);
+    } else {
+      navigate(`/patient/chat/${item.id}`);
+    }
+  };
+
+  const getDoctorName = (item) =>
+    ((item.doctor || item.doctorName || "Doctor")
+      .replace(/^(Dr\.\s*)+/i, "")
+      .trim() || "Doctor");
 
   /* ================= FETCH HISTORY ================= */
   useEffect(() => {
@@ -167,17 +182,7 @@ const History = () => {
                     <div>
 
                       <h3>
-                        Dr. {
-                          (
-                            item.doctorName ||
-                            "Doctor"
-                          )
-                            .replace(
-                              /^(Dr\.\s*)+/i,
-                              ""
-                            )
-                            .trim()
-                        }
+                        Dr. {getDoctorName(item)}
                       </h3>
 
                       <p className="timeline-date">
@@ -222,6 +227,17 @@ const History = () => {
                         : "Appointment was cancelled before consultation."}
 
                     </p>
+
+                    {item.status === "completed" && (
+                      <div className="history-card-actions">
+                        <button
+                          className="history-chat-button"
+                          onClick={() => handleOpenChat(item)}
+                        >
+                          Open Chat
+                        </button>
+                      </div>
+                    )}
 
                   </div>
 

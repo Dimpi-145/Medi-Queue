@@ -12,6 +12,10 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
       label: "Appointments",
     },
     {
+      key: "Queue",
+      label: "Queue",
+    },
+    {
       key: "History",
       label: "History",
     },

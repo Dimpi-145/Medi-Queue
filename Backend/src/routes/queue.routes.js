@@ -9,7 +9,7 @@ const roleMiddleware = require("../middleware.js/role.middleware")
 QueueRouter.get(
     "/live",
     authMiddleware,
-    roleMiddleware("doctor","admin"),
+    roleMiddleware("doctor","admin","patient"),
     queueController.getLiveQueue
 )
 

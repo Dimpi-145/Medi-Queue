@@ -15,13 +15,26 @@ API.interceptors.request.use((req) => {
 });
 
 // GET doctor dashboard data
-export const getDoctorDashboard = () =>
-  API.get("/Dashboard/doctor");
+export const getDoctorDashboard = (date) =>
+  API.get(`/Dashboard/doctor${date ? `?date=${date}` : ""}`);
 
 // GET doctor appointments
-export const getDoctorAppointments = () =>
-  API.get("/appointments/doctor");
+export const getDoctorAppointments = (date) =>
+  API.get(`/appointments/doctor${date ? `?date=${date}` : ""}`);
+
+// GET doctor history
+export const getDoctorHistory = () => API.get("/doctor/history");
 
 // GET live queue
-export const getLiveQueue = () =>
-  API.get("/queue/live");
+export const getLiveQueue = (doctorId, date) => {
+  const params = [];
+  if (doctorId) params.push(`doctorId=${doctorId}`);
+  if (date) params.push(`date=${date}`);
+  return API.get(`/queue/live${params.length ? `?${params.join("&")}` : ""}`);
+};
+
+export const callNextPatient = (date) =>
+  API.put(`/queue/next${date ? `?date=${date}` : ""}`);
+
+export const completeCurrent = () =>
+  API.put("/queue/complete");

@@ -1,0 +1,292 @@
+@charset "UTF-8";
+.video-room-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.video-room-container .video-main {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  overflow: hidden;
+}
+.video-room-container .video-main .video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+.video-room-container .video-main .video-wrapper.main-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.video-room-container .video-main .video-wrapper.local-video {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 240px;
+  height: 180px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+  background: #000;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .video-room-container .video-main .video-wrapper.local-video {
+    width: 180px;
+    height: 135px;
+    bottom: 100px;
+    right: 10px;
+  }
+}
+.video-room-container .video-main .video-wrapper.local-video .local-label {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+.video-room-container .video-main .video-wrapper .video-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.video-room-container .video-main .video-wrapper .video-placeholder .placeholder-content {
+  text-align: center;
+  color: white;
+}
+.video-room-container .video-main .video-wrapper .video-placeholder .placeholder-content .waiting-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.video-room-container .video-main .video-wrapper .video-placeholder .placeholder-content p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+.video-room-container .video-main .video-wrapper .video-element {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.video-room-container .video-controls {
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.9) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.video-room-container .video-controls .controls-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.video-room-container .video-controls .controls-group .control-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.video-room-container .video-controls .controls-group .control-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+.video-room-container .video-controls .controls-group .control-btn.mic-btn.off {
+  background: rgba(239, 68, 68, 0.6);
+}
+.video-room-container .video-controls .controls-group .control-btn.mic-btn.off:hover {
+  background: rgba(239, 68, 68, 0.8);
+}
+.video-room-container .video-controls .controls-group .control-btn.camera-btn.off {
+  background: rgba(239, 68, 68, 0.6);
+}
+.video-room-container .video-controls .controls-group .control-btn.camera-btn.off:hover {
+  background: rgba(239, 68, 68, 0.8);
+}
+.video-room-container .video-controls .controls-group .control-btn.hang-up-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+}
+.video-room-container .video-controls .controls-group .control-btn.hang-up-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+}
+.video-room-container .video-controls .connection-status {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+.video-room-container .video-controls .connection-status::before {
+  content: "●";
+  margin-right: 6px;
+  color: #10b981;
+  font-size: 10px;
+}
+
+.video-room-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.video-room-loading .loading-content {
+  text-align: center;
+  color: white;
+}
+.video-room-loading .loading-content .spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: spin 1s linear infinite;
+}
+.video-room-loading .loading-content h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+}
+.video-room-loading .loading-content p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.video-room-error {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.video-room-error .error-content {
+  text-align: center;
+  color: white;
+  max-width: 400px;
+}
+.video-room-error .error-content .error-icon {
+  font-size: 72px;
+  margin-bottom: 16px;
+}
+.video-room-error .error-content h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 600;
+}
+.video-room-error .error-content p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+.video-room-error .error-content p.error-hint {
+  margin-bottom: 24px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+.video-room-error .error-content .back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.video-room-error .error-content .back-btn:hover {
+  background: white;
+  color: #e11d48;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 768px) {
+  .video-room-container .video-controls {
+    padding: 16px;
+    gap: 16px;
+  }
+  .video-room-container .video-controls .controls-group {
+    gap: 12px;
+  }
+  .video-room-container .video-controls .controls-group .control-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  .video-room-container .video-controls .controls-group .control-btn.hang-up-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+  .video-room-container .video-controls .connection-status {
+    font-size: 12px;
+  }
+}/*# sourceMappingURL=VideoRoom.css.map */

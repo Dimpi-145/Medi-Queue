@@ -1,0 +1,264 @@
+@charset "UTF-8";
+.doctor-history-panel {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.history-header .eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #0f172a;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.history-header h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #0f172a;
+}
+
+.history-header .subtext {
+  margin: 0.55rem 0 0;
+  color: #475569;
+  max-width: 540px;
+  font-size: 0.95rem;
+}
+
+.record-count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.history-empty {
+  padding: 2rem;
+  text-align: center;
+  border-radius: 18px;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.history-empty.error {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.history-groups {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.history-group-date {
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.history-group-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.history-card {
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 1.3rem;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.patient-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.card-top h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.card-top p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.92rem;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card-body .row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.card-body span {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-body strong {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.open-chat-btn,
+.accept-btn,
+.reject-btn {
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  padding: 0.95rem 1.1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  font-weight: 700;
+}
+
+.open-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  padding: 0.85rem 1.4rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.open-chat-btn::before {
+  content: "💬";
+  font-size: 1rem;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.open-chat-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+@keyframes pulse-button {
+  0% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(102, 126, 234, 0.55);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  }
+}
+.open-chat-btn {
+  animation: pulse-button 2s ease-in-out infinite;
+}
+
+.open-chat-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  animation: none;
+}
+.open-chat-btn:hover::before {
+  transform: scale(1.2) rotate(-10deg);
+}
+.open-chat-btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.open-chat-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.accept-btn {
+  background: #059669;
+  color: white;
+}
+
+.reject-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.open-chat-btn:disabled,
+.accept-btn:disabled,
+.reject-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.video-request-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.video-request-label {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  .card-body {
+    grid-template-columns: 1fr;
+  }
+}/*# sourceMappingURL=DoctorHistory.css.map */

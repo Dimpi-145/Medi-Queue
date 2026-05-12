@@ -72,22 +72,6 @@ authRouter.get("/doctor-dashboard", authMiddleware, (req, res) => {
 /**
  * GET /api/auth/patients/:id
  */
-authRouter.get(
-  "/patients/:id",
-  authMiddleware,
-  roleMiddleware("doctor"),
-  authController.getPatientById,
-);
-
-/**
- * PUT /api/auth/patients/me
- * Update authenticated patient's profile
- */
-authRouter.put(
-  "/patients/me",
-  authMiddleware,
-  roleMiddleware("patient"),
-  authController.updateMyProfile,
-);
+authRouter.get("/patients/:id", authMiddleware, roleMiddleware("doctor"), authController.getPatientById);
 
 module.exports = authRouter;

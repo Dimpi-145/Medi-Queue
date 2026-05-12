@@ -1,6 +1,7 @@
 .terms-container {
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 100vh;
   font-family: "Inter", sans-serif;
   color: white;
