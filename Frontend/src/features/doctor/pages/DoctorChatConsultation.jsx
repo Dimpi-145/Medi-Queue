@@ -97,12 +97,20 @@ const DoctorChatConsultation = () => {
 
     // Listen for new messages
     socket.on("newMessage", (newMessage) => {
-      if (newMessage.appointmentId === appointmentId || newMessage.consultationId === appointmentId) {
+      // Convert both to strings for safe comparison (handle both string and ObjectId formats)
+      const msgAppointmentId = String(newMessage.appointmentId);
+      const msgConsultationId = String(newMessage.consultationId);
+      const currentAppointmentId = String(appointmentId);
+      
+      if (msgAppointmentId === currentAppointmentId || msgConsultationId === currentAppointmentId) {
         setMessages((prev) => {
-          // Prevent duplicates
-          if (prev.some((msg) => msg._id === newMessage._id)) {
+          // Prevent duplicates by checking both _id and ensuring it's not already in the list
+          const msgId = String(newMessage._id);
+          if (prev.some((msg) => String(msg._id) === msgId)) {
+            console.log("[Chat] Duplicate message ignored:", msgId);
             return prev;
           }
+          console.log("[Chat] Adding new message:", msgId);
           return [...prev, newMessage];
         });
       }

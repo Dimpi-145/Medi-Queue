@@ -7,8 +7,8 @@ export const sendChatMessage = (appointmentId, message) => {
   });
 };
 
-export const getChatHistory = (appointmentId) => {
-  return axios.get(`/chat/history/${appointmentId}`);
+export const getChatHistory = (consultationId) => {
+  return axios.get(`/chat/history/${consultationId}`);
 };
 
 export const getFollowUpConsultations = () => {

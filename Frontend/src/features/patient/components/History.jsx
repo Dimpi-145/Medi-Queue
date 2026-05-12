@@ -19,6 +19,19 @@ const History = ({ onChat }) => {
   const [loading, setLoading] =
     useState(true);
 
+  const handleOpenChat = (item) => {
+    if (onChat) {
+      onChat(item);
+    } else {
+      navigate(`/patient/chat/${item.id}`);
+    }
+  };
+
+  const getDoctorName = (item) =>
+    ((item.doctor || item.doctorName || "Doctor")
+      .replace(/^(Dr\.\s*)+/i, "")
+      .trim() || "Doctor");
+
   /* ================= FETCH HISTORY ================= */
   useEffect(() => {
 
@@ -169,17 +182,7 @@ const History = ({ onChat }) => {
                     <div>
 
                       <h3>
-                        Dr. {
-                          (
-                            item.doctorName ||
-                            "Doctor"
-                          )
-                            .replace(
-                              /^(Dr\.\s*)+/i,
-                              ""
-                            )
-                            .trim()
-                        }
+                        Dr. {getDoctorName(item)}
                       </h3>
 
                       <p className="timeline-date">
@@ -226,14 +229,14 @@ const History = ({ onChat }) => {
                     </p>
 
                     {item.status === "completed" && (
-                      <button
-                        className="history-chat-button"
-                        onClick={() =>
-                          navigate(`/patient/chat/${item.id}`)
-                        }
-                      >
-                        Open Chat
-                      </button>
+                      <div className="history-card-actions">
+                        <button
+                          className="history-chat-button"
+                          onClick={() => handleOpenChat(item)}
+                        >
+                          Open Chat
+                        </button>
+                      </div>
                     )}
 
                   </div>

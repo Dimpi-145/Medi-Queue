@@ -50,11 +50,7 @@ const PatientDashboard = () => {
   };
 
   const openChat = (appointment) => {
-    setChatContext({
-      appointmentId: appointment.id,
-      doctorId: appointment.doctorId,
-      doctorName: appointment.doctor,
-    });
+    navigate(`/patient/chat/${appointment.id}`);
   };
 
   useEffect(() => {
