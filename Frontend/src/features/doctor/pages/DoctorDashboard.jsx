@@ -111,7 +111,7 @@ const DoctorDashboard = () => {
 
   const handleCompleteCurrent = async () => {
     try {
-      await completeCurrent();
+      await completeCurrent(selectedDate);
       fetchData(selectedDate);
       fetchQueue(selectedDate);
     } catch (err) {
@@ -144,13 +144,15 @@ const DoctorDashboard = () => {
     socket.on("connect", joinDoctorRoom);
 
     socket.on("queueUpdated", (data) => {
-      if (!doctorInfo?._id) {
+      const storedId = localStorage.getItem("doctorId");
+      const id = doctorInfo?._id || storedId;
+      if (!id) {
         fetchData();
         fetchQueue();
         return;
       }
 
-      if (data.doctorId === doctorInfo._id) {
+      if (String(data.doctorId) === String(id)) {
         fetchData();
         fetchQueue();
       }

@@ -1,15 +1,22 @@
 const Appointment = require("../models/appointment.model")
+const {
+    normalizeAppointmentDate,
+    allocateNextQueueNumber,
+    syncActiveQueueSequential,
+} = require("../utils/queueNumber.util")
+const { broadcastQueueUpdated } = require("../utils/queueEvents.util")
 
 // ================= BOOK =================
 async function bookAppointment(req, res) {
     try {
         const { doctorId, date, timeSlot } = req.body
+        const normalizedDate = normalizeAppointmentDate(date)
 
         // ✅ CHECK DUPLICATE (date + timeSlot)
         const existingAppointment = await Appointment.findOne({
             patientId: req.user.id,
             doctorId,
-            date,
+            date: normalizedDate,
             timeSlot,
             status: { $in: ["pending", "approved"] }
         })
@@ -20,23 +27,21 @@ async function bookAppointment(req, res) {
             })
         }
 
-        // ✅ QUEUE PER DOCTOR + DATE (Atomic count to prevent race conditions)
-        // Count all non-cancelled appointments for this doctor+date
-        const queueCount = await Appointment.countDocuments({
-            doctorId,
-            date,
-            status: { $in: ["pending", "approved", "completed"] }
-        })
-
-        const queueNumber = queueCount + 1
+        const queueNumber = await allocateNextQueueNumber(doctorId, normalizedDate)
 
         const appointment = await Appointment.create({
             patientId: req.user.id,
             doctorId,
-            date,
+            date: normalizedDate,
             timeSlot,
             queueNumber,
             status: "pending"
+        })
+
+        const io = req.app.get("io")
+        await broadcastQueueUpdated(io, {
+            doctorId,
+            date: normalizedDate,
         })
 
         return res.status(201).json({
@@ -85,14 +90,18 @@ async function getMyAppointments(req, res) {
 // ================= DOCTOR =================
 async function getDoctorAppointments(req, res) {
     try {
-        const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
+        const selectedDate = normalizeAppointmentDate(
+            req.query.date || new Date().toISOString().split("T")[0]
+        );
+
+        await syncActiveQueueSequential(req.user.id, selectedDate);
 
         const appointments = await Appointment.find({
             doctorId: req.user.id,
             date: selectedDate,
         })
         .populate("patientId", "username age gender")
-        .sort({ queueNumber: 1 }) // queue order
+        .sort({ queueNumber: 1, createdAt: 1 }) // queue order
 
         const formattedAppointments = appointments.map(app => ({
             id: app._id,
@@ -188,17 +197,14 @@ async function cancelAppointment(req, res) {
         }
 
         const doctorId = appointment.doctorId.toString();
-        const oldStatus = appointment.status;
 
         appointment.status = "cancelled"
         await appointment.save()
 
-        // Emit socket event to doctor and patient
-        io.to(doctorId).emit("queueUpdated", {
+        await broadcastQueueUpdated(io, {
             doctorId,
-            date: appointment.date,
-            message: "Appointment cancelled"
-        });
+            date: normalizeAppointmentDate(appointment.date),
+        })
 
         io.to(appointment.patientId.toString()).emit("appointmentCancelled", {
             appointmentId: appointment._id,
@@ -239,10 +245,12 @@ async function rescheduleAppointment(req, res) {
             return res.status(403).json({ message: "Not authorized" });
         }
 
+        const normalizedNewDate = normalizeAppointmentDate(newDate)
+
         // Check if new slot already exists
         const existingSlot = await Appointment.findOne({
             doctorId: appointment.doctorId._id,
-            date: newDate,
+            date: normalizedNewDate,
             timeSlot: newTimeSlot,
             status: { $in: ["pending", "approved"] }
         });
@@ -253,13 +261,10 @@ async function rescheduleAppointment(req, res) {
             });
         }
 
-        // Get queue number for new date
-        const lastAppointment = await Appointment.findOne({
-            doctorId: appointment.doctorId._id,
-            date: newDate
-        }).sort({ queueNumber: -1 });
-
-        const newQueueNumber = lastAppointment ? lastAppointment.queueNumber + 1 : 1;
+        const newQueueNumber = await allocateNextQueueNumber(
+            appointment.doctorId._id,
+            normalizedNewDate
+        )
 
         // Mark old appointment as rescheduled
         appointment.status = "rescheduled";
@@ -269,7 +274,7 @@ async function rescheduleAppointment(req, res) {
         const newAppointment = await Appointment.create({
             patientId: appointment.patientId._id,
             doctorId: appointment.doctorId._id,
-            date: newDate,
+            date: normalizedNewDate,
             timeSlot: newTimeSlot,
             queueNumber: newQueueNumber,
             status: "pending",
@@ -278,11 +283,10 @@ async function rescheduleAppointment(req, res) {
          .populate("doctorId", "username email");
 
         // Emit socket events
-        io.to(appointment.doctorId._id.toString()).emit("queueUpdated", {
+        await broadcastQueueUpdated(io, {
             doctorId: appointment.doctorId._id,
-            date: newDate,
-            message: "Patient rescheduled appointment"
-        });
+            date: normalizedNewDate,
+        })
 
         return res.status(200).json({
             message: "Appointment rescheduled successfully",
@@ -336,6 +340,12 @@ async function completeAppointment(req, res) {
 
         appointment.status = "completed"
         await appointment.save()
+
+        const io = req.app.get("io")
+        await broadcastQueueUpdated(io, {
+            doctorId: appointment.doctorId,
+            date: normalizeAppointmentDate(appointment.date),
+        })
 
         return res.json({
             message: "Appointment completed"

@@ -1,4 +1,11 @@
 const Appointment = require("../models/appointment.model");
+const {
+  normalizeAppointmentDate,
+  allocateNextQueueNumber,
+  syncActiveQueueSequential,
+  computeLiveQueueInfoForAppointmentId,
+} = require("../utils/queueNumber.util");
+const { broadcastQueueUpdated } = require("../utils/queueEvents.util");
 
 // ================= CURRENT PATIENT =================
 async function getCurrentPatient(req, res) {
@@ -32,7 +39,9 @@ async function callNextPatient(req, res) {
   try {
     const io = req.app.get("io");
     const doctorRoom = req.user.id.toString();
-    const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
+    const selectedDate = normalizeAppointmentDate(
+      req.query.date || new Date().toISOString().split("T")[0]
+    );
 
     // complete previous approved patient for the selected date
     await Appointment.updateMany(
@@ -51,7 +60,7 @@ async function callNextPatient(req, res) {
       date: selectedDate,
       status: "pending",
     })
-      .sort({ queueNumber: 1 })
+      .sort({ queueNumber: 1, createdAt: 1 })
       .populate("patientId", "username age gender email phone");
 
     if (!nextAppointment) {
@@ -63,14 +72,9 @@ async function callNextPatient(req, res) {
     nextAppointment.status = "approved";
     await nextAppointment.save();
 
-    // 🔥 IMPORTANT: emit ONLY to this doctor room
-    io.to(doctorRoom).emit("queueUpdated", {
+    await broadcastQueueUpdated(io, {
       doctorId: req.user.id,
       date: selectedDate,
-      appointmentId: nextAppointment._id,
-      queueNumber: nextAppointment.queueNumber,
-      patientId: nextAppointment.patientId._id,
-      patient: nextAppointment.patientId,
     });
 
     return res.json({
@@ -90,7 +94,9 @@ async function callNextPatient(req, res) {
 // ================= LIVE QUEUE =================
 async function getLiveQueue(req, res) {
   try {
-    const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
+    const selectedDate = normalizeAppointmentDate(
+      req.query.date || new Date().toISOString().split("T")[0]
+    );
     const filter = {
       date: selectedDate,
       status: { $nin: ["completed", "cancelled"] },
@@ -145,8 +151,10 @@ async function getLiveQueue(req, res) {
       });
     }
 
+    await syncActiveQueueSequential(filter.doctorId, selectedDate);
+
     const queue = await Appointment.find(filter)
-      .sort({ queueNumber: 1 })
+      .sort({ queueNumber: 1, createdAt: 1 })
       .populate("patientId", "username age gender")
       .populate("doctorId", "username");
 
@@ -180,22 +188,25 @@ async function getQueuePosition(req, res) {
       });
     }
 
-    const patientsAhead = await Appointment.countDocuments({
-      doctorId: appointment.doctorId,
-      date: appointment.date,
-      status: "pending",
-      queueNumber: { $lt: appointment.queueNumber },
-    });
+    const metrics = await computeLiveQueueInfoForAppointmentId(
+      req.params.id
+    );
+
+    if (!metrics) {
+      return res.status(404).json({
+        message: "Appointment not found",
+      });
+    }
 
     // ⏱️ 10 min per patient (you can change)
     const avgTimePerPatient = 10;
-    const estimatedWaitTime = patientsAhead * avgTimePerPatient;
+    const estimatedWaitTime = metrics.patientsAhead * avgTimePerPatient;
 
     return res.status(200).json({
-      appointmentId: appointment._id,
+      appointmentId: metrics.appointmentId,
       doctorId: appointment.doctorId,
-      yourQueueNumber: appointment.queueNumber,
-      patientsAhead,
+      yourQueueNumber: metrics.liveQueueNumber,
+      patientsAhead: metrics.patientsAhead,
       estimatedWaitTime: `${estimatedWaitTime} minutes`,
     });
   } catch (error) {
@@ -210,16 +221,9 @@ async function addToQueue(req, res) {
   try {
     const { patientId, doctorId } = req.body;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = normalizeAppointmentDate(new Date());
 
-    const lastAppointment = await Appointment.findOne({
-      doctorId,
-      date: today,
-    }).sort({ queueNumber: -1 });
-
-    const queueNumber = lastAppointment
-      ? lastAppointment.queueNumber + 1
-      : 1;
+    const queueNumber = await allocateNextQueueNumber(doctorId, today);
 
     const appointment = await Appointment.create({
       patientId,
@@ -229,10 +233,10 @@ async function addToQueue(req, res) {
       date: today,
     });
 
-    // 🔥 emit only to doctor room
     const io = req.app.get("io");
-    io.to(doctorId.toString()).emit("queueUpdated", {
+    await broadcastQueueUpdated(io, {
       doctorId,
+      date: today,
     });
 
     return res.status(201).json({
@@ -249,9 +253,14 @@ async function addToQueue(req, res) {
 // ================= COMPLETE CURRENT =================
 async function completeCurrent(req, res) {
   try {
+    const selectedDate = normalizeAppointmentDate(
+      req.query.date || new Date().toISOString().split("T")[0]
+    );
+
     const current = await Appointment.findOne({
       doctorId: req.user.id,
       status: "approved",
+      date: selectedDate,
     });
 
     if (!current) {
@@ -264,9 +273,9 @@ async function completeCurrent(req, res) {
     await current.save();
 
     const io = req.app.get("io");
-    io.to(req.user.id.toString()).emit("queueUpdated", {
+    await broadcastQueueUpdated(io, {
       doctorId: req.user.id,
-      message: "Patient completed",
+      date: selectedDate,
     });
 
     return res.json({

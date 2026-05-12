@@ -1,10 +1,19 @@
 const Appointment = require("../models/appointment.model");
 const User = require("../models/user.model");
+const {
+  normalizeAppointmentDate,
+  computeLiveQueueInfoForAppointmentId,
+  syncActiveQueueSequential,
+} = require("../utils/queueNumber.util");
 
 async function doctorDashboard(req, res) {
   try {
     const doctorId = req.user.id;
-    const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
+    const selectedDate = normalizeAppointmentDate(
+      req.query.date || new Date().toISOString().split("T")[0]
+    );
+
+    await syncActiveQueueSequential(doctorId, selectedDate);
 
     const doctor = await User.findById(doctorId).select(
       "username email specialization department profileImage role"
@@ -21,7 +30,7 @@ async function doctorDashboard(req, res) {
       date: selectedDate,
       status: "pending",
     })
-      .sort({ queueNumber: 1 })
+      .sort({ queueNumber: 1, createdAt: 1 })
       .populate("patientId", "username age gender");
 
     const totalWaiting = await Appointment.countDocuments({
@@ -59,7 +68,9 @@ async function doctorDashboard(req, res) {
 async function patientDashboard(req, res) {
   try {
     const patientId = req.user.id;
-    const selectedDate = req.query.date || new Date().toISOString().split("T")[0];
+    const selectedDate = normalizeAppointmentDate(
+      req.query.date || new Date().toISOString().split("T")[0]
+    );
 
     // Patient Info
     const patient = await User.findById(patientId).select("-password");
@@ -69,29 +80,43 @@ async function patientDashboard(req, res) {
       .populate("doctorId", "username specialization")
       .sort({ createdAt: -1 });
 
-    // Active Appointment for selected date
-    const activeAppointment = await Appointment.findOne({
+    let activeAppointment = await Appointment.findOne({
       patientId,
       status: { $in: ["pending", "approved"] },
       date: selectedDate,
     }).populate("doctorId", "username specialization");
 
+    if (!activeAppointment) {
+      activeAppointment = await Appointment.findOne({
+        patientId,
+        status: { $in: ["pending", "approved"] },
+        date: { $gte: selectedDate },
+      })
+        .sort({ date: 1 })
+        .populate("doctorId", "username specialization");
+    }
+
     let queueInfo = null;
 
     if (activeAppointment) {
-      const patientsAhead = await Appointment.countDocuments({
-        doctorId: activeAppointment.doctorId._id,
-        date: activeAppointment.date,
-        status: "pending",
-        queueNumber: { $lt: activeAppointment.queueNumber },
-      });
+      const metrics = await computeLiveQueueInfoForAppointmentId(
+        activeAppointment._id
+      );
 
-      queueInfo = {
-        appointmentId: activeAppointment._id,
-        status: activeAppointment.status,
-        queueNumber: activeAppointment.queueNumber,
-        patientsAhead,
-      };
+      activeAppointment = await Appointment.findById(activeAppointment._id).populate(
+        "doctorId",
+        "username specialization"
+      );
+
+      if (metrics) {
+        queueInfo = {
+          appointmentId: metrics.appointmentId,
+          status: metrics.status,
+          queueNumber: metrics.liveQueueNumber,
+          liveQueueNumber: metrics.liveQueueNumber,
+          patientsAhead: metrics.patientsAhead,
+        };
+      }
     }
 
     return res.status(200).json({

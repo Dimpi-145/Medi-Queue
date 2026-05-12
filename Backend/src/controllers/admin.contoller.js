@@ -1,6 +1,11 @@
 const User = require("../models/user.model");
 const Appointment = require("../models/appointment.model");
 const bcrypt = require('bcrypt');
+const {
+  normalizeAppointmentDate,
+  allocateNextQueueNumber,
+} = require("../utils/queueNumber.util");
+const { broadcastQueueUpdated } = require("../utils/queueEvents.util");
 
 // ================= DASHBOARD STATS =================
 async function getDashboardStats(req, res) {
@@ -187,20 +192,22 @@ async function walkInRegister(req, res) {
       password: await bcrypt.hash("walkin123", 10) // default temp password
     });
 
-    // 2. Generate queue number
-    const last = await Appointment.findOne({ doctorId })
-      .sort({ queueNumber: -1 });
+    const today = normalizeAppointmentDate(new Date());
+    const queueNumber = await allocateNextQueueNumber(doctorId, today);
 
-    const queueNumber = last ? last.queueNumber + 1 : 1;
-
-    // 3. Create appointment (QUEUE ENTRY)
     const appointment = await Appointment.create({
       patientId: patient._id,
       doctorId,
       queueNumber,
       status: "pending",
       source: "walk-in" ,
-      date: new Date() 
+      date: today,
+    });
+
+    const io = req.app.get("io");
+    await broadcastQueueUpdated(io, {
+      doctorId,
+      date: today,
     });
 
     return res.status(201).json({
@@ -225,7 +232,7 @@ async function getAppointments(req, res) {
     const appointments = await Appointment.find({})
       .populate("patientId", "username age gender")
       .populate("doctorId", "username specialization")
-      .sort({ date: -1 });
+      .sort({ date: -1, queueNumber: 1 });
 
     const formatted = appointments.map(app => ({
       _id: app._id,
@@ -255,11 +262,12 @@ async function adminBookAppointment(req, res) {
   try {
     const { patientId, doctorId, date, timeSlot } = req.body;
 
-    // Check duplicate
+    const normalizedDate = normalizeAppointmentDate(date);
+
     const existing = await Appointment.findOne({
       patientId,
       doctorId,
-      date,
+      date: normalizedDate,
       timeSlot,
       status: { $in: ["pending", "approved"] }
     });
@@ -268,17 +276,21 @@ async function adminBookAppointment(req, res) {
       return res.status(400).json({ message: "Slot already booked" });
     }
 
-    // Queue number
-    const last = await Appointment.findOne({ doctorId, date }).sort({ queueNumber: -1 });
-    const queueNumber = last ? last.queueNumber + 1 : 1;
+    const queueNumber = await allocateNextQueueNumber(doctorId, normalizedDate);
 
     const appointment = await Appointment.create({
       patientId,
       doctorId,
-      date,
+      date: normalizedDate,
       timeSlot,
       queueNumber,
       status: "pending"
+    });
+
+    const io = req.app.get("io");
+    await broadcastQueueUpdated(io, {
+      doctorId,
+      date: normalizedDate,
     });
 
     return res.status(201).json({

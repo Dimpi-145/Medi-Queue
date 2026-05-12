@@ -36,5 +36,5 @@ export const getLiveQueue = (doctorId, date) => {
 export const callNextPatient = (date) =>
   API.put(`/queue/next${date ? `?date=${date}` : ""}`);
 
-export const completeCurrent = () =>
-  API.put("/queue/complete");
+export const completeCurrent = (date) =>
+  API.put(`/queue/complete${date ? `?date=${date}` : ""}`);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 
@@ -44,6 +44,21 @@ const PatientDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
+  const dashboardCtxRef = useRef({
+    date: selectedDate,
+    doctorId: null,
+  });
+
+  useEffect(() => {
+    dashboardCtxRef.current = {
+      date: activeAppointment?.date || selectedDate,
+      doctorId:
+        activeAppointment?.doctorId?._id ||
+        activeAppointment?.doctorId ||
+        null,
+    };
+  }, [activeAppointment, selectedDate]);
+
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
@@ -53,17 +68,51 @@ const PatientDashboard = () => {
     navigate(`/patient/chat/${appointment.id}`);
   };
 
-  useEffect(() => {
-    fetchAllData();
+  const fetchLiveQueue = useCallback(async (date, doctorId) => {
+    try {
+      setLoadingQueue(true);
+      const res = await API.get(
+        `/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`
+      );
+      const queueData = res.data?.patients || [];
+      setQueue(Array.isArray(queueData) ? queueData : []);
+    } catch (err) {
+      console.error("Queue fetch error:", err);
+      setQueue([]);
+    } finally {
+      setLoadingQueue(false);
+    }
   }, []);
 
-  useEffect(() => {
-    if (activeAppointment) {
-      const dateToUse = activeAppointment.date || selectedDate;
-      setSelectedDate(dateToUse);
-      fetchQueue(dateToUse);
+  const fetchDashboard = useCallback(async (dateOverride) => {
+    try {
+      setLoading(true);
+      const dateToQuery =
+        dateOverride !== undefined && dateOverride !== null
+          ? dateOverride
+          : selectedDate;
+      const res = await getPatientDashboard(dateToQuery);
+      setPatient(res.data?.patient || null);
+      setQueueInfo(res.data?.queueInfo || null);
+      const aa = res.data?.activeAppointment || null;
+      setActiveAppointment(aa);
+      const effectiveDate = aa?.date || dateToQuery;
+      if (aa?.date) {
+        setSelectedDate(aa.date);
+      }
+      const docId = aa?.doctorId?._id || aa?.doctorId || null;
+      await fetchLiveQueue(effectiveDate, docId);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }, [activeAppointment]);
+  }, [selectedDate, fetchLiveQueue]);
+
+  useEffect(() => {
+    if (activeTab !== "Queue Status") return;
+    fetchDashboard(selectedDate);
+  }, [activeTab]); // refresh live queue + dashboard when opening this tab
 
   useEffect(() => {
     if (!activeAppointment) {
@@ -71,50 +120,44 @@ const PatientDashboard = () => {
     }
 
     const socket = io("http://localhost:3000");
+    const doctorDocId =
+      activeAppointment.doctorId?._id || activeAppointment.doctorId;
+    const patientId = localStorage.getItem("userId");
 
-    socket.on("connect", () => {
-      if (activeAppointment.doctorId?._id) {
-        socket.emit("joinDoctorRoom", activeAppointment.doctorId._id);
+    const onConnect = () => {
+      if (patientId) {
+        socket.emit("joinUserRoom", patientId);
       }
-    });
+      if (doctorDocId) {
+        socket.emit("joinDoctorRoom", doctorDocId);
+      }
+    };
+
+    socket.on("connect", onConnect);
+    if (socket.connected) {
+      onConnect();
+    }
 
     socket.on("queueUpdated", (data) => {
-      if (data.doctorId === activeAppointment.doctorId?._id) {
-        fetchQueue(selectedDate);
-        fetchDashboard();
+      const matchesDoctor =
+        doctorDocId != null &&
+        String(data.doctorId) === String(doctorDocId);
+      const matchesPatient =
+        data.patientId &&
+        patientId &&
+        String(data.patientId) === String(patientId);
+      if (matchesDoctor || matchesPatient) {
+        const { date } = dashboardCtxRef.current;
+        fetchDashboard(date);
       }
     });
 
     return () => {
+      socket.off("connect", onConnect);
+      socket.off("queueUpdated");
       socket.disconnect();
     };
-  }, [activeAppointment, selectedDate]);
-
-  const fetchAllData = async () => {
-    await Promise.all([
-      fetchDashboard(),
-      fetchAppointments(),
-      fetchPrescriptions(),
-      fetchReportsCount(),
-    ]);
-  };
-
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      const res = await getPatientDashboard(selectedDate);
-      setPatient(res.data?.patient || null);
-      setQueueInfo(res.data?.queueInfo || null);
-      setActiveAppointment(res.data?.activeAppointment || null);
-      if (res.data?.activeAppointment?.date) {
-        setSelectedDate(res.data.activeAppointment.date);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [activeAppointment, fetchDashboard]);
 
   const fetchAppointments = async () => {
     try {
@@ -129,22 +172,6 @@ const PatientDashboard = () => {
       setAppointments(formatted);
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const fetchQueue = async (date = selectedDate) => {
-    try {
-      setLoadingQueue(true);
-      // include doctorId when we have an active appointment to ensure we fetch the correct doctor's queue
-      const doctorId = activeAppointment?.doctorId?._id || activeAppointment?.doctorId || null;
-      const res = await API.get(`/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`);
-      const queueData = res.data?.patients || [];
-      setQueue(Array.isArray(queueData) ? queueData : []);
-    } catch (err) {
-      console.error("Queue fetch error:", err);
-      setQueue([]);
-    } finally {
-      setLoadingQueue(false);
     }
   };
 
@@ -166,6 +193,19 @@ const PatientDashboard = () => {
     }
   };
 
+  const fetchAllData = async () => {
+    await Promise.all([
+      fetchDashboard(),
+      fetchAppointments(),
+      fetchPrescriptions(),
+      fetchReportsCount(),
+    ]);
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
   const handleBook = async (formData) => {
     try {
       await bookAppointment(formData);
@@ -180,15 +220,25 @@ const PatientDashboard = () => {
     try {
       await updateProfile(formData);
       setShowEditProfile(false);
-      fetchDashboard();
+      fetchDashboard(dashboardCtxRef.current.date);
     } catch (err) {
       console.error(err);
       throw err;
     }
   };
 
-  const currentQueueNumber = queueInfo?.queueNumber || "-";
-  const patientsAhead = queueInfo?.patientsAhead || 0;
+  const patientKey = String(
+    patient?._id || localStorage.getItem("userId") || ""
+  );
+  const myQueueRow = queue.find(
+    (q) => String(q.patientId?._id || q.patientId) === patientKey
+  );
+  const currentQueueNumber =
+    queueInfo?.liveQueueNumber ??
+    queueInfo?.queueNumber ??
+    myQueueRow?.queueNumber ??
+    "-";
+  const patientsAhead = queueInfo?.patientsAhead ?? 0;
 
   return (
     <div className="patient-dashboard">
@@ -243,8 +293,9 @@ const PatientDashboard = () => {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => {
-                      setSelectedDate(e.target.value);
-                      fetchQueue(e.target.value);
+                      const v = e.target.value;
+                      setSelectedDate(v);
+                      fetchDashboard(v);
                     }}
                   />
                 </div>

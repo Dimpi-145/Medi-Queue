@@ -8,7 +8,7 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import PatientDetails from "../components/PatientDetails";
 import PrescriptionBox from "../components/PrescriptionBox";
-import {completeCurrent, callNextPatient} from "../services/doctor.api";
+import { callNextPatient } from "../services/doctor.api";
 
 import "../doctorDashboard.scss";
 
@@ -95,8 +95,14 @@ const DoctorPatientDetails = () => {
 
     // Listen for queue updates
     socket.on("queueUpdated", (data) => {
-      console.log("Queue updated:", data);
-      // Refresh queue when updates happen
+      const doctorId = localStorage.getItem("doctorId");
+      if (
+        doctorId &&
+        data.doctorId &&
+        String(data.doctorId) !== String(doctorId)
+      ) {
+        return;
+      }
       fetchQueue();
     });
 

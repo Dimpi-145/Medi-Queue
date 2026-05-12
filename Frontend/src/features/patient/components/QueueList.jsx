@@ -325,7 +325,9 @@ const QueueList = ({
                 <div
                   key={item._id}
                   className={`queue-row ${
-                    item.queueNumber === currentQueueNumber ? "current" : ""
+                    Number(item.queueNumber) === Number(currentQueueNumber)
+                      ? "current"
+                      : ""
                   }`}
                 >
                   <div className="queue-user">
