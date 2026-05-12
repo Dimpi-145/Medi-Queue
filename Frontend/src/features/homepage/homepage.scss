@@ -428,3 +428,31 @@ body {
     margin-top: 90px;
   }
 }
+
+/* ===== SUPPORT LINK ===== */
+.support-link {
+  color: #ffffff;
+  text-decoration: none;
+
+  font-weight: 600;
+
+  padding: 6px 12px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  transition: all 0.3s ease;
+
+  display: inline-block;
+  margin-left: 6px;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.support-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
