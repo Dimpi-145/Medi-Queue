@@ -135,7 +135,9 @@ const PatientDashboard = () => {
   const fetchQueue = async (date = selectedDate) => {
     try {
       setLoadingQueue(true);
-      const res = await API.get(`/queue/live?date=${date}`);
+      // include doctorId when we have an active appointment to ensure we fetch the correct doctor's queue
+      const doctorId = activeAppointment?.doctorId?._id || activeAppointment?.doctorId || null;
+      const res = await API.get(`/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`);
       const queueData = res.data?.patients || [];
       setQueue(Array.isArray(queueData) ? queueData : []);
     } catch (err) {

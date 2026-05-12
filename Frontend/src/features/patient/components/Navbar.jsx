@@ -4,7 +4,6 @@ import "./Navbar.scss";
 const Navbar = ({ patient, loading, onLogout }) => {
   return (
     <header className="top-navbar">
-
       {/* LEFT SECTION */}
       <div className="brand-section">
         <span className="brand-chip">MediQueue</span>
@@ -20,20 +19,19 @@ const Navbar = ({ patient, loading, onLogout }) => {
             {/* ❌ Avatar removed */}
             <div className="profile-pill">
               <div className="profile-text">
-                <p>Welcome back, <strong>{patient?.username || "Patient"}</strong></p>
+                <p>
+                  Welcome back,{" "}
+                  <strong>{patient?.username || "Patient"}</strong>
+                </p>
               </div>
             </div>
 
-            <button
-              className="primary-button logout-button"
-              onClick={onLogout}
-            >
+            <button className="primary-button logout-button" onClick={onLogout}>
               Logout
             </button>
           </>
         )}
       </div>
-
     </header>
   );
 };

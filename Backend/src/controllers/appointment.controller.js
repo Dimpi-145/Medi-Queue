@@ -20,13 +20,15 @@ async function bookAppointment(req, res) {
             })
         }
 
-        // ✅ QUEUE PER DOCTOR + DATE
-        const lastAppointment = await Appointment.findOne({
+        // ✅ QUEUE PER DOCTOR + DATE (Atomic count to prevent race conditions)
+        // Count all non-cancelled appointments for this doctor+date
+        const queueCount = await Appointment.countDocuments({
             doctorId,
-            date
-        }).sort({ queueNumber: -1 })
+            date,
+            status: { $in: ["pending", "approved", "completed"] }
+        })
 
-        const queueNumber = lastAppointment ? lastAppointment.queueNumber + 1 : 1
+        const queueNumber = queueCount + 1
 
         const appointment = await Appointment.create({
             patientId: req.user.id,

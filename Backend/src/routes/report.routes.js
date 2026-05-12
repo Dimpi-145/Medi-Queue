@@ -9,11 +9,11 @@ const role = require("../middleware.js/role.middleware");
 
 // Patient uploads report
 ReportRouter.post(
-    "/upload",
-    upload.single("report"),
-    auth,
-    role("patient"),
-    reportController.uploadReport,
+  "/upload",
+  upload.single("report"),
+  auth,
+  role("patient"),
+  reportController.uploadReport,
 );
 
 // Patient gets own reports
@@ -21,26 +21,26 @@ ReportRouter.get("/my", auth, role("patient"), reportController.getMyReports);
 
 // Patient renames own report
 ReportRouter.patch(
-    "/:id/rename",
-    auth,
-    role("patient"),
-    reportController.renameReport,
+  "/:id/rename",
+  auth,
+  role("patient"),
+  reportController.renameReport,
 );
 
 // Patient deletes own report
 ReportRouter.delete(
-    "/:id",
-    auth,
-    role("patient"),
-    reportController.deleteReport,
+  "/:id",
+  auth,
+  role("patient"),
+  reportController.deleteReport,
 );
 
 // Doctor views via token
 ReportRouter.get(
-    "/view/:token",
-    auth,
-    role("doctor"),
-    reportController.getReportByToken,
+  "/view/:token",
+  auth,
+  role("doctor"),
+  reportController.getReportByToken,
 );
 
 module.exports = ReportRouter;
