@@ -24,7 +24,7 @@ function emitQueueUpdated(io, { doctorId, date, patientId }) {
 /**
  * Notify doctor + every patient currently in that doctor's active queue for the date.
  */
-async function broadcastQueueUpdated(io, { doctorId, date }) {
+async function broadcastQueueUpdated(io, { doctorId, date, patientId }) {
   if (!io || !doctorId || !date) return;
 
   let normalizedDate;
@@ -40,6 +40,12 @@ async function broadcastQueueUpdated(io, { doctorId, date }) {
   };
 
   io.to(String(doctorId)).emit("queueUpdated", payload);
+  if (patientId) {
+    io.to(String(patientId)).emit("queueUpdated", {
+      ...payload,
+      patientId: String(patientId),
+    });
+  }
 
   const rows = await Appointment.find({
     doctorId,

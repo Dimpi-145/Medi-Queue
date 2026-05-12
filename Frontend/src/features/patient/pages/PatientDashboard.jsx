@@ -14,11 +14,12 @@ import History from "../components/History";
 import Report from "../components/Report";
 
 import API from "../../../utils/axios";
-import { getMyAppointments, bookAppointment } from "../services/appointment.api";
+import { getMyAppointments, bookAppointment, cancelAppointment } from "../services/appointment.api";
 import { getPatientDashboard } from "../services/dashboard.api";
 import { getMyPrescriptions } from "../services/prescription.api";
 import { getMyReports } from "../services/report.api";
 import { updateProfile } from "../../auth/services/auth.api";
+import { getQueuePosition } from "../services/queue.api";
 
 import "../../shared/global.scss";
 import "../patientDashboard.scss";
@@ -37,6 +38,7 @@ const PatientDashboard = () => {
   const [activeAppointment, setActiveAppointment] = useState(null);
   const [queue, setQueue] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
+  const [queuePosition, setQueuePosition] = useState(null);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -84,6 +86,17 @@ const PatientDashboard = () => {
     }
   }, []);
 
+  const fetchQueueStatus = useCallback(async () => {
+    if (!activeAppointment?._id) return;
+    try {
+      const res = await getQueuePosition(activeAppointment._id);
+      setQueuePosition(res.data);
+    } catch (err) {
+      console.error("Queue position fetch error:", err);
+      setQueuePosition(null);
+    }
+  }, [activeAppointment?._id]);
+
   const fetchDashboard = useCallback(async (dateOverride) => {
     try {
       setLoading(true);
@@ -102,6 +115,7 @@ const PatientDashboard = () => {
       }
       const docId = aa?.doctorId?._id || aa?.doctorId || null;
       await fetchLiveQueue(effectiveDate, docId);
+      await fetchQueueStatus();
     } catch (err) {
       console.error(err);
     } finally {
@@ -149,6 +163,7 @@ const PatientDashboard = () => {
       if (matchesDoctor || matchesPatient) {
         const { date } = dashboardCtxRef.current;
         fetchDashboard(date);
+        fetchQueueStatus();
       }
     });
 
@@ -157,15 +172,15 @@ const PatientDashboard = () => {
       socket.off("queueUpdated");
       socket.disconnect();
     };
-  }, [activeAppointment, fetchDashboard]);
+  }, [activeAppointment, fetchDashboard, fetchQueueStatus]);
 
   const fetchAppointments = async () => {
     try {
       const res = await getMyAppointments();
       const formatted = (res.data || []).map((item) => ({
-        id: item._id,
-        doctor: item.doctorId?.username || "Doctor",
-        date: new Date(item.date).toLocaleDateString(),
+        id: item.id || item._id,
+        doctor: item.doctor || item.doctorId?.username || "Doctor",
+        date: item.date ? new Date(item.date).toLocaleDateString() : "N/A",
         time: item.timeSlot,
         status: item.status,
       }));
@@ -206,6 +221,12 @@ const PatientDashboard = () => {
     fetchAllData();
   }, []);
 
+  useEffect(() => {
+    if (activeAppointment) {
+      fetchQueueStatus();
+    }
+  }, [activeAppointment, fetchQueueStatus]);
+
   const handleBook = async (formData) => {
     try {
       await bookAppointment(formData);
@@ -227,6 +248,25 @@ const PatientDashboard = () => {
     }
   };
 
+  const handleCancelAppointment = async (appointmentId) => {
+    try {
+      console.log("🗑️ Cancelling appointment:", appointmentId);
+      const activeAppointmentId = activeAppointment?._id?.toString();
+      
+      await cancelAppointment(appointmentId);
+      await fetchAppointments();
+      await fetchDashboard(dashboardCtxRef.current.date);
+      await fetchQueueStatus();
+
+      if (appointmentId === activeAppointmentId) {
+        setQueuePosition(null);
+      }
+    } catch (err) {
+      console.error("❌ Failed to cancel appointment:", err);
+      await fetchAppointments();
+    }
+  };
+
   const patientKey = String(
     patient?._id || localStorage.getItem("userId") || ""
   );
@@ -234,11 +274,12 @@ const PatientDashboard = () => {
     (q) => String(q.patientId?._id || q.patientId) === patientKey
   );
   const currentQueueNumber =
+    queuePosition?.yourQueueNumber ??
     queueInfo?.liveQueueNumber ??
     queueInfo?.queueNumber ??
     myQueueRow?.queueNumber ??
     "-";
-  const patientsAhead = queueInfo?.patientsAhead ?? 0;
+  const patientsAhead = queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
 
   return (
     <div className="patient-dashboard">
@@ -263,7 +304,7 @@ const PatientDashboard = () => {
             <AppointmentTable
               appointments={appointments}
               loading={loading}
-              onChat={openChat}
+              onCancel={handleCancelAppointment}
             />
           )}
 
@@ -326,7 +367,11 @@ const PatientDashboard = () => {
               <button onClick={() => setShowModal(false)}>×</button>
             </div>
 
-            <AppointmentForm onBook={handleBook} loading={loading} />
+            <AppointmentForm
+        onBook={handleBook}
+        loading={loading}
+        onClose={() => setShowModal(false)}
+      />
           </div>
         </div>
       )}

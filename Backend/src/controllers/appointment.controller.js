@@ -9,8 +9,15 @@ const { broadcastQueueUpdated } = require("../utils/queueEvents.util")
 // ================= BOOK =================
 async function bookAppointment(req, res) {
     try {
-        const { doctorId, date, timeSlot } = req.body
-        const normalizedDate = normalizeAppointmentDate(date)
+        const { doctorId, date, timeSlot } = req.body;
+
+        if (!doctorId || !date || !timeSlot) {
+            return res.status(400).json({
+                message: "doctorId, date, and timeSlot are required"
+            });
+        }
+
+        const normalizedDate = normalizeAppointmentDate(date);
 
         // ✅ CHECK DUPLICATE (date + timeSlot)
         const existingAppointment = await Appointment.findOne({
@@ -61,7 +68,8 @@ async function bookAppointment(req, res) {
 async function getMyAppointments(req, res) {
     try {
         const appointments = await Appointment.find({
-            patientId: req.user.id
+            patientId: req.user.id,
+            status: { $in: ["pending", "approved"] }
         })
         .populate("doctorId", "username specialization")
         .sort({ date: -1 }) // ✅ latest first
@@ -80,8 +88,14 @@ async function getMyAppointments(req, res) {
         return res.status(200).json(formattedAppointments)
 
     } catch (error) {
-        return res.status(500).json({
-            message: error.message
+        const statusCode =
+            error.message.includes("required") ||
+            error.message.includes("Invalid appointment date")
+                ? 400
+                : 500;
+
+        return res.status(statusCode).json({
+            message: error.message,
         })
     }
 }
@@ -99,11 +113,13 @@ async function getDoctorAppointments(req, res) {
         const appointments = await Appointment.find({
             doctorId: req.user.id,
             date: selectedDate,
+            status: { $in: ["pending", "approved"] }
         })
         .populate("patientId", "username age gender")
         .sort({ queueNumber: 1, createdAt: 1 }) // queue order
 
         const formattedAppointments = appointments.map(app => ({
+            _id: app._id,
             id: app._id,
             patient: app.patientId,
             date: app.date,
@@ -178,7 +194,13 @@ async function getDoctors(req, res) {
 // ================= CANCEL =================
 async function cancelAppointment(req, res) {
     try {
-        const appointment = await Appointment.findById(req.params.id)
+        const appointmentId = req.params.id;
+
+        if (!appointmentId) {
+            return res.status(400).json({ message: "Appointment id is required" });
+        }
+
+        const appointment = await Appointment.findById(appointmentId)
         const io = req.app.get("io");
 
         if (!appointment) {
@@ -201,9 +223,12 @@ async function cancelAppointment(req, res) {
         appointment.status = "cancelled"
         await appointment.save()
 
+        await syncActiveQueueSequential(doctorId, appointment.date)
+
         await broadcastQueueUpdated(io, {
             doctorId,
             date: normalizeAppointmentDate(appointment.date),
+            patientId: appointment.patientId.toString(),
         })
 
         io.to(appointment.patientId.toString()).emit("appointmentCancelled", {

@@ -82,14 +82,14 @@ const DoctorDashboard = () => {
   const fetchQueue = useCallback(async (date = selectedDate) => {
     try {
       setLoadingQueue(true);
-      const queueRes = await getLiveQueue(
-        doctorInfo?._id || localStorage.getItem("doctorId"),
-        date
-      );
+      const doctorId = doctorInfo?._id || localStorage.getItem("doctorId");
+      console.log("📋 Fetching queue with:", { doctorId, date, selectedDate });
+      const queueRes = await getLiveQueue(doctorId, date);
       const queueData = queueRes.data?.patients || queueRes.data || [];
+      console.log("✅ Queue fetched:", queueData.length, "patients");
       setQueue(Array.isArray(queueData) ? queueData : []);
     } catch (err) {
-      console.error("Error fetching live queue:", err);
+      console.error("❌ Error fetching live queue:", err);
       setQueue([]);
     } finally {
       setLoadingQueue(false);
@@ -173,8 +173,9 @@ const DoctorDashboard = () => {
   useEffect(() => {
     if (socketRef.current && doctorInfo?._id) {
       socketRef.current.emit("joinDoctorRoom", doctorInfo._id);
+      fetchQueue(selectedDate);
     }
-  }, [doctorInfo?._id]);
+  }, [doctorInfo?._id, selectedDate, fetchQueue]);
   // ================= LOGOUT =================
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -247,6 +248,7 @@ const DoctorDashboard = () => {
             <table className="appointment-table">
               <thead>
                 <tr>
+                  <th>Token</th>
                   <th>Patient</th>
                   <th>Date</th>
                   <th>Time</th>
@@ -257,11 +259,12 @@ const DoctorDashboard = () => {
               <tbody>
                 {loadingAppointments ? (
                   <tr>
-                    <td colSpan="4">Loading...</td>
+                    <td colSpan="5">Loading...</td>
                   </tr>
                 ) : appointments.length > 0 ? (
                   appointments.map((item) => (
-                    <tr key={item._id}>
+                    <tr key={item.id || item._id}>
+                      <td>{item.queueNumber || "—"}</td>
                       <td>
                         {item.patient?.username ||
                           item.patientId?.username ||

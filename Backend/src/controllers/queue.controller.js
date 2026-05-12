@@ -158,6 +158,18 @@ async function getLiveQueue(req, res) {
       .populate("patientId", "username age gender")
       .populate("doctorId", "username");
 
+    console.log("🔍 Queue Query Debug:", {
+      filter: JSON.stringify(filter),
+      selectedDate,
+      queueLength: queue.length,
+      appointments: queue.map((a) => ({
+        patient: a.patientId?.username,
+        date: a.date,
+        status: a.status,
+        queueNumber: a.queueNumber,
+      })),
+    });
+
     return res.status(200).json({
       doctorId: filter.doctorId || null,
       date: selectedDate,

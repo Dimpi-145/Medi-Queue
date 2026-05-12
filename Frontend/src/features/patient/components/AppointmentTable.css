@@ -46,7 +46,6 @@ tbody tr:hover {
   background: #b91c1c;
 }
 
-// Modal Styles
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -128,4 +127,4 @@ tbody tr:hover {
 
 .cancel-modal-btn:hover {
   background: #e5e7eb;
-}
+}/*# sourceMappingURL=AppointmentTable.css.map */
