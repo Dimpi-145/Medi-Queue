@@ -20,8 +20,7 @@ const Navbar = ({ patient, loading, onLogout }) => {
             {/* ❌ Avatar removed */}
             <div className="profile-pill">
               <div className="profile-text">
-                <p>Welcome back</p>
-                <strong>{patient?.name || "Patient"}</strong>
+                <p>Welcome back, <strong>{patient?.username || "Patient"}</strong></p>
               </div>
             </div>
 

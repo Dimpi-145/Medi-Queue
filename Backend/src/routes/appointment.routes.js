@@ -14,13 +14,12 @@ appointmentRouter.post(
     roleMiddleware("patient"),
     appointmentController.bookAppointment
 )
+
 // GET all doctors (optionally by department)
 appointmentRouter.get("/get-doctors",
     authMiddleware, 
     roleMiddleware("patient"), 
     appointmentController.getDoctors);
-
-
 
 // patient view
 appointmentRouter.get(
@@ -29,7 +28,6 @@ appointmentRouter.get(
     roleMiddleware("patient"),
     appointmentController.getMyAppointments
 )
-
 
 // doctor view
 appointmentRouter.get(
@@ -47,15 +45,11 @@ appointmentRouter.put(
     appointmentController.cancelAppointment
 )
 
-
 appointmentRouter.put(
     "/complete/:id",
     authMiddleware,
     roleMiddleware("doctor"),
     appointmentController.completeAppointment
 )
-
-
-
 
 module.exports = appointmentRouter

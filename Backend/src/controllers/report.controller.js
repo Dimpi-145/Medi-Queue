@@ -36,7 +36,9 @@ function normalizeFileName(inputName, currentFileName = "report") {
 
   const currentExtension = getFileExtension(currentFileName);
   const inputExtension = getFileExtension(trimmedName);
-  const baseName = (inputExtension ? trimmedName.slice(0, -inputExtension.length) : trimmedName)
+  const baseName = (
+    inputExtension ? trimmedName.slice(0, -inputExtension.length) : trimmedName
+  )
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
@@ -48,7 +50,10 @@ function normalizeFileName(inputName, currentFileName = "report") {
 }
 
 function buildImageKitFileUrl(filePath) {
-  const endpoint = String(process.env.IMAGEKIT_URL_ENDPOINT || "").replace(/\/+$/, "");
+  const endpoint = String(process.env.IMAGEKIT_URL_ENDPOINT || "").replace(
+    /\/+$/,
+    "",
+  );
   return `${endpoint}${filePath}`;
 }
 
@@ -82,8 +87,9 @@ async function removeStoredReportFile(req, report) {
   const storageType = getReportStorageType(report);
 
   if (storageType === "local") {
-    const localName =
-      report.localPath ? path.basename(report.localPath) : path.basename(report.fileUrl || report.fileName || "");
+    const localName = report.localPath
+      ? path.basename(report.localPath)
+      : path.basename(report.fileUrl || report.fileName || "");
     const localPath = report.localPath || path.join(reportUploadDir, localName);
 
     if (localPath && fs.existsSync(localPath)) {
@@ -94,7 +100,9 @@ async function removeStoredReportFile(req, report) {
   }
 
   if (!report.fileId) {
-    throw new Error("Cannot delete this report because its ImageKit fileId is missing");
+    throw new Error(
+      "Cannot delete this report because its ImageKit fileId is missing",
+    );
   }
 
   const client = makeImageKitClient();
@@ -156,7 +164,7 @@ async function uploadReport(req, res) {
       console.log("Sanitized filename:", sanitizedName);
 
       const uploadableFile = await toFile(file.buffer, sanitizedName);
-      
+
       uploadedFile = await client.files.upload({
         file: uploadableFile,
         fileName: `${Date.now()}-${sanitizedName}`,
@@ -172,9 +180,11 @@ async function uploadReport(req, res) {
     } catch (ikError) {
       console.error("ImageKit Upload Error:", ikError);
       console.error("Full ImageKit Error Stack:", ikError.stack);
-      if (ikError?.error) console.error("ImageKit error object:", ikError.error);
+      if (ikError?.error)
+        console.error("ImageKit error object:", ikError.error);
       if (ikError?.status) console.error("ImageKit status:", ikError.status);
-      if (ikError?.response) console.error("ImageKit response:", ikError.response);
+      if (ikError?.response)
+        console.error("ImageKit response:", ikError.response);
 
       try {
         uploadedFile = saveReportLocally(req, file, sanitizedName);
@@ -183,7 +193,8 @@ async function uploadReport(req, res) {
         console.error("Local report storage failed:", fallbackError);
         return res.status(500).json({
           success: false,
-          message: "ImageKit upload failed and local fallback storage also failed",
+          message:
+            "ImageKit upload failed and local fallback storage also failed",
           details: fallbackError?.message || ikError?.message || fallbackError,
         });
       }
@@ -229,7 +240,9 @@ async function getMyReports(req, res) {
   try {
     const patientId = req.user.id;
 
-    const reports = await ReportModel.find({ patientId }).sort({ createdAt: -1 });
+    const reports = await ReportModel.find({ patientId }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({
       success: true,
@@ -249,7 +262,10 @@ async function getReportByToken(req, res) {
   try {
     const { token } = req.params;
 
-    const report = await ReportModel.findOne({ token }).populate("patientId", "username");
+    const report = await ReportModel.findOne({ token }).populate(
+      "patientId",
+      "username",
+    );
 
     if (!report) {
       return res.status(404).json({
@@ -262,7 +278,6 @@ async function getReportByToken(req, res) {
       success: true,
       data: report,
     });
-
   } catch (err) {
     console.error("GET REPORT BY TOKEN ERROR:", err);
     return res.status(500).json({
@@ -300,8 +315,11 @@ async function renameReport(req, res) {
     const storageType = getReportStorageType(report);
 
     if (storageType === "local") {
-      const currentLocalName = report.localPath ? path.basename(report.localPath) : path.basename(report.fileUrl);
-      const currentLocalPath = report.localPath || path.join(reportUploadDir, currentLocalName);
+      const currentLocalName = report.localPath
+        ? path.basename(report.localPath)
+        : path.basename(report.fileUrl);
+      const currentLocalPath =
+        report.localPath || path.join(reportUploadDir, currentLocalName);
       const nextLocalPath = path.join(reportUploadDir, safeNewName);
 
       if (!fs.existsSync(currentLocalPath)) {
@@ -330,7 +348,8 @@ async function renameReport(req, res) {
     if (!report.filePath) {
       return res.status(400).json({
         success: false,
-        message: "Cannot rename this report because its ImageKit file path is missing",
+        message:
+          "Cannot rename this report because its ImageKit file path is missing",
       });
     }
 
@@ -341,7 +360,10 @@ async function renameReport(req, res) {
       purgeCache: true,
     });
 
-    const nextFilePath = path.posix.join(path.posix.dirname(report.filePath), safeNewName);
+    const nextFilePath = path.posix.join(
+      path.posix.dirname(report.filePath),
+      safeNewName,
+    );
 
     report.fileName = safeNewName;
     report.filePath = nextFilePath;
@@ -401,8 +423,6 @@ async function deleteReport(req, res) {
     });
   }
 }
-
-
 
 module.exports = {
   uploadReport,

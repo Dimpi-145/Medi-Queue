@@ -6,21 +6,16 @@ const api = axios.create({
 });
 
 // Upload report
-export const uploadReport = (data) =>
-  api.post("/upload", data);
+export const uploadReport = (data) => api.post("/upload", data);
 
 // Get patient reports
-export const getMyReports = () =>
-  api.get("/my");
+export const getMyReports = () => api.get("/my");
 
 // Rename report
-export const renameReport = (id, data) =>
-  api.patch(`/${id}/rename`, data);
+export const renameReport = (id, data) => api.patch(`/${id}/rename`, data);
 
 // Delete report
-export const deleteReport = (id) =>
-  api.delete(`/${id}`);
+export const deleteReport = (id) => api.delete(`/${id}`);
 
 // Doctor view by token
-export const getReportByToken = (token) =>
-  api.get(`/view/${token}`);
+export const getReportByToken = (token) => api.get(`/view/${token}`);
