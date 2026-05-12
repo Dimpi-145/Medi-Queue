@@ -31,6 +31,17 @@ const chatMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    attachment: {
+      type: {
+        filename: String,
+        originalName: String,
+        path: String,
+        url: String,
+        mimetype: String,
+        size: Number,
+      },
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -9,6 +9,8 @@ import Homepage from "./homepage/homepage"
 import Terms from "./homepage/Terms"
 import Privacy from "./homepage/Privacy"
 import VideoRoom from "./video/VideoRoom"
+import ChatConsultation from "./patient/pages/ChatConsultation"
+import DoctorChatConsultation from "./doctor/pages/DoctorChatConsultation"
 
 
 export const router = createBrowserRouter([
@@ -29,12 +31,20 @@ export const router = createBrowserRouter([
         element: <PatientDashboard />
     },
     {
+        path: "/patient/chat/:appointmentId",
+        element: <ChatConsultation />
+    },
+    {
         path: "/doctor-dashboard",
         element: <DoctorDashboard />
     },
     {
         path: "/doctor-dashboard/patient/:patientId",
         element: <DoctorPatientDetails />
+    },
+    {
+        path: "/doctor/chat/:appointmentId",
+        element: <DoctorChatConsultation />
     },
     {
         path: "/admin-dashboard",

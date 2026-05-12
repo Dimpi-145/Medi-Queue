@@ -1,48 +1,344 @@
-.video-room-shell {
-  min-height: 100vh;
+// VideoRoom.scss - Professional WebRTC Video Call UI
+
+.video-room-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  .video-main {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    overflow: hidden;
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+
+      &.main-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+
+      &.local-video {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 240px;
+        height: 180px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 3px solid rgba(255, 255, 255, 0.2);
+        z-index: 10;
+        background: #000;
+        overflow: hidden;
+
+        @media (max-width: 768px) {
+          width: 180px;
+          height: 135px;
+          bottom: 100px;
+          right: 10px;
+        }
+
+        .local-label {
+          position: absolute;
+          bottom: 8px;
+          left: 8px;
+          background: rgba(0, 0, 0, 0.6);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          backdrop-filter: blur(4px);
+        }
+      }
+
+      .video-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        .placeholder-content {
+          text-align: center;
+          color: white;
+
+          .waiting-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: pulse 1.5s ease-in-out infinite;
+          }
+
+          p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+          }
+        }
+      }
+
+      .video-element {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  .video-controls {
+    padding: 20px;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.9) 100%
+    );
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+
+    .controls-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .control-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(1.1);
+        }
+
+        &.mic-btn {
+          &.off {
+            background: rgba(239, 68, 68, 0.6);
+
+            &:hover {
+              background: rgba(239, 68, 68, 0.8);
+            }
+          }
+        }
+
+        &.camera-btn {
+          &.off {
+            background: rgba(239, 68, 68, 0.6);
+
+            &:hover {
+              background: rgba(239, 68, 68, 0.8);
+            }
+          }
+        }
+
+        &.hang-up-btn {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          width: 60px;
+          height: 60px;
+          font-size: 28px;
+
+          &:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+          }
+        }
+      }
+    }
+
+    .connection-status {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+
+      &::before {
+        content: "●";
+        margin-right: 6px;
+        color: #10b981;
+        font-size: 10px;
+      }
+    }
+  }
+}
+
+// Loading state
+.video-room-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eef2ff;
-  padding: 2rem;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  .loading-content {
+    text-align: center;
+    color: white;
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      animation: spin 1s linear infinite;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  }
 }
 
-.video-room-card {
-  background: white;
-  border-radius: 24px;
-  padding: 2rem;
-  max-width: 520px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
-  text-align: center;
+// Error state
+.video-room-error {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  .error-content {
+    text-align: center;
+    color: white;
+    max-width: 400px;
+
+    .error-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0 0 12px;
+      font-size: 14px;
+      opacity: 0.9;
+
+      &.error-hint {
+        margin-bottom: 24px;
+        font-size: 13px;
+        opacity: 0.8;
+      }
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: white;
+        color: #e11d48;
+      }
+    }
+  }
 }
 
-.video-room-card h1 {
-  margin-bottom: 0.75rem;
-  font-size: 2rem;
-  color: #0f172a;
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
-.video-room-card p {
-  margin-bottom: 1rem;
-  color: #475569;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.video-room-id {
-  padding: 1rem 1.2rem;
-  margin-bottom: 1.5rem;
-  background: #f8fafc;
-  border-radius: 16px;
-  font-weight: 700;
-  color: #0f172a;
-}
+// Responsive design
+@media (max-width: 768px) {
+  .video-room-container {
+    .video-controls {
+      padding: 16px;
+      gap: 16px;
 
-.video-room-card button {
-  border: none;
-  border-radius: 14px;
-  padding: 0.95rem 1.3rem;
-  background: #2563eb;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
+      .controls-group {
+        gap: 12px;
+
+        .control-btn {
+          width: 48px;
+          height: 48px;
+          font-size: 20px;
+
+          &.hang-up-btn {
+            width: 56px;
+            height: 56px;
+            font-size: 24px;
+          }
+        }
+      }
+
+      .connection-status {
+        font-size: 12px;
+      }
+    }
+  }
 }

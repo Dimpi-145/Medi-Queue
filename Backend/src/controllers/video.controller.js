@@ -109,16 +109,20 @@ async function respondToVideoRequest(req, res) {
       videoRequest.respondedAt = new Date();
       await videoRequest.save();
 
-      // Notify patient via socket
-      io.to(videoRequest.patientId._id.toString()).emit("videoRequestAccepted", {
+      // Notify patient via socket - emit to patient's user room and doctor's room
+      const acceptedPayload = {
         videoRequestId: videoRequest._id,
         roomId,
+        doctorId: videoRequest.doctorId,
+        patientId: videoRequest.patientId._id,
         message: "Doctor accepted your video consultation request",
-      });
+      };
 
-      // Join both doctor and patient to video room
-      io.to(doctorId).emit("joinVideoRoom", { roomId });
-      io.to(videoRequest.patientId._id.toString()).emit("joinVideoRoom", { roomId });
+      // Emit to patient's user room
+      io.to(videoRequest.patientId._id.toString()).emit("videoRequestAccepted", acceptedPayload);
+      
+      // Emit to doctor's user room
+      io.to(doctorId).emit("videoRequestAccepted", acceptedPayload);
 
       return res.status(200).json({
         message: "Video consultation accepted",
@@ -131,10 +135,13 @@ async function respondToVideoRequest(req, res) {
       await videoRequest.save();
 
       // Notify patient via socket
-      io.to(videoRequest.patientId._id.toString()).emit("videoRequestRejected", {
+      const rejectedPayload = {
         videoRequestId: videoRequest._id,
         message: "Doctor rejected your video consultation request",
-      });
+      };
+
+      io.to(videoRequest.patientId._id.toString()).emit("videoRequestRejected", rejectedPayload);
+      io.to(doctorId).emit("videoRequestRejected", rejectedPayload);
 
       return res.status(200).json({
         message: "Video consultation rejected",

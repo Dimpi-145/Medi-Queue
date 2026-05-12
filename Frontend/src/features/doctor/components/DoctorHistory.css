@@ -1,3 +1,4 @@
+@charset "UTF-8";
 .doctor-history-panel {
   background: #ffffff;
   border-radius: 20px;
@@ -164,12 +165,67 @@
 }
 
 .open-chat-btn {
-  background: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  padding: 0.85rem 1.4rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.open-chat-btn::before {
+  content: "💬";
+  font-size: 1rem;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.open-chat-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+@keyframes pulse-button {
+  0% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(102, 126, 234, 0.55);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  }
+}
+.open-chat-btn {
+  animation: pulse-button 2s ease-in-out infinite;
 }
 
 .open-chat-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.05);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  animation: none;
+}
+.open-chat-btn:hover::before {
+  transform: scale(1.2) rotate(-10deg);
+}
+.open-chat-btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.open-chat-btn:active {
+  transform: translateY(-1px) scale(0.98);
 }
 
 .accept-btn {

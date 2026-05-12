@@ -5,7 +5,6 @@ import io from "socket.io-client";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import DoctorHistory from "../components/DoctorHistory";
-import ChatBox from "../../patient/components/chat/ChatBox";
 
 import "../doctorDashboard.scss";
 
@@ -34,7 +33,6 @@ const DoctorDashboard = () => {
 
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [chatContext, setChatContext] = useState(null);
 
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
@@ -127,16 +125,6 @@ const DoctorDashboard = () => {
     localStorage.setItem("doctorQueueDate", date);
     fetchData(date);
     fetchQueue(date);
-  };
-
-  const openChat = (appointment) => {
-    setChatContext({
-      appointmentId: appointment.id,
-      contactName: appointment.patient?.username || "Patient",
-      patientName: appointment.patient?.username,
-      currentUserRole: "doctor",
-      isDoctor: true,
-    });
   };
 
   // ================= INIT =================
@@ -363,7 +351,6 @@ const DoctorDashboard = () => {
     if (activeSection === "History") {
       return (
         <DoctorHistory
-          onChat={openChat}
           socket={socketRef.current}
         />
       );
@@ -492,12 +479,6 @@ const DoctorDashboard = () => {
 
         <div className="doctor-content">{renderContent()}</div>
       </div>
-      {chatContext && (
-        <ChatBox
-          chatContext={chatContext}
-          onClose={() => setChatContext(null)}
-        />
-      )}
     </div>
   );
 };

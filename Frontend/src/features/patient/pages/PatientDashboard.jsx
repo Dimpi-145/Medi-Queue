@@ -12,7 +12,6 @@ import PrescriptionList from "../components/PrescriptionList";
 import AppointmentForm from "../components/AppointmentForm";
 import History from "../components/History";
 import Report from "../components/Report";
-import ChatBox from "../components/chat/ChatBox";
 
 import API from "../../../utils/axios";
 import { getMyAppointments, bookAppointment } from "../services/appointment.api";
@@ -43,7 +42,6 @@ const PatientDashboard = () => {
   );
 
   const [showModal, setShowModal] = useState(false);
-  const [chatContext, setChatContext] = useState(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
   const handleLogout = () => {
@@ -264,13 +262,6 @@ const PatientDashboard = () => {
           )}
         </main>
       </div>
-
-      {chatContext && (
-        <ChatBox
-          chatContext={chatContext}
-          onClose={() => setChatContext(null)}
-        />
-      )}
 
       {showModal && (
         <div

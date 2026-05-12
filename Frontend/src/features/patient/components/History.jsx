@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   getMyAppointments,
@@ -10,6 +11,7 @@ import {
 import "./History.scss";
 
 const History = ({ onChat }) => {
+  const navigate = useNavigate();
 
   const [history, setHistory] =
     useState([]);
@@ -223,15 +225,11 @@ const History = ({ onChat }) => {
 
                     </p>
 
-                    {item.status === "completed" && onChat && (
+                    {item.status === "completed" && (
                       <button
                         className="history-chat-button"
                         onClick={() =>
-                          onChat({
-                            id: item.id,
-                            doctorId: item.doctorId,
-                            doctor: item.doctor,
-                          })
+                          navigate(`/patient/chat/${item.id}`)
                         }
                       >
                         Open Chat

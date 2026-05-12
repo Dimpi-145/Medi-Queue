@@ -14,7 +14,7 @@ const formatDate = (dateStr) =>
     day: "numeric",
   });
 
-const DoctorHistory = ({ onChat, socket }) => {
+const DoctorHistory = ({ socket }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [videoRequests, setVideoRequests] = useState([]);
@@ -95,13 +95,7 @@ const DoctorHistory = ({ onChat, socket }) => {
   }, [history]);
 
   const handleOpenChat = (item) => {
-    onChat({
-      appointmentId: item.id,
-      contactName: item.patient?.username || "Patient",
-      patientName: item.patient?.username,
-      currentUserRole: "doctor",
-      isDoctor: true,
-    });
+    navigate(`/doctor/chat/${item.id}`);
   };
 
   const handleVideoResponse = async (requestId, action) => {
