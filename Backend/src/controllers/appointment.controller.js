@@ -221,6 +221,35 @@ async function getDoctorHistory(req, res) {
   }
 }
 
+// ================= PATIENT HISTORY =================
+async function getPatientHistory(req, res) {
+  try {
+    const appointments = await Appointment.find({
+      patientId: req.user.id,
+      status: { $in: ["completed", "cancelled"] },
+    })
+      .populate("doctorId", "username specialization")
+      .sort({ date: -1 });
+
+    const formattedAppointments = appointments.map((app) => ({
+      id: app._id,
+      doctorId: app.doctorId?._id,
+      doctor: app.doctorId?.username || "Doctor",
+      specialization: app.doctorId?.specialization || "",
+      date: app.date,
+      timeSlot: app.timeSlot,
+      queueNumber: app.queueNumber,
+      status: app.status,
+    }));
+
+    return res.status(200).json(formattedAppointments);
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+}
+
 const User = require("../models/user.model");
 
 // ================= GET DOCTORS =================
@@ -443,4 +472,5 @@ module.exports = {
   callNextPatient,
   completeAppointment,
   getDoctorHistory,
+  getPatientHistory,
 };

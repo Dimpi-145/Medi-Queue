@@ -5,7 +5,7 @@ import React, {
 import { useNavigate } from "react-router-dom";
 
 import {
-  getMyAppointments,
+  getAppointmentHistory,
 } from "../services/appointment.api";
 
 import "./History.scss";
@@ -43,19 +43,10 @@ const History = ({ onChat }) => {
           setLoading(true);
 
           const res =
-            await getMyAppointments();
-
-          const completedAppointments =
-            (res.data || []).filter(
-              (apt) =>
-                apt.status ===
-                  "completed" ||
-                apt.status ===
-                  "cancelled"
-            );
+            await getAppointmentHistory();
 
           setHistory(
-            completedAppointments || []
+            res.data || []
           );
 
         } catch (err) {

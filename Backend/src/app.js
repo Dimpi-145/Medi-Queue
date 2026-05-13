@@ -15,10 +15,24 @@ const doctorRouter = require("./routes/doctor.routes");
 
 const app = express();
 
+// Secure CORS configuration
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? (process.env.ALLOWED_ORIGINS || "").split(",")
+    : ["http://localhost:5173", "http://localhost:3000"];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"), false);
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

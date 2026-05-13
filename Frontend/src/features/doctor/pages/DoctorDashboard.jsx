@@ -6,6 +6,8 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import DoctorHistory from "../components/DoctorHistory";
 
+import { logout as logoutApi } from "../../auth/services/auth.api";
+
 import "../doctorDashboard.scss";
 
 import {
@@ -38,7 +40,7 @@ const DoctorDashboard = () => {
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   const navigate = useNavigate();
@@ -46,55 +48,77 @@ const DoctorDashboard = () => {
   const socketRef = React.useRef(null);
 
   // ================= FETCH DATA (IMPORTANT FIX) =================
-  const fetchData = useCallback(async (date = selectedDate) => {
-    try {
-      const [dashboardRes, appointmentRes] = await Promise.all([
-        getDoctorDashboard(date),
-        getDoctorAppointments(date),
-      ]);
+  const fetchData = useCallback(
+    async (date = selectedDate) => {
+      try {
+        setLoadingDashboard(true);
+        setLoadingAppointments(true);
 
-      const doctor = dashboardRes.data?.doctor || null;
+        const dateToUse = date || selectedDate;
+        console.log("📊 Fetching doctor dashboard for date:", dateToUse);
 
-      const stats = {
-        totalWaiting: dashboardRes.data?.totalWaiting || 0,
-        completedToday: dashboardRes.data?.completedToday || 0,
-        cancelledToday: dashboardRes.data?.cancelledToday || 0,
-        currentPatient: dashboardRes.data?.currentPatient || null,
-        nextPatient: dashboardRes.data?.nextPatient || null,
-      };
+        const [dashboardRes, appointmentRes] = await Promise.all([
+          getDoctorDashboard(dateToUse),
+          getDoctorAppointments(dateToUse),
+        ]);
 
-      const appointmentData =
-        appointmentRes.data?.data ||
-        appointmentRes.data ||
-        [];
+        console.log("✅ Dashboard Response:", dashboardRes.data);
+        console.log("✅ Appointments Response:", appointmentRes.data);
 
-      setDoctorInfo(doctor);
-      setDashboardStats(stats);
-      setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
-    } catch (err) {
-      console.error("Error fetching doctor data:", err);
-    } finally {
-      setLoadingDashboard(false);
-      setLoadingAppointments(false);
-    }
-  }, [selectedDate]);
+        const doctor = dashboardRes.data?.doctor || null;
 
-  const fetchQueue = useCallback(async (date = selectedDate) => {
-    try {
-      setLoadingQueue(true);
-      const doctorId = doctorInfo?._id || localStorage.getItem("doctorId");
-      console.log("📋 Fetching queue with:", { doctorId, date, selectedDate });
-      const queueRes = await getLiveQueue(doctorId, date);
-      const queueData = queueRes.data?.patients || queueRes.data || [];
-      console.log("✅ Queue fetched:", queueData.length, "patients");
-      setQueue(Array.isArray(queueData) ? queueData : []);
-    } catch (err) {
-      console.error("❌ Error fetching live queue:", err);
-      setQueue([]);
-    } finally {
-      setLoadingQueue(false);
-    }
-  }, [doctorInfo?._id, selectedDate]);
+        const stats = {
+          totalWaiting: dashboardRes.data?.totalWaiting || 0,
+          completedToday: dashboardRes.data?.completedToday || 0,
+          cancelledToday: dashboardRes.data?.cancelledToday || 0,
+          currentPatient: dashboardRes.data?.currentPatient || null,
+          nextPatient: dashboardRes.data?.nextPatient || null,
+        };
+
+        console.log("📈 Dashboard Stats:", stats);
+
+        // Appointments come as array directly from backend
+        const appointmentData = Array.isArray(appointmentRes.data)
+          ? appointmentRes.data
+          : appointmentRes.data?.data || [];
+
+        setDoctorInfo(doctor);
+        setDashboardStats(stats);
+        setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+      } catch (err) {
+        console.error("❌ Error fetching doctor data:", err);
+        console.error("Error Details:", err.response?.data || err.message);
+      } finally {
+        setLoadingDashboard(false);
+        setLoadingAppointments(false);
+      }
+    },
+    [selectedDate],
+  );
+
+  const fetchQueue = useCallback(
+    async (date = selectedDate) => {
+      try {
+        setLoadingQueue(true);
+        const doctorId = doctorInfo?._id || localStorage.getItem("doctorId");
+        console.log("📋 Fetching queue with:", {
+          doctorId,
+          date,
+          selectedDate,
+        });
+        const queueRes = await getLiveQueue(doctorId, date);
+        const queueData = queueRes.data?.patients || queueRes.data || [];
+        console.log("✅ Queue fetched:", queueData.length, "patients");
+        setQueue(Array.isArray(queueData) ? queueData : []);
+      } catch (err) {
+        console.error("❌ Error fetching live queue:", err);
+        setQueue([]);
+      } finally {
+        setLoadingQueue(false);
+      }
+    },
+    [doctorInfo?._id, selectedDate],
+  );
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -129,8 +153,8 @@ const DoctorDashboard = () => {
 
   // ================= INIT =================
   useEffect(() => {
-    fetchData();
-    fetchQueue();
+    fetchData(selectedDate);
+    fetchQueue(selectedDate);
     fetchHistory();
 
     const socket = io("http://localhost:3000");
@@ -147,14 +171,14 @@ const DoctorDashboard = () => {
       const storedId = localStorage.getItem("doctorId");
       const id = doctorInfo?._id || storedId;
       if (!id) {
-        fetchData();
-        fetchQueue();
+        fetchData(selectedDate);
+        fetchQueue(selectedDate);
         return;
       }
 
       if (String(data.doctorId) === String(id)) {
-        fetchData();
-        fetchQueue();
+        fetchData(selectedDate);
+        fetchQueue(selectedDate);
       }
     });
 
@@ -168,7 +192,7 @@ const DoctorDashboard = () => {
       socket.off("videoRequestReceived");
       socket.disconnect();
     };
-  }, [fetchData, fetchQueue, fetchHistory]);
+  }, []);
 
   useEffect(() => {
     if (socketRef.current && doctorInfo?._id) {
@@ -177,10 +201,17 @@ const DoctorDashboard = () => {
     }
   }, [doctorInfo?._id, selectedDate, fetchQueue]);
   // ================= LOGOUT =================
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("doctorId");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      ["token", "user", "username", "role", "userId", "doctorId"].forEach(
+        (key) => localStorage.removeItem(key),
+      );
+      navigate("/login");
+    }
   };
 
   // ================= UI =================
@@ -210,12 +241,18 @@ const DoctorDashboard = () => {
           </thead>
           <tbody>
             {queue.map((item) => (
-              <tr 
+              <tr
                 key={item._id}
-                onClick={() => navigate(`/doctor-dashboard/patient/${item.patientId?._id}`)}
+                onClick={() =>
+                  navigate(`/doctor-dashboard/patient/${item.patientId?._id}`)
+                }
                 style={{ cursor: "pointer", transition: "0.2s" }}
-                onMouseEnter={(e) => e.target.parentElement.style.backgroundColor = "#f0f4f8"}
-                onMouseLeave={(e) => e.target.parentElement.style.backgroundColor = "transparent"}
+                onMouseEnter={(e) =>
+                  (e.target.parentElement.style.backgroundColor = "#f0f4f8")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.parentElement.style.backgroundColor = "transparent")
+                }
               >
                 <td>{item.queueNumber}</td>
                 <td>{item.patientId?.username || "N/A"}</td>
@@ -265,11 +302,7 @@ const DoctorDashboard = () => {
                   appointments.map((item) => (
                     <tr key={item.id || item._id}>
                       <td>{item.queueNumber || "—"}</td>
-                      <td>
-                        {item.patient?.username ||
-                          item.patientId?.username ||
-                          "N/A"}
-                      </td>
+                      <td>{item.patient?.username || "N/A"}</td>
 
                       <td>
                         {item.date
@@ -284,7 +317,7 @@ const DoctorDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4">No appointments</td>
+                    <td colSpan="5">No appointments</td>
                   </tr>
                 )}
               </tbody>
@@ -320,11 +353,15 @@ const DoctorDashboard = () => {
                 <p>Waiting</p>
               </div>
               <div className="stat-box">
-                <span>{dashboardStats.currentPatient?.username ? 1 : 0}</span>
+                <span>{dashboardStats.currentPatient?.patientId?.username ? 1 : 0}</span>
                 <p>Being Treated</p>
               </div>
               <div className="stat-box">
-                <span>{dashboardStats.nextPatient?.username ? dashboardStats.nextPatient.username : "N/A"}</span>
+                <span>
+                  {dashboardStats.nextPatient?.patientId?.username
+                    ? dashboardStats.nextPatient.patientId.username
+                    : "N/A"}
+                </span>
                 <p>Next Patient</p>
               </div>
             </div>
@@ -354,11 +391,7 @@ const DoctorDashboard = () => {
     }
 
     if (activeSection === "History") {
-      return (
-        <DoctorHistory
-          socket={socketRef.current}
-        />
-      );
+      return <DoctorHistory socket={socketRef.current} />;
     }
 
     return (
@@ -403,11 +436,15 @@ const DoctorDashboard = () => {
               <div className="doctor-info-grid">
                 <div className="info-card">
                   <p className="info-label">Current Patient</p>
-                  <strong>{dashboardStats.currentPatient?.username || "None"}</strong>
+                  <strong>
+                    {dashboardStats.currentPatient?.patientId?.username || "None"}
+                  </strong>
                 </div>
                 <div className="info-card">
                   <p className="info-label">Next Patient</p>
-                  <strong>{dashboardStats.nextPatient?.username || "None"}</strong>
+                  <strong>
+                    {dashboardStats.nextPatient?.patientId?.username || "None"}
+                  </strong>
                 </div>
               </div>
             </>
@@ -442,11 +479,7 @@ const DoctorDashboard = () => {
                 ) : appointments.length > 0 ? (
                   appointments.map((item) => (
                     <tr key={item._id}>
-                      <td>
-                        {item.patient?.username ||
-                          item.patientId?.username ||
-                          "N/A"}
-                      </td>
+                      <td>{item.patient?.username || "N/A"}</td>
                       <td>
                         {item.date
                           ? new Date(item.date).toLocaleDateString()

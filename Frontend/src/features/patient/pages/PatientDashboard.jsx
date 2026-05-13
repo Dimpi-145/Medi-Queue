@@ -22,7 +22,10 @@ import {
 import { getPatientDashboard } from "../services/dashboard.api";
 import { getMyPrescriptions } from "../services/prescription.api";
 import { getMyReports } from "../services/report.api";
-import { updateProfile } from "../../auth/services/auth.api";
+import {
+  updateProfile,
+  logout as logoutApi,
+} from "../../auth/services/auth.api";
 import { getQueuePosition } from "../services/queue.api";
 
 import "../../shared/global.scss";
@@ -36,6 +39,7 @@ const PatientDashboard = () => {
 
   const [patient, setPatient] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [appointmentsFull, setAppointmentsFull] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [reports, setReports] = useState([]);
   const [queueInfo, setQueueInfo] = useState(null);
@@ -46,6 +50,8 @@ const PatientDashboard = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -63,9 +69,17 @@ const PatientDashboard = () => {
     };
   }, [activeAppointment, selectedDate]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logoutApi();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      ["token", "user", "username", "role", "userId", "doctorId"].forEach(
+        (key) => localStorage.removeItem(key),
+      );
+      navigate("/login");
+    }
   };
 
   const openChat = (appointment) => {
@@ -181,6 +195,7 @@ const PatientDashboard = () => {
   const fetchAppointments = async () => {
     try {
       const res = await getMyAppointments();
+      setAppointmentsFull(res.data || []);
       const formatted = (res.data || []).map((item) => ({
         id: item.id || item._id,
         doctor: item.doctor || item.doctorId?.username || "Doctor",
@@ -277,14 +292,69 @@ const PatientDashboard = () => {
   const myQueueRow = queue.find(
     (q) => String(q.patientId?._id || q.patientId) === patientKey,
   );
-  const currentQueueNumber =
-    queuePosition?.yourQueueNumber ??
-    queueInfo?.liveQueueNumber ??
-    queueInfo?.queueNumber ??
-    myQueueRow?.queueNumber ??
-    "-";
-  const patientsAhead =
-    queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
+
+  // If we have filtered queue data (department, doctor, date selected), recalculate from that
+  // Otherwise use the queueInfo from dashboard
+  let currentQueueNumber = "-";
+  let patientsAhead = 0;
+
+  if (selectedDepartment && selectedDoctor && selectedDate) {
+    // In filtered queue view - use actual queue data
+    currentQueueNumber = myQueueRow?.queueNumber ?? "-";
+    if (myQueueRow?.queueNumber) {
+      patientsAhead = (queue || []).filter(
+        (q) =>
+          q.queueNumber &&
+          q.queueNumber < myQueueRow.queueNumber &&
+          q.status !== "completed" &&
+          q.status !== "cancelled",
+      ).length;
+    }
+  } else {
+    // In dashboard view - use queuePosition/queueInfo
+    currentQueueNumber =
+      queuePosition?.yourQueueNumber ??
+      queueInfo?.liveQueueNumber ??
+      queueInfo?.queueNumber ??
+      myQueueRow?.queueNumber ??
+      "-";
+    patientsAhead =
+      queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
+  }
+
+  // Extract unique departments and doctors from appointments
+  const departments = Array.from(
+    new Set(
+      (appointmentsFull || [])
+        .map((a) => a.specialization || "")
+        .filter(Boolean),
+    ),
+  ).sort();
+
+  const doctors = selectedDepartment
+    ? Array.from(
+        new Map(
+          (appointmentsFull || [])
+            .filter((a) => a.specialization === selectedDepartment)
+            .map((a) => [
+              a.doctorId?._id || a.doctorId || a.id,
+              {
+                id: a.doctorId?._id || a.doctorId,
+                name: a.doctor || a.doctorId?.username || "Unknown",
+              },
+            ]),
+        ).values(),
+      ).sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+
+  // Fetch queue only when all filters are selected
+  useEffect(() => {
+    if (selectedDepartment && selectedDoctor && selectedDate) {
+      fetchLiveQueue(selectedDate, selectedDoctor);
+    } else {
+      setQueue([]);
+    }
+  }, [selectedDepartment, selectedDoctor, selectedDate, fetchLiveQueue]);
 
   return (
     <div className="patient-dashboard">
@@ -330,29 +400,76 @@ const PatientDashboard = () => {
               <div className="queue-header-row">
                 <div>
                   <h2>Live Queue</h2>
-                  <p>Track your queue in real time for the selected date.</p>
+                  <p>
+                    Select a department, doctor, and date to view the queue.
+                  </p>
                 </div>
-                <div className="date-control">
+              </div>
+
+              <div className="queue-filters-grid">
+                <div className="filter-control">
+                  <label htmlFor="queue-department">Department</label>
+                  <select
+                    id="queue-department"
+                    value={selectedDepartment}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSelectedDepartment(v);
+                      setSelectedDoctor("");
+                    }}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept) => (
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-control">
+                  <label htmlFor="queue-doctor">Doctor</label>
+                  <select
+                    id="queue-doctor"
+                    value={selectedDoctor}
+                    onChange={(e) => setSelectedDoctor(e.target.value)}
+                    disabled={!selectedDepartment}
+                  >
+                    <option value="">Select Doctor</option>
+                    {doctors.map((doc) => (
+                      <option key={doc.id} value={doc.id}>
+                        {doc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="filter-control">
                   <label htmlFor="patient-queue-date">Date</label>
                   <input
                     id="patient-queue-date"
                     type="date"
                     value={selectedDate}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setSelectedDate(v);
-                      fetchDashboard(v);
-                    }}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    disabled={!selectedDoctor}
                   />
                 </div>
               </div>
 
-              <QueueList
-                queue={queue}
-                loading={loadingQueue}
-                currentQueueNumber={currentQueueNumber}
-                patientsAhead={patientsAhead}
-              />
+              {selectedDepartment && selectedDoctor && selectedDate ? (
+                <QueueList
+                  queue={queue}
+                  loading={loadingQueue}
+                  currentQueueNumber={currentQueueNumber}
+                  patientsAhead={patientsAhead}
+                />
+              ) : (
+                <div className="queue-empty-state">
+                  <p>
+                    Select a department, doctor, and date to view the queue.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </main>
