@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import io from "socket.io-client";
+import {
+  initSocket,
+  joinConsultationRoom,
+  leaveConsultationRoom,
+  joinUserRoom,
+  leaveUserRoom,
+} from "../../../services/socket";
 
 import {
   getChatHistory,
@@ -135,47 +141,79 @@ const ChatConsultation = () => {
 
     if (!appointmentId) return;
 
-    const socket = io(
-      "http://localhost:3000"
-    );
-
+    const token = localStorage.getItem("token");
+    const socket = initSocket(token);
     socketRef.current = socket;
 
-    socket.on("connect", () => {
+    userId.current = localStorage.getItem("userId");
+    const roomId = `consultation-${appointmentId}`;
 
-      const userIdFromStorage =
-        localStorage.getItem("userId");
-
-      if (userIdFromStorage) {
-
-        userId.current =
-          userIdFromStorage;
-
-        socket.emit(
-          "joinUserRoom",
-          userIdFromStorage
-        );
-      }
-
-      socket.emit(
-        "joinConsultationRoom",
-        `consultation-${appointmentId}`
-      );
-
-      setOnlineStatus("online");
+    console.log("[PatientChat][socket-debug] effect start", {
+      appointmentId,
+      roomId,
+      userId: userId.current,
+      hasToken: Boolean(token),
+      hasSocket: Boolean(socket),
+      connected: Boolean(socket?.connected),
+      socketId: socket?.id,
     });
 
-    // New messages
-    socket.on("newMessage", (newMessage) => {
+    const joinRooms = () => {
+      console.log("[PatientChat][socket-debug] joinRooms", {
+        appointmentId,
+        roomId,
+        userId: userId.current,
+        connected: Boolean(socket?.connected),
+        socketId: socket?.id,
+      });
+
+      if (userId.current) {
+        joinUserRoom(userId.current);
+      }
+
+      joinConsultationRoom(appointmentId);
+    };
+
+    const handleConnect = () => {
+      console.log("[PatientChat][socket-debug] connect handler", {
+        appointmentId,
+        roomId,
+        socketId: socket.id,
+      });
+      joinRooms();
+      setOnlineStatus("online");
+    };
+
+    const handleNewMessage = (newMessage) => {
       const msgApptId = String(newMessage.appointmentId || "");
       const msgConsultId = String(newMessage.consultationId || "");
       const currentId = String(appointmentId);
 
-      if (msgApptId !== currentId && msgConsultId !== currentId) return;
+      console.log("[PatientChat][socket-debug] newMessage received", {
+        currentAppointmentId: currentId,
+        msgAppointmentId: msgApptId,
+        msgConsultationId: msgConsultId,
+        messageId: String(newMessage._id || ""),
+        senderId: String(newMessage.senderId || ""),
+      });
+
+      if (msgApptId !== currentId && msgConsultId !== currentId) {
+        console.log("[PatientChat][socket-debug] newMessage rejected by appointment filter", {
+          currentAppointmentId: currentId,
+          msgAppointmentId: msgApptId,
+          msgConsultationId: msgConsultId,
+        });
+
+        return;
+      }
 
       setMessages((prev) => {
         // Exact-match dedupe by _id
         if (prev.some((msg) => String(msg._id) === String(newMessage._id))) {
+          console.log("[PatientChat][socket-debug] newMessage ignored as duplicate", {
+            messageId: String(newMessage._id || ""),
+          });
+
           return prev;
         }
 
@@ -188,33 +226,39 @@ const ChatConsultation = () => {
         );
 
         if (localIndex !== -1) {
+          console.log("[PatientChat][socket-debug] replacing optimistic message", {
+            localIndex,
+            messageId: String(newMessage._id || ""),
+          });
+
           const copy = [...prev];
           copy[localIndex] = newMessage;
           return copy;
         }
 
+        console.log("[PatientChat][socket-debug] appending newMessage", {
+          messageId: String(newMessage._id || ""),
+        });
+
         return [...prev, newMessage];
       });
-    });
+    };
 
-    // Video accepted
+    const handleVideoAccepted = (payload) => {
 
-    socket.on(
-      "videoRequestAccepted",
-      (payload) => {
+      if (payload.roomId) {
 
-        if (payload.roomId) {
-
-          navigate(
-            `/video-room/${payload.roomId}`
-          );
-        }
+        navigate(
+          `/video-room/${payload.roomId}`
+        );
       }
-    );
+    };
 
-    // Video request received (doctor initiated)
-    socket.on("videoRequestReceived", (payload) => {
-      if (payload.appointmentId === appointmentId) {
+    const handleVideoRequestReceived = (payload) => {
+      if (
+        String(payload.appointmentId) ===
+        String(appointmentId)
+      ) {
         setVideoRequest({
           _id: payload.videoRequestId,
           appointmentId: payload.appointmentId,
@@ -225,55 +269,78 @@ const ChatConsultation = () => {
 
         setVideoStatus("pending");
       }
-    });
+    };
 
-    // Video rejected
+    const handleVideoRejected = () => {
 
-    socket.on(
-      "videoRequestRejected",
-      () => {
+      setVideoStatus("rejected");
 
-        setVideoStatus("rejected");
+      setVideoMessage(
+        "Doctor declined your video request."
+      );
+    };
 
-        setVideoMessage(
-          "Doctor declined your video request."
-        );
-      }
-    );
-
-    // Video cancelled
-
-    socket.on("videoRequestCancelled", (payload) => {
+    const handleVideoCancelled = () => {
       setVideoStatus(null);
       setVideoRequest(null);
       setVideoMessage("Video request cancelled.");
-    });
+    };
 
-    // Video call ended
-    socket.on("videoCallEnded", (payload) => {
+    const handleVideoEnded = () => {
       setVideoStatus(null);
       setVideoRequest(null);
       setVideoMessage("Video call ended.");
-    });
+    };
 
-    socket.on("disconnect", () => {
-
+    const handleDisconnect = () => {
       setOnlineStatus("offline");
+    };
+
+    console.log("[PatientChat][socket-debug] registering listeners", {
+      appointmentId,
+      roomId,
+      socketId: socket?.id,
+      connected: Boolean(socket?.connected),
     });
+
+    socket.on("connect", handleConnect);
+    socket.on("newMessage", handleNewMessage);
+    socket.on("videoRequestAccepted", handleVideoAccepted);
+    socket.on("videoRequestReceived", handleVideoRequestReceived);
+    socket.on("videoRequestRejected", handleVideoRejected);
+    socket.on("videoRequestCancelled", handleVideoCancelled);
+    socket.on("videoCallEnded", handleVideoEnded);
+    socket.on("disconnect", handleDisconnect);
+
+    // Join now as well as on future reconnects. This is the key fix for
+    // reused sockets whose original "connect" event already happened.
+    joinRooms();
+    if (socket.connected) {
+      setOnlineStatus("online");
+    }
 
     return () => {
+      try {
+        console.log("[PatientChat][socket-debug] cleanup listeners", {
+          appointmentId,
+          roomId,
+          userId: userId.current,
+          socketId: socket?.id,
+        });
 
-      socket.emit(
-        "leaveUserRoom",
-        userId.current
-      );
-
-      socket.emit(
-        "leaveConsultationRoom",
-        `consultation-${appointmentId}`
-      );
-
-      socket.disconnect();
+        socket.off("connect", handleConnect);
+        socket.off("newMessage", handleNewMessage);
+        socket.off("videoRequestAccepted", handleVideoAccepted);
+        socket.off("videoRequestReceived", handleVideoRequestReceived);
+        socket.off("videoRequestRejected", handleVideoRejected);
+        socket.off("videoRequestCancelled", handleVideoCancelled);
+        socket.off("videoCallEnded", handleVideoEnded);
+        socket.off("disconnect", handleDisconnect);
+        leaveUserRoom(userId.current);
+        leaveConsultationRoom(appointmentId);
+      } catch (err) {
+        // ignore
+      }
     };
 
   }, [appointmentId, navigate]);
@@ -712,27 +779,31 @@ const ChatConsultation = () => {
 
                   <div
                     key={msg._id}
-                    className={`message-wrapper ${
-                      msg.senderRole ===
-                      "patient"
-                        ? "sent"
-                        : "received"
-                    }`}
+                    className={`message-wrapper ${msg.senderRole === "patient" ? "sent" : "received"}`}
                   >
 
                     <div className="message-bubble">
 
-                      {msg.message && (
-                        <p className="message-text">
-                          {msg.message}
-                        </p>
+                      {msg.attachment && msg.attachment.mimetype && msg.attachment.url && (
+                        (msg.attachment.mimetype.startsWith("image/")) ? (
+                          <img src={msg.attachment.url} alt="shared" className="message-image" />
+                        ) : (
+                          <div className="message-file">
+                            <div className="file-icon">{msg.attachment.mimetype === 'application/pdf' ? '📄' : '📎'}</div>
+                            <div className="file-info">
+                              <p className="file-name">{msg.attachment.originalName}</p>
+                              <p className="file-size">{(msg.attachment.size / 1024).toFixed(2)} KB</p>
+                            </div>
+                            <a href={msg.attachment.url} download className="download-btn">⬇️</a>
+                          </div>
+                        )
                       )}
 
-                      <span className="message-time">
-                        {formatTime(
-                          msg.createdAt
-                        )}
-                      </span>
+                      {msg.message && (
+                        <p className="message-text">{msg.message}</p>
+                      )}
+
+                      <span className="message-time">{formatTime(msg.createdAt)}</span>
 
                     </div>
 

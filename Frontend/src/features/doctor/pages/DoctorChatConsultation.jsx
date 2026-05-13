@@ -1,6 +1,14 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import io from "socket.io-client";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+
+import {
+  useParams,
+  useNavigate,
+} from "react-router-dom";
 
 import {
   getChatHistory,
@@ -11,383 +19,812 @@ import {
 import {
   getVideoRequestStatus,
   respondToVideoRequest,
+  requestVideoConsultation,
+  cancelVideoConsultation,
 } from "../services/video.api";
-import { requestVideoConsultation, cancelVideoConsultation } from "../services/video.api";
+
+import {
+  initSocket,
+  getSocket,
+  joinConsultationRoom,
+  leaveConsultationRoom,
+  joinUserRoom,
+  leaveUserRoom,
+} from "../../../services/socket";
 
 import "../styles/ChatConsultation.scss";
 
 const DoctorChatConsultation = () => {
-  const { appointmentId } = useParams();
+  const { appointmentId } =
+    useParams();
+
   const navigate = useNavigate();
 
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  const [messages, setMessages] =
+    useState([]);
 
-  const [videoRequest, setVideoRequest] = useState(null);
-  const [videoStatus, setVideoStatus] = useState(null);
-  const [videoMessage, setVideoMessage] = useState("");
+  const [input, setInput] =
+    useState("");
 
-  const [onlineStatus, setOnlineStatus] = useState("offline");
-  const [respondingVideo, setRespondingVideo] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
-  const [uploading, _setUploading] = useState(false);
+  const [sending, setSending] =
+    useState(false);
 
-  const messagesEndRef = useRef(null);
-  const socketRef = useRef(null);
-  const userId = useRef(null);
-  const fileInputRef = useRef(null);
+  const [videoRequest, setVideoRequest] =
+    useState(null);
 
-  // Scroll to latest message
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, []);
+  const [videoStatus, setVideoStatus] =
+    useState(null);
+
+  const [videoMessage, setVideoMessage] =
+    useState("");
+
+  const [onlineStatus, setOnlineStatus] =
+    useState("offline");
+
+  const [
+    respondingVideo,
+    setRespondingVideo,
+  ] = useState(false);
+
+  const [selectedFile, setSelectedFile] =
+    useState(null);
+
+  const [filePreview, setFilePreview] =
+    useState(null);
+
+  const [uploading, setUploading] =
+    useState(false);
+
+  const messagesEndRef =
+    useRef(null);
+
+  const fileInputRef =
+    useRef(null);
+
+  const token =
+    localStorage.getItem("token");
+
+  const userId =
+    localStorage.getItem("userId");
+
+  // ================= SCROLL =================
+
+  const scrollToBottom =
+    useCallback(() => {
+      messagesEndRef.current?.scrollIntoView(
+        {
+          behavior: "smooth",
+        }
+      );
+    }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Load chat history
+  // ================= LOAD CHAT =================
+
   useEffect(() => {
-    const loadChatHistory = async () => {
-      try {
-        setLoading(true);
+    if (!appointmentId) return;
 
-        const res = await getChatHistory(appointmentId);
+    const loadChatHistory =
+      async () => {
+        try {
+          setLoading(true);
 
-        setMessages(res.data.messages || []);
-      } catch (error) {
-        console.error("Failed to load chat history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+          const res =
+            await getChatHistory(
+              appointmentId
+            );
+
+          setMessages(
+            res.data.messages || []
+          );
+        } catch (error) {
+          console.error(
+            "[DoctorChat] failed loading chat:",
+            error
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
 
     loadChatHistory();
   }, [appointmentId]);
 
-  // Load video request status
+  // ================= LOAD VIDEO STATUS =================
+
   useEffect(() => {
-    const loadVideoStatus = async () => {
-      try {
-        const res = await getVideoRequestStatus(appointmentId);
+    if (!appointmentId) return;
 
-        const videoReq = res.data.videoRequest;
+    const loadVideoStatus =
+      async () => {
+        try {
+          const res =
+            await getVideoRequestStatus(
+              appointmentId
+            );
 
-        setVideoRequest(videoReq);
-        setVideoStatus(videoReq?.status || null);
-      } catch (_) {
+          const request =
+            res.data.videoRequest;
+
+          setVideoRequest(request);
+
+          setVideoStatus(
+            request?.status || null
+          );
+        } catch (error) {
           setVideoRequest(null);
           setVideoStatus(null);
         }
-    };
+      };
 
     loadVideoStatus();
   }, [appointmentId]);
 
-  // Socket connection
+  // ================= SOCKET CONNECTION =================
+
   useEffect(() => {
-    if (!appointmentId) return;
+    if (!appointmentId || !token)
+      return;
 
-    const socket = io("http://localhost:3000");
+    const socket =
+      getSocket() ||
+      initSocket(token);
 
-    socketRef.current = socket;
+    if (!socket) return;
+    const roomId = `consultation-${appointmentId}`;
 
-    socket.on("connect", () => {
-      console.log("Connected to socket server");
-
-      const userIdFromStorage = localStorage.getItem("userId");
-
-      if (userIdFromStorage) {
-        userId.current = userIdFromStorage;
-
-        socket.emit("joinUserRoom", userIdFromStorage);
-      }
-
-      socket.emit(
-        "joinConsultationRoom",
-        `consultation-${appointmentId}`
-      );
-
-      setOnlineStatus("online");
+    console.log("[DoctorChat][socket-debug] effect start", {
+      appointmentId,
+      roomId,
+      userId,
+      hasToken: Boolean(token),
+      hasSocket: Boolean(socket),
+      connected: Boolean(socket?.connected),
+      socketId: socket?.id,
     });
 
-    // New message listener
-    socket.on("newMessage", (newMessage) => {
-      const msgApptId = String(newMessage.appointmentId || "");
-      const msgConsultId = String(newMessage.consultationId || "");
-      const currentId = String(appointmentId);
+    const joinRooms = () => {
+      console.log("[DoctorChat][socket-debug] joinRooms", {
+        appointmentId,
+        roomId,
+        userId,
+        connected: Boolean(socket?.connected),
+        socketId: socket?.id,
+      });
 
-      if (msgApptId !== currentId && msgConsultId !== currentId) return;
+      joinUserRoom(userId);
+
+      joinConsultationRoom(
+        appointmentId
+      );
+    };
+
+    const handleConnect =
+      () => {
+        console.log("[DoctorChat][socket-debug] connect handler", {
+          appointmentId,
+          roomId,
+          socketId: socket.id,
+        });
+
+        joinRooms();
+
+        setOnlineStatus(
+          "online"
+        );
+      };
+
+    // ===== NEW MESSAGE =====
+
+    const handleNewMessage = (
+      newMessage
+    ) => {
+      const incomingAppointmentId =
+        String(
+          newMessage.appointmentId ||
+            ""
+        );
+      const currentAppointmentId =
+        String(appointmentId);
+
+      console.log("[DoctorChat][socket-debug] newMessage received", {
+        currentAppointmentId,
+        msgAppointmentId:
+          incomingAppointmentId,
+        messageId:
+          String(
+            newMessage._id || ""
+          ),
+        senderId:
+          String(
+            newMessage.senderId || ""
+          ),
+      });
+
+      if (
+        incomingAppointmentId !==
+        currentAppointmentId
+      ) {
+        console.log("[DoctorChat][socket-debug] newMessage rejected by appointment filter", {
+          currentAppointmentId,
+          msgAppointmentId:
+            incomingAppointmentId,
+        });
+
+        return;
+      }
 
       setMessages((prev) => {
-        if (prev.some((msg) => String(msg._id) === String(newMessage._id))) {
+        // Exact duplicate prevention
+        const alreadyExists =
+          prev.some(
+            (msg) =>
+              String(msg._id) ===
+              String(newMessage._id)
+          );
+
+        if (alreadyExists) {
+          console.log("[DoctorChat][socket-debug] newMessage ignored as duplicate", {
+            messageId:
+              String(
+                newMessage._id || ""
+              ),
+          });
+
           return prev;
         }
 
-        const localIndex = prev.findIndex((msg) =>
-          String(msg._id).startsWith("local-") &&
-          String(msg.senderId) === String(newMessage.senderId) &&
-          msg.message === newMessage.message &&
-          Math.abs(new Date(msg.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 10000
-        );
+        // Replace optimistic message
+        const optimisticIndex =
+          prev.findIndex(
+            (msg) =>
+              String(
+                msg._id
+              ).startsWith(
+                "local-"
+              ) &&
+              String(
+                msg.senderId
+              ) ===
+                String(
+                  newMessage.senderId
+                ) &&
+              msg.message ===
+                newMessage.message
+          );
 
-        if (localIndex !== -1) {
-          const copy = [...prev];
-          copy[localIndex] = newMessage;
-          return copy;
+        if (
+          optimisticIndex !== -1
+        ) {
+          console.log("[DoctorChat][socket-debug] replacing optimistic message", {
+            localIndex:
+              optimisticIndex,
+            messageId:
+              String(
+                newMessage._id || ""
+              ),
+          });
+
+          const updated = [
+            ...prev,
+          ];
+
+          updated[
+            optimisticIndex
+          ] = newMessage;
+
+          return updated;
         }
 
-        return [...prev, newMessage];
-      });
-    });
+        console.log("[DoctorChat][socket-debug] appending newMessage", {
+          messageId:
+            String(
+              newMessage._id || ""
+            ),
+        });
 
-    // Video request listener
-    socket.on("videoRequestReceived", (payload) => {
-      if (payload.appointmentId === appointmentId) {
+        return [
+          ...prev,
+          newMessage,
+        ];
+      });
+    };
+
+    // ===== VIDEO REQUEST RECEIVED =====
+
+    const handleVideoRequestReceived =
+      (payload) => {
+        if (
+          String(
+            payload.appointmentId
+          ) !==
+          String(appointmentId)
+        ) {
+          return;
+        }
+
         setVideoRequest({
-          _id: payload.videoRequestId,
-          appointmentId: payload.appointmentId,
+          _id:
+            payload.videoRequestId,
+          appointmentId:
+            payload.appointmentId,
           status: "pending",
-          patientName: payload.patientName,
+          patientName:
+            payload.patientName,
         });
 
         setVideoStatus("pending");
-      }
-    });
+      };
 
-    // Video cancelled listener - close incoming popup if the appointment matches
-    socket.on("videoRequestCancelled", (payload) => {
-      if (payload.appointmentId === appointmentId) {
-        setVideoStatus(null);
+    // ===== VIDEO CANCELLED =====
+
+    const handleVideoCancelled =
+      (payload) => {
+        if (
+          String(
+            payload.appointmentId
+          ) ===
+          String(appointmentId)
+        ) {
+          setVideoStatus(null);
+          setVideoRequest(null);
+        }
+      };
+
+    // ===== VIDEO ACCEPTED =====
+
+    const handleVideoAccepted =
+      (payload) => {
+        if (payload?.roomId) {
+          navigate(
+            `/video-room/${payload.roomId}`
+          );
+        }
+      };
+
+    // ===== VIDEO REJECTED =====
+
+    const handleVideoRejected =
+      () => {
+        setVideoStatus(
+          "rejected"
+        );
+
         setVideoRequest(null);
-      }
+      };
+
+    // ===== VIDEO ENDED =====
+
+    const handleVideoEnded =
+      () => {
+        setVideoStatus(null);
+
+        setVideoRequest(null);
+      };
+
+    // ===== DISCONNECT =====
+
+    const handleDisconnect =
+      () => {
+        setOnlineStatus(
+          "offline"
+        );
+      };
+
+    console.log("[DoctorChat][socket-debug] registering listeners", {
+      appointmentId,
+      roomId,
+      socketId: socket?.id,
+      connected: Boolean(socket?.connected),
     });
 
-    // Video accepted -> navigate to video room
-    socket.on("videoRequestAccepted", (payload) => {
-      if (payload.roomId) {
-        navigate(`/video-room/${payload.roomId}`);
-      }
-    });
+    socket.on(
+      "connect",
+      handleConnect
+    );
 
-    // Video rejected
-    socket.on("videoRequestRejected", (payload) => {
-      setVideoStatus("rejected");
-      setVideoRequest(null);
-    });
+    socket.on(
+      "newMessage",
+      handleNewMessage
+    );
 
-    // Video call ended
-    socket.on("videoCallEnded", (payload) => {
-      setVideoStatus(null);
-      setVideoRequest(null);
-    });
+    socket.on(
+      "videoRequestReceived",
+      handleVideoRequestReceived
+    );
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from socket server");
+    socket.on(
+      "videoRequestCancelled",
+      handleVideoCancelled
+    );
 
-      setOnlineStatus("offline");
-    });
+    socket.on(
+      "videoRequestAccepted",
+      handleVideoAccepted
+    );
+
+    socket.on(
+      "videoRequestRejected",
+      handleVideoRejected
+    );
+
+    socket.on(
+      "videoCallEnded",
+      handleVideoEnded
+    );
+
+    socket.on(
+      "disconnect",
+      handleDisconnect
+    );
+
+    // Join now as well as on future reconnects. Reused sockets may already
+    // be connected before this component mounts.
+    joinRooms();
+
+    if (socket.connected) {
+      setOnlineStatus(
+        "online"
+      );
+    }
 
     return () => {
-      socket.emit("leaveUserRoom", userId.current);
+      console.log("[DoctorChat][socket-debug] cleanup listeners", {
+        appointmentId,
+        roomId,
+        userId,
+        socketId: socket?.id,
+      });
 
-      socket.emit(
-        "leaveConsultationRoom",
-        `consultation-${appointmentId}`
+      socket.off(
+        "connect",
+        handleConnect
       );
 
-      socket.disconnect();
-    };
-  }, [appointmentId]);
+      socket.off(
+        "newMessage",
+        handleNewMessage
+      );
 
-  // File select
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
+      socket.off(
+        "videoRequestReceived",
+        handleVideoRequestReceived
+      );
+
+      socket.off(
+        "videoRequestCancelled",
+        handleVideoCancelled
+      );
+
+      socket.off(
+        "videoRequestAccepted",
+        handleVideoAccepted
+      );
+
+      socket.off(
+        "videoRequestRejected",
+        handleVideoRejected
+      );
+
+      socket.off(
+        "videoCallEnded",
+        handleVideoEnded
+      );
+
+      socket.off(
+        "disconnect",
+        handleDisconnect
+      );
+
+      leaveUserRoom(userId);
+
+      leaveConsultationRoom(
+        appointmentId
+      );
+    };
+  }, [
+    appointmentId,
+    token,
+    userId,
+    navigate,
+  ]);
+
+  // ================= FILE SELECT =================
+
+  const handleFileSelect = (
+    e
+  ) => {
+    const file =
+      e.target.files?.[0];
 
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert("File size must be less than 10MB");
+    if (
+      file.size >
+      10 * 1024 * 1024
+    ) {
+      alert(
+        "File size must be less than 10MB"
+      );
+
       return;
     }
 
     setSelectedFile(file);
 
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
+    if (
+      file.type.startsWith(
+        "image/"
+      )
+    ) {
+      const reader =
+        new FileReader();
 
-      reader.onload = (event) => {
-        setFilePreview(event.target.result);
+      reader.onload = (
+        event
+      ) => {
+        setFilePreview(
+          event.target.result
+        );
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(
+        file
+      );
     } else {
       setFilePreview(null);
     }
   };
 
-  // Send message
-  const handleSendMessage = async () => {
-    if (!input.trim() && !selectedFile) return;
+  // ================= SEND MESSAGE =================
 
-    const text = input.trim();
+  const handleSendMessage =
+    async () => {
+      if (
+        !input.trim() &&
+        !selectedFile
+      ) {
+        return;
+      }
 
-    setInput("");
-    setSending(true);
+      const text =
+        input.trim();
 
-    const tempId = `local-${Date.now()}`;
+      setInput("");
 
-    try {
-      // Optimistic message for sender (include attachment preview if any)
-      const optimistic = {
-        _id: tempId,
-        appointmentId,
-        consultationId: appointmentId,
-        senderId: localStorage.getItem("userId"),
-        senderName: localStorage.getItem("username") || "You",
-        receiverId: null,
-        receiverName: "",
-        senderRole: localStorage.getItem("role") || "doctor",
-        message: text,
-        ...(selectedFile
-          ? {
-              attachment: {
-                originalName: selectedFile.name,
-                size: selectedFile.size,
-                mimetype: selectedFile.type,
-                url: filePreview || null,
-              },
-            }
-          : {}),
-        createdAt: new Date().toISOString(),
-      };
+      setSending(true);
+      setUploading(true);
 
-      setMessages((prev) => [...prev, optimistic]);
+      const tempId = `local-${Date.now()}`;
+
+      const optimisticMessage =
+        {
+          _id: tempId,
+          appointmentId,
+          senderId: userId,
+          senderName:
+            localStorage.getItem(
+              "username"
+            ) || "Doctor",
+          senderRole:
+            localStorage.getItem(
+              "role"
+            ) || "doctor",
+          message: text,
+          createdAt:
+            new Date().toISOString(),
+        };
 
       if (selectedFile) {
-        const formData = new FormData();
-        formData.append("appointmentId", appointmentId);
-        formData.append("message", text);
-        formData.append("file", selectedFile);
+        optimisticMessage.attachment =
+          {
+            originalName:
+              selectedFile.name,
+            size:
+              selectedFile.size,
+            mimetype:
+              selectedFile.type,
+            url:
+              filePreview ||
+              null,
+          };
+      }
 
-        try {
-          await sendChatMessageWithFile(formData);
+      setMessages((prev) => [
+        ...prev,
+        optimisticMessage,
+      ]);
+
+      try {
+        if (selectedFile) {
+          const formData =
+            new FormData();
+
+          formData.append(
+            "appointmentId",
+            appointmentId
+          );
+
+          formData.append(
+            "message",
+            text
+          );
+
+          formData.append(
+            "file",
+            selectedFile
+          );
+
+          await sendChatMessageWithFile(
+            formData
+          );
 
           setSelectedFile(null);
+
           setFilePreview(null);
-        } catch (err) {
-          // remove optimistic message on error
-          setMessages((prev) => prev.filter((m) => m._id !== tempId));
-          throw err;
+        } else {
+          await sendChatMessage(
+            appointmentId,
+            text
+          );
         }
-      } else {
-        await sendChatMessage(appointmentId, text);
-      }
-    } catch (error) {
-      console.error(
-        "Failed to send message:",
-        error
-      );
-
-      // Prefer server-provided message when available
-      const serverMsg = error?.response?.data?.message;
-      alert("Failed to send message: " + (serverMsg || error.message));
-
-      setInput(text);
-
-      // remove optimistic message on error
-      setMessages((prev) => prev.filter((m) => m._id !== tempId));
-    } finally {
-      setSending(false);
-    }
-  };
-
-  // Video accept/reject
-  const handleVideoResponse = async (
-    action
-  ) => {
-    if (!videoRequest?._id) return;
-
-    setRespondingVideo(true);
-
-    try {
-      const res =
-        await respondToVideoRequest(
-          videoRequest._id,
-          action
+      } catch (error) {
+        console.error(
+          "[DoctorChat] send failed:",
+          error
         );
 
-      const updatedRequest =
-        res.data.videoRequest;
+        setMessages((prev) =>
+          prev.filter(
+            (msg) =>
+              msg._id !== tempId
+          )
+        );
 
-      if (action === "accept") {
-        setVideoStatus("accepted");
+        setInput(text);
 
-        setVideoRequest(updatedRequest);
+        const serverMessage =
+          error?.response?.data
+            ?.message;
 
-        if (updatedRequest.roomId) {
+        alert(
+          `Failed to send message: ${
+            serverMessage ||
+            error.message
+          }`
+        );
+      } finally {
+        setSending(false);
+        setUploading(false);
+      }
+    };
+
+  // ================= VIDEO RESPONSE =================
+
+  const handleVideoResponse =
+    async (action) => {
+      if (
+        !videoRequest?._id
+      )
+        return;
+
+      setRespondingVideo(
+        true
+      );
+
+      try {
+        const res =
+          await respondToVideoRequest(
+            videoRequest._id,
+            action
+          );
+
+        const updatedRequest =
+          res.data.videoRequest;
+
+        setVideoRequest(
+          updatedRequest
+        );
+
+        setVideoStatus(
+          updatedRequest?.status ||
+            null
+        );
+
+        if (
+          action ===
+            "accept" &&
+          updatedRequest?.roomId
+        ) {
           navigate(
             `/video-room/${updatedRequest.roomId}`
           );
         }
-      } else {
-        setVideoStatus("rejected");
-
-        setVideoRequest(updatedRequest);
+      } catch (error) {
+        console.error(
+          "[DoctorChat] video response failed:",
+          error
+        );
+      } finally {
+        setRespondingVideo(
+          false
+        );
       }
-    } catch (error) {
-      console.error(
-        "Failed to respond to video request:",
-        error
+    };
+
+  // ================= VIDEO REQUEST =================
+
+  const handleVideoRequest =
+    async () => {
+      if (!appointmentId)
+        return;
+
+      setRespondingVideo(
+        true
       );
-    } finally {
-      setRespondingVideo(false);
-    }
-  };
 
-  // Doctor initiate video request
-  const handleVideoRequest = async () => {
-    if (!appointmentId) return;
+      try {
+        await requestVideoConsultation(
+          appointmentId
+        );
 
-    setRespondingVideo(true);
+        setVideoStatus(
+          "pending"
+        );
+      } catch (error) {
+        console.error(
+          "[DoctorChat] request failed:",
+          error
+        );
+      } finally {
+        setRespondingVideo(
+          false
+        );
+      }
+    };
 
-    try {
-      await requestVideoConsultation(appointmentId);
+  // ================= CANCEL VIDEO =================
 
-      // force pending
-      setVideoStatus("pending");
-    } catch (err) {
-      console.error("Failed to initiate video request:", err);
-    } finally {
-      setRespondingVideo(false);
-    }
-  };
+  const handleCancelVideoRequest =
+    async () => {
+      if (!appointmentId)
+        return;
 
-  const handleCancelVideoRequest = async () => {
-    if (!appointmentId) return;
+      setRespondingVideo(
+        true
+      );
 
-    setRespondingVideo(true);
+      try {
+        await cancelVideoConsultation(
+          appointmentId
+        );
 
-    try {
-      await cancelVideoConsultation(appointmentId);
+        setVideoStatus(null);
 
-      setVideoStatus(null);
-      setVideoRequest(null);
-    } catch (err) {
-      console.error("Failed to cancel video request:", err);
-    } finally {
-      setRespondingVideo(false);
-    }
-  };
+        setVideoRequest(null);
+      } catch (error) {
+        console.error(
+          "[DoctorChat] cancel failed:",
+          error
+        );
+      } finally {
+        setRespondingVideo(
+          false
+        );
+      }
+    };
 
-  // Enter send
-  const handleKeyPress = (e) => {
+  // ================= ENTER SEND =================
+
+  const handleKeyPress = (
+    e
+  ) => {
     if (
       e.key === "Enter" &&
       !e.shiftKey
@@ -398,9 +835,14 @@ const DoctorChatConsultation = () => {
     }
   };
 
-  // Time formatter
-  const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString(
+  // ================= FORMATTERS =================
+
+  const formatTime = (
+    date
+  ) => {
+    return new Date(
+      date
+    ).toLocaleTimeString(
       [],
       {
         hour: "2-digit",
@@ -409,16 +851,20 @@ const DoctorChatConsultation = () => {
     );
   };
 
-  // Date formatter
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
     const d = new Date(date);
 
-    const today = new Date();
+    const today =
+      new Date();
 
-    const yesterday = new Date(today);
+    const yesterday =
+      new Date(today);
 
     yesterday.setDate(
-      yesterday.getDate() - 1
+      yesterday.getDate() -
+        1
     );
 
     if (
@@ -426,49 +872,71 @@ const DoctorChatConsultation = () => {
       today.toDateString()
     ) {
       return "Today";
-    } else if (
+    }
+
+    if (
       d.toDateString() ===
       yesterday.toDateString()
     ) {
       return "Yesterday";
-    } else {
-      return d.toLocaleDateString();
     }
+
+    return d.toLocaleDateString();
   };
 
-  // File size formatter
-  const formatFileSize = (size) => {
+  const formatFileSize = (
+    size
+  ) => {
     const kb = size / 1024;
 
-    if (kb < 1024)
-      return `${kb.toFixed(1)} KB`;
+    if (kb < 1024) {
+      return `${kb.toFixed(
+        1
+      )} KB`;
+    }
 
-    return `${(kb / 1024).toFixed(1)} MB`;
+    return `${(
+      kb / 1024
+    ).toFixed(1)} MB`;
   };
 
-  // Group messages
-  const groupedMessages = messages.reduce(
-    (groups, msg) => {
-      const date = formatDate(
-        msg.createdAt
-      );
+  // ================= GROUP MESSAGES =================
 
-      if (!groups[date]) {
-        groups[date] = [];
-      }
+  const groupedMessages =
+    messages.reduce(
+      (groups, msg) => {
+        const date =
+          formatDate(
+            msg.createdAt
+          );
 
-      groups[date].push(msg);
+        if (
+          !groups[date]
+        ) {
+          groups[date] = [];
+        }
 
-      return groups;
-    },
-    {}
-  );
+        groups[date].push(
+          msg
+        );
 
-  const isImage = (mimetype) =>
-    mimetype?.startsWith("image/");
+        return groups;
+      },
+      {}
+    );
 
-  const isPdf = (mimetype) =>
-    mimetype === "application/pdf";
+  const isImage = (
+    mimetype
+  ) =>
+    mimetype?.startsWith(
+      "image/"
+    );
+
+  const isPdf = (
+    mimetype
+  ) =>
+    mimetype ===
+    "application/pdf";
 
   return (
     <div className="chat-consultation-container">
@@ -481,31 +949,44 @@ const DoctorChatConsultation = () => {
 
           <button
             className="back-button"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
           >
             ←
           </button>
 
           <div className="header-info">
-            <h2>Patient Chat</h2>
+
+            <h2>
+              Patient Chat
+            </h2>
 
             <span
               className={`status ${onlineStatus}`}
             >
-              ● {onlineStatus}
+              ●{" "}
+              {
+                onlineStatus
+              }
             </span>
+
           </div>
 
         </div>
 
         <div className="header-right">
+
           <button
             className="close-btn"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             title="Close Chat"
           >
             ✕
           </button>
+
         </div>
 
       </div>
@@ -518,7 +999,8 @@ const DoctorChatConsultation = () => {
           <div className="loading">
             Loading messages...
           </div>
-        ) : messages.length === 0 ? (
+        ) : messages.length ===
+          0 ? (
           <div className="empty-state">
 
             <div className="empty-icon">
@@ -526,8 +1008,9 @@ const DoctorChatConsultation = () => {
             </div>
 
             <p>
-              No messages yet. Wait for
-              patient to start the
+              No messages yet.
+              Wait for patient
+              to start the
               conversation.
             </p>
 
@@ -536,125 +1019,146 @@ const DoctorChatConsultation = () => {
           <>
             {Object.entries(
               groupedMessages
-            ).map(([date, msgs]) => (
-              <div key={date}>
+            ).map(
+              ([
+                date,
+                msgs,
+              ]) => (
+                <div
+                  key={date}
+                >
 
-                <div className="date-divider">
-                  <span>{date}</span>
-                </div>
-
-                {msgs.map((msg) => (
-                  <div
-                    key={msg._id}
-                    className={`message-wrapper ${
-                      msg.senderRole ===
-                      "doctor"
-                        ? "sent"
-                        : "received"
-                    }`}
-                  >
-
-                    <div className="message-bubble">
-
-                      {msg.attachment &&
-                        isImage(
-                          msg.attachment
-                            .mimetype
-                        ) && (
-                          <img
-                            src={
-                              msg.attachment
-                                .url
-                            }
-                            alt="shared"
-                            className="message-image"
-                          />
-                        )}
-
-                      {msg.attachment &&
-                        !isImage(
-                          msg.attachment
-                            .mimetype
-                        ) && (
-                          <div className="message-file">
-
-                            <div className="file-icon">
-                              {isPdf(
-                                msg.attachment
-                                  .mimetype
-                              )
-                                ? "📄"
-                                : "📎"}
-                            </div>
-
-                            <div className="file-info">
-                              <p className="file-name">
-                                {
-                                  msg
-                                    .attachment
-                                    .originalName
-                                }
-                              </p>
-
-                              <p className="file-size">
-                                {(
-                                  msg
-                                    .attachment
-                                    .size /
-                                  1024
-                                ).toFixed(
-                                  2
-                                )}{" "}
-                                KB
-                              </p>
-                            </div>
-
-                            <a
-                              href={
-                                msg
-                                  .attachment
-                                  .url
-                              }
-                              download
-                              className="download-btn"
-                            >
-                              ⬇️
-                            </a>
-
-                          </div>
-                        )}
-
-                      {msg.message && (
-                        <p className="message-text">
-                          {msg.message}
-                        </p>
-                      )}
-
-                      <span className="message-time">
-                        {formatTime(
-                          msg.createdAt
-                        )}
-                      </span>
-
-                    </div>
-
+                  <div className="date-divider">
+                    <span>
+                      {date}
+                    </span>
                   </div>
-                ))}
 
-              </div>
-            ))}
+                  {msgs.map(
+                    (msg) => (
+                      <div
+                        key={
+                          msg._id
+                        }
+                        className={`message-wrapper ${
+                          msg.senderRole ===
+                          "doctor"
+                            ? "sent"
+                            : "received"
+                        }`}
+                      >
+
+                        <div className="message-bubble">
+
+                          {msg.attachment &&
+                            isImage(
+                              msg
+                                .attachment
+                                .mimetype
+                            ) && (
+                              <img
+                                src={
+                                  msg
+                                    .attachment
+                                    .url
+                                }
+                                alt="shared"
+                                className="message-image"
+                              />
+                            )}
+
+                          {msg.attachment &&
+                            !isImage(
+                              msg
+                                .attachment
+                                .mimetype
+                            ) && (
+                              <div className="message-file">
+
+                                <div className="file-icon">
+                                  {isPdf(
+                                    msg
+                                      .attachment
+                                      .mimetype
+                                  )
+                                    ? "📄"
+                                    : "📎"}
+                                </div>
+
+                                <div className="file-info">
+
+                                  <p className="file-name">
+                                    {
+                                      msg
+                                        .attachment
+                                        .originalName
+                                    }
+                                  </p>
+
+                                  <p className="file-size">
+                                    {formatFileSize(
+                                      msg
+                                        .attachment
+                                        .size
+                                    )}
+                                  </p>
+
+                                </div>
+
+                                <a
+                                  href={
+                                    msg
+                                      .attachment
+                                      .url
+                                  }
+                                  download
+                                  className="download-btn"
+                                >
+                                  ⬇️
+                                </a>
+
+                              </div>
+                            )}
+
+                          {msg.message && (
+                            <p className="message-text">
+                              {
+                                msg.message
+                              }
+                            </p>
+                          )}
+
+                          <span className="message-time">
+                            {formatTime(
+                              msg.createdAt
+                            )}
+                          </span>
+
+                        </div>
+
+                      </div>
+                    )
+                  )}
+
+                </div>
+              )
+            )}
           </>
         )}
 
-        <div ref={messagesEndRef} />
+        <div
+          ref={
+            messagesEndRef
+          }
+        />
 
       </div>
 
-      {/* INCOMING VIDEO CALL MODAL */}
+      {/* VIDEO MODAL */}
 
-      {videoStatus === "pending" &&
+      {videoStatus ===
+        "pending" &&
         videoRequest && (
-
           <div className="incoming-call-overlay">
 
             <div className="incoming-call-modal">
@@ -664,17 +1168,22 @@ const DoctorChatConsultation = () => {
               </div>
 
               <h2>
-                Incoming Video Consultation
+                Incoming Video
+                Consultation
               </h2>
 
               <p>
-                Patient is requesting a
-                live consultation
+                Patient is
+                requesting a
+                live
+                consultation
               </p>
 
               <div className="caller-info">
 
-                <span>👤</span>
+                <span>
+                  👤
+                </span>
 
                 <strong>
                   {videoRequest.patientName ||
@@ -726,47 +1235,61 @@ const DoctorChatConsultation = () => {
 
       {/* VIDEO STATUS */}
 
-      {videoStatus === "accepted" && (
+      {videoStatus ===
+        "accepted" && (
         <div className="video-status accepted">
-          ✓ Video call accepted.
-          Waiting for patient to join...
+          ✓ Video call
+          accepted.
+          Waiting for
+          patient to join...
         </div>
       )}
 
-      {videoStatus === "rejected" && (
+      {videoStatus ===
+        "rejected" && (
         <div className="video-status rejected">
-          ✕ Video call rejected.
+          ✕ Video call
+          rejected.
         </div>
       )}
 
-      {/* FILE PREVIEW */}
+      {/* FOOTER */}
 
       <div className="chat-footer">
 
-        {selectedFile && (
+        {/* FILE PREVIEW */}
 
+        {selectedFile && (
           <div className="attachment-preview">
 
             {filePreview ? (
-
               <div className="attachment-image-card">
 
                 <img
-                  src={filePreview}
-                  alt={selectedFile.name}
+                  src={
+                    filePreview
+                  }
+                  alt={
+                    selectedFile.name
+                  }
                   className="attachment-preview-image"
                 />
 
                 <div className="attachment-meta">
 
                   <div>
+
                     <p className="attachment-title">
-                      Selected image
+                      Selected
+                      image
                     </p>
 
                     <p className="attachment-subtitle">
-                      {selectedFile.name}
+                      {
+                        selectedFile.name
+                      }
                     </p>
+
                   </div>
 
                   <button
@@ -787,9 +1310,7 @@ const DoctorChatConsultation = () => {
                 </div>
 
               </div>
-
             ) : (
-
               <div className="attachment-file-card">
 
                 <div className="attachment-file-icon">
@@ -802,7 +1323,9 @@ const DoctorChatConsultation = () => {
                 <div className="attachment-file-info">
 
                   <p className="attachment-title">
-                    {selectedFile.name}
+                    {
+                      selectedFile.name
+                    }
                   </p>
 
                   <p className="attachment-subtitle">
@@ -834,54 +1357,72 @@ const DoctorChatConsultation = () => {
           </div>
         )}
 
-        {/* CHAT INPUT */}
-        {/* VIDEO SECTION */}
+        {/* VIDEO BUTTONS */}
 
         <div className="video-consultation-section">
 
-          {videoStatus === "pending" ? (
-
+          {videoStatus ===
+          "pending" ? (
             <button
               className="cancel-video-btn"
-              onClick={handleCancelVideoRequest}
-              disabled={respondingVideo}
+              onClick={
+                handleCancelVideoRequest
+              }
+              disabled={
+                respondingVideo
+              }
             >
-              {respondingVideo ? "⏳ Cancelling..." : "❌ Cancel Video"}
+              {respondingVideo
+                ? "⏳ Cancelling..."
+                : "❌ Cancel Video"}
             </button>
-
           ) : (
-
             <button
               className="video-consultation-btn"
-              onClick={handleVideoRequest}
-              disabled={respondingVideo}
+              onClick={
+                handleVideoRequest
+              }
+              disabled={
+                respondingVideo
+              }
             >
-              {respondingVideo ? "⏳" : "📹 Request Video Consultation"}
+              {respondingVideo
+                ? "⏳"
+                : "📹 Request Video Consultation"}
             </button>
-
           )}
 
           <p className="video-consultation-info">
-            Start a live video consultation with your patient.
+            Start a live video
+            consultation with
+            your patient.
           </p>
 
           {videoMessage && (
             <p className="video-consultation-info video-message">
-              {videoMessage}
+              {
+                videoMessage
+              }
             </p>
           )}
 
         </div>
 
         {/* CHAT INPUT */}
+
         <div className="chat-input-area">
 
           <input
-            ref={fileInputRef}
+            ref={
+              fileInputRef
+            }
             type="file"
-            onChange={handleFileSelect}
+            onChange={
+              handleFileSelect
+            }
             style={{
-              display: "none",
+              display:
+                "none",
             }}
             accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
           />
@@ -894,7 +1435,8 @@ const DoctorChatConsultation = () => {
                 fileInputRef.current?.click()
               }
               disabled={
-                sending || uploading
+                sending ||
+                uploading
               }
               title="Attach file"
             >
@@ -905,23 +1447,36 @@ const DoctorChatConsultation = () => {
               type="text"
               placeholder="Type a message..."
               value={input}
-              onChange={(e) =>
-                setInput(e.target.value)
+              onChange={(
+                e
+              ) =>
+                setInput(
+                  e.target
+                    .value
+                )
               }
-              onKeyPress={handleKeyPress}
-              disabled={sending}
+              onKeyPress={
+                handleKeyPress
+              }
+              disabled={
+                sending
+              }
             />
 
             <button
               className="send-btn"
-              onClick={handleSendMessage}
+              onClick={
+                handleSendMessage
+              }
               disabled={
                 sending ||
                 (!input.trim() &&
                   !selectedFile)
               }
             >
-              {sending ? "↻" : "→"}
+              {sending
+                ? "↻"
+                : "→"}
             </button>
 
           </div>

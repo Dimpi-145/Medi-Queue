@@ -2,8 +2,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./App.jsx";
+import { initSocket } from "./services/socket";
 
 import { Toaster } from "react-hot-toast";
+
+const token = localStorage.getItem("token");
+if (token) initSocket(token);
 
 createRoot(
   document.getElementById("root")

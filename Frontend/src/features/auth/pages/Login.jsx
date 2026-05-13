@@ -31,14 +31,25 @@ const Login = () => {
       );
 
       const user = response.user;
+      const token = response.token;
 
       // ✅ STORE USER (IMPORTANT FIX)
       handleLogin(user);
 
       // 🔥 STORE FOR SOCKET + SESSION
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("role", user.role);
       localStorage.setItem("userId", user._id);
+
+      console.log("[Login][socket-debug] stored auth", {
+        hasToken: Boolean(token),
+        userId: user._id,
+        role: user.role,
+      });
 
       // optional (only for doctor queue system)
       if (user.role === "doctor") {
