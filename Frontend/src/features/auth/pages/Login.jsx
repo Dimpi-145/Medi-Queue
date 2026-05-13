@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import '../style/form.scss'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -10,9 +10,14 @@ const Login = () => {
   const { handleLogin } = useAuth()
 
   const [formData, setFormData] = useState({
+    role: "",
     username: "",
     password: ""
   })
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState(null)
+  const formRef = useRef(null)
 
   const handleChange = (e) => {
     setFormData({
@@ -23,6 +28,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // run browser validation (required fields)
+    if (formRef.current && !formRef.current.reportValidity()) return;
+    setError(null)
 
     try {
       const response = await login(
@@ -32,6 +40,12 @@ const Login = () => {
 
       const user = response.user;
       const token = response.token;
+
+      // Enforce selected role matches server-side user role
+      if (formData.role && formData.role !== user.role) {
+        setError('Selected role does not match account role');
+        return;
+      }
 
       // ✅ STORE USER (IMPORTANT FIX)
       handleLogin(user);
@@ -66,6 +80,7 @@ const Login = () => {
 
     } catch (err) {
       console.log("LOGIN ERROR:", err.response?.data);
+      setError(err.response?.data?.message || 'Login failed')
     }
   };
 
@@ -76,7 +91,22 @@ const Login = () => {
         <h2>Welcome Back</h2>
         <p>Login to continue to MediQueue</p>
 
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
+
+          <div className="form-group">
+            <label>Role</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Select your role</option>
+              <option value="patient">Patient</option>
+              <option value="doctor">Doctor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
 
           <div className="form-group">
             <label>Username</label>
@@ -86,23 +116,49 @@ const Login = () => {
               placeholder="Enter username"
               value={formData.username}
               onChange={handleChange}
+              required
             />
           </div>
 
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-            />
+            <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword(s => !s)}
+                style={{background: 'transparent', border: 'none', cursor: 'pointer'}}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
-          <button className="auth-btn">
-            Login
-          </button>
+          <div style={{display: 'flex', gap: 8, flexDirection: 'column'}}>
+            <button className="auth-btn">
+              Login
+            </button>
+
+            <button
+              type="button"
+              className="auth-btn"
+              onClick={() => navigate('/demo-login')}
+            >
+              Use Demo Credentials
+            </button>
+          </div>
+
+          {error && (
+            <div style={{color: 'var(--danger, #c00)', marginTop: 8}}>{error}</div>
+          )}
 
         </form>
 

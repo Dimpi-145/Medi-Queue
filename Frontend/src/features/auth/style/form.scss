@@ -346,3 +346,25 @@ body {
   color: #64748b;
   text-align: center;
 }
+
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  background: #f8fafc;
+  color: #0f172a;
+
+  font-size: 14px;
+  transition: all 0.25s ease;
+  appearance: none;
+}
+
+.form-group select:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}

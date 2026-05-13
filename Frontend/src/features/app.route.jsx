@@ -17,6 +17,8 @@ import Support from "./homepage/support"
 
 import VideoRoom from "./video/VideoRoom"
 
+import DemoCredentials from "./auth/pages/DemoCredentials"
+
 import ChatConsultation from "./patient/pages/ChatConsultation"
 import DoctorChatConsultation from "./doctor/pages/DoctorChatConsultation"
 
@@ -69,6 +71,11 @@ export const router = createBrowserRouter([
     {
         path: "/video-room/:roomId",
         element: <VideoRoom />
+    },
+
+    {
+        path: "/demo-login",
+        element: <DemoCredentials />
     },
 
     {
