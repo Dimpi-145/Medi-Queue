@@ -31,6 +31,14 @@ appointmentRouter.get(
   appointmentController.getMyAppointments,
 );
 
+// patient history
+appointmentRouter.get(
+  "/history",
+  authMiddleware,
+  roleMiddleware("patient"),
+  appointmentController.getPatientHistory,
+);
+
 // doctor view
 appointmentRouter.get(
   "/doctor",

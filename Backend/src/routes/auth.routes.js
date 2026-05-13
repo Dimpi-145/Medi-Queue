@@ -3,19 +3,24 @@ const authController = require("../controllers/auth.controllers");
 const adminController = require("../controllers/admin.contoller");
 const authMiddleware = require("../middleware.js/auth.middleware");
 const roleMiddleware = require("../middleware.js/role.middleware");
-const appointmentController = require("../controllers/appointment.controller");
+const { authLimiter } = require("../middleware.js/rateLimiter.middleware");
 
 const authRouter = express.Router();
 
 /**
  * POST /api/auth/register
  */
-authRouter.post("/register", authController.registerController);
+authRouter.post("/register", authLimiter, authController.registerController);
 
 /**
  * POST /api/auth/login
  */
-authRouter.post("/login", authController.loginController);
+authRouter.post("/login", authLimiter, authController.loginController);
+
+/**
+ * POST /api/auth/logout
+ */
+authRouter.post("/logout", authController.logoutController);
 
 /**
  * Post / api/auth/admin/create-patient
@@ -72,6 +77,11 @@ authRouter.get("/doctor-dashboard", authMiddleware, (req, res) => {
 /**
  * GET /api/auth/patients/:id
  */
-authRouter.get("/patients/:id", authMiddleware, roleMiddleware("doctor"), authController.getPatientById);
+authRouter.get(
+  "/patients/:id",
+  authMiddleware,
+  roleMiddleware("doctor"),
+  authController.getPatientById,
+);
 
 module.exports = authRouter;

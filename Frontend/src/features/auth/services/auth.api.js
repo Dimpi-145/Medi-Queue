@@ -27,4 +27,9 @@ export const getPatientDashboard = async () => {
 export const updateProfile = async (data) => {
   const response = await api.put("/profile", data);
   return response.data;
-}
+};
+
+export const logout = async () => {
+  const response = await api.post("/logout");
+  return response.data;
+};

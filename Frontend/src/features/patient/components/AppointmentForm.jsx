@@ -79,9 +79,14 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
       setDate("");
       setTimeSlot("");
       setReason("");
-
     } catch (err) {
-      console.error(err);
+      console.error("[AppointmentForm] booking error:", err);
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to book appointment";
+      alert("Error: " + errorMsg);
     }
   };
 
@@ -89,55 +94,39 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
   if (success) {
     return (
       <div className="booking-panel success-screen">
-
         <div className="success-icon">
           <CheckCircle2 size={70} />
         </div>
 
         <h2>Appointment Confirmed</h2>
 
-        <p>
-          Your appointment has been booked successfully.
-        </p>
+        <p>Your appointment has been booked successfully.</p>
 
-        <button
-          className="primary-button"
-          onClick={() => setSuccess(false)}
-        >
+        <button className="primary-button" onClick={() => setSuccess(false)}>
           Book Another Appointment
         </button>
-
       </div>
     );
   }
 
   return (
     <div className="booking-panel">
-
       {/* HEADER */}
       <div className="booking-header">
-
         <div>
           <p className="eyebrow">Book Appointment</p>
           <h2>Schedule a Visit</h2>
         </div>
 
-        <button
-          type="button"
-          className="close-button"
-          onClick={onClose}
-        >
+        <button type="button" className="close-button" onClick={onClose}>
           <X size={18} />
         </button>
-
       </div>
 
       <form className="appointment-form" onSubmit={handleSubmit}>
-
         {/* DEPARTMENT */}
         <label>
           Department
-
           <select
             value={department}
             onChange={(e) => {
@@ -156,7 +145,6 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         {/* DOCTOR */}
         <label>
           Doctor
-
           <select
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
@@ -175,7 +163,6 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         {/* DOCTOR CARD */}
         {selectedDoctor && (
           <div className="doctor-preview-card">
-
             <div className="doctor-avatar">
               <UserRound size={28} />
             </div>
@@ -190,14 +177,12 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
 
               <span>Available Today</span>
             </div>
-
           </div>
         )}
 
         {/* DATE */}
         <label>
           Date
-
           <div className="input-icon">
             <Calendar size={18} />
 
@@ -211,35 +196,28 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
 
         {/* SLOT CHIPS */}
         <div className="slot-section">
-
           <p className="slot-title">
             <Clock3 size={16} />
             Available Time Slots
           </p>
 
           <div className="slot-grid">
-
             {slotOptions.map((slot) => (
               <button
                 type="button"
                 key={slot}
-                className={`slot-chip ${
-                  timeSlot === slot ? "active" : ""
-                }`}
+                className={`slot-chip ${timeSlot === slot ? "active" : ""}`}
                 onClick={() => setTimeSlot(slot)}
               >
                 {formatTimeWithAMPM(slot)}
               </button>
             ))}
-
           </div>
-
         </div>
 
         {/* REASON */}
         <label>
           Reason
-
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -251,16 +229,12 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         {/* SUMMARY CARD */}
         {(doctorId || date || timeSlot) && (
           <div className="appointment-summary">
-
             <h4>Appointment Summary</h4>
 
             <div className="summary-grid">
-
               <div>
                 <span>Doctor</span>
-                <strong>
-                  {selectedDoctor?.username || "--"}
-                </strong>
+                <strong>{selectedDoctor?.username || "--"}</strong>
               </div>
 
               <div>
@@ -271,14 +245,10 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
               <div>
                 <span>Time</span>
                 <strong>
-                  {timeSlot
-                    ? formatTimeWithAMPM(timeSlot)
-                    : "--"}
+                  {timeSlot ? formatTimeWithAMPM(timeSlot) : "--"}
                 </strong>
               </div>
-
             </div>
-
           </div>
         )}
 
@@ -289,9 +259,7 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         >
           {loading ? "Booking..." : "Confirm Appointment"}
         </button>
-
       </form>
-
     </div>
   );
 };

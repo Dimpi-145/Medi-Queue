@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const Appointment = require("../models/appointment.model");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const {
   normalizeAppointmentDate,
   allocateNextQueueNumber,
@@ -30,7 +30,6 @@ async function getDashboardStats(req, res) {
       patientsInQueue,
       appointmentsToday,
     });
-
   } catch (error) {
     return res.status(500).json({
       message: error.message,
@@ -42,7 +41,7 @@ async function getDashboardStats(req, res) {
 async function getPatients(req, res) {
   try {
     const patients = await User.find({ role: "patient" }).select(
-      "username email age gender phone doctorId"
+      "username email age gender phone doctorId",
     );
 
     const formatted = patients.map((p) => ({
@@ -65,21 +64,28 @@ async function getPatients(req, res) {
 
 async function adminCreatePatient(req, res) {
   try {
-    console.log("📝 Patient creation request received:", req.body);
-    
-    const { username, email, password, age, gender, phone, doctorId } = req.body;
-    const safePassword = (password && String(password).trim().length >= 6) ? String(password).trim() : "patient123";
-    
-    console.log("🔐 Using password:", safePassword === "patient123" ? "default" : "custom");
+    const { username, email, password, age, gender, phone, doctorId } =
+      req.body;
+
+    // Validate required fields
+    if (!username || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username, email, and password are required" });
+    }
+
+    if (String(password).trim().length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
 
     const existing = await User.findOne({ email });
     if (existing) {
-      console.log("❌ Patient already exists with email:", email);
-      return res.status(400).json({ message: "Patient already exists" });
+      return res.status(409).json({ message: "Email already exists" });
     }
 
-    const hashed = await bcrypt.hash(safePassword, 10);
-    console.log("✅ Password hashed successfully");
+    const hashed = await bcrypt.hash(String(password).trim(), 10);
 
     const patient = await User.create({
       username,
@@ -92,32 +98,26 @@ async function adminCreatePatient(req, res) {
       doctorId: doctorId || undefined,
     });
 
-    console.log("✅ Patient created successfully:", patient._id);
-
     return res.status(201).json({
       message: "Patient created successfully",
       patient: {
         _id: patient._id,
         username: patient.username,
         email: patient.email,
-        age: patient.age,
-        gender: patient.gender,
-        phone: patient.phone,
-        doctorId: patient.doctorId,
       },
     });
   } catch (error) {
-    console.error("❌ Error creating patient:", error.message);
-    console.error("Stack:", error.stack);
-    return res.status(500).json({ message: error.message });
+    console.error("Patient creation error");
+    return res.status(500).json({ message: "Failed to create patient" });
   }
 }
 
 // GET DOCTORS
 async function getDoctors(req, res) {
   try {
-    const doctors = await User.find({ role: "doctor" })
-      .select("username email specialization");
+    const doctors = await User.find({ role: "doctor" }).select(
+      "username email specialization",
+    );
 
     const formatted = doctors.map((d) => ({
       _id: d._id,
@@ -136,7 +136,8 @@ async function getDoctors(req, res) {
 async function admincreateDoctor(req, res) {
   try {
     const { username, email, password, specialization } = req.body;
-    const safePassword = password && password.length >= 6 ? password : "doctor123";
+    const safePassword =
+      password && password.length >= 6 ? password : "doctor123";
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -168,28 +169,24 @@ async function admincreateDoctor(req, res) {
 }
 async function walkInRegister(req, res) {
   try {
-    const {
-      username,
-      email,
-      gender,
-      age,
-      doctorId
-    } = req.body;
+    const { username, email, gender, age, doctorId } = req.body;
 
     if (!doctorId) {
       return res.status(400).json({
-        message: "doctorId is required"
+        message: "doctorId is required",
       });
     }
 
-    // 1. Create patient (NO PASSWORD for walk-in optional)
+    // 1. Create patient with secure temporary password
+    const crypto = require("crypto");
+    const tempPassword = crypto.randomBytes(4).toString("hex");
     const patient = await User.create({
       username,
       email,
       role: "patient",
       gender,
       age,
-      password: await bcrypt.hash("walkin123", 10) // default temp password
+      password: await bcrypt.hash(tempPassword, 10),
     });
 
     const today = normalizeAppointmentDate(new Date());
@@ -200,7 +197,7 @@ async function walkInRegister(req, res) {
       doctorId,
       queueNumber,
       status: "pending",
-      source: "walk-in" ,
+      source: "walk-in",
       date: today,
     });
 
@@ -213,18 +210,14 @@ async function walkInRegister(req, res) {
     return res.status(201).json({
       message: "Walk-in patient registered and added to queue",
       patient,
-      appointment
+      appointment,
     });
-
   } catch (error) {
     return res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 }
-
-
-
 
 // ================= GET ALL APPOINTMENTS =================
 async function getAppointments(req, res) {
@@ -234,7 +227,7 @@ async function getAppointments(req, res) {
       .populate("doctorId", "username specialization")
       .sort({ date: -1, queueNumber: 1 });
 
-    const formatted = appointments.map(app => ({
+    const formatted = appointments.map((app) => ({
       _id: app._id,
       patient: app.patientId?.username || "Unknown",
       doctor: app.doctorId?.username || "Unknown",
@@ -243,19 +236,16 @@ async function getAppointments(req, res) {
       timeSlot: app.timeSlot,
       queueNumber: app.queueNumber,
       status: app.status,
-      source: app.source
+      source: app.source,
     }));
 
     return res.status(200).json(formatted);
   } catch (error) {
     return res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 }
-
-
-
 
 // ================= ADMIN BOOK APPOINTMENT =================
 async function adminBookAppointment(req, res) {
@@ -269,7 +259,7 @@ async function adminBookAppointment(req, res) {
       doctorId,
       date: normalizedDate,
       timeSlot,
-      status: { $in: ["pending", "approved"] }
+      status: { $in: ["pending", "approved"] },
     });
 
     if (existing) {
@@ -284,7 +274,7 @@ async function adminBookAppointment(req, res) {
       date: normalizedDate,
       timeSlot,
       queueNumber,
-      status: "pending"
+      status: "pending",
     });
 
     const io = req.app.get("io");
@@ -295,15 +285,12 @@ async function adminBookAppointment(req, res) {
 
     return res.status(201).json({
       message: "Appointment booked successfully",
-      appointment
+      appointment,
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 }
-
-
-
 
 module.exports = {
   getDashboardStats,
