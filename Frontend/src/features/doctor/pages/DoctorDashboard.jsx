@@ -353,7 +353,9 @@ const DoctorDashboard = () => {
                 <p>Waiting</p>
               </div>
               <div className="stat-box">
-                <span>{dashboardStats.currentPatient?.patientId?.username ? 1 : 0}</span>
+                <span>
+                  {dashboardStats.currentPatient?.patientId?.username ? 1 : 0}
+                </span>
                 <p>Being Treated</p>
               </div>
               <div className="stat-box">
@@ -437,7 +439,8 @@ const DoctorDashboard = () => {
                 <div className="info-card">
                   <p className="info-label">Current Patient</p>
                   <strong>
-                    {dashboardStats.currentPatient?.patientId?.username || "None"}
+                    {dashboardStats.currentPatient?.patientId?.username ||
+                      "None"}
                   </strong>
                 </div>
                 <div className="info-card">

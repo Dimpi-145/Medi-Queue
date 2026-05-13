@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import io from "socket.io-client";
+import { initSocket } from "../../services/socket";
 import "./VideoRoom.scss";
 
 const VideoRoom = () => {
@@ -30,10 +31,18 @@ const VideoRoom = () => {
   const [remoteUserConnected, setRemoteUserConnected] = useState(false);
 
   const RTCConfig = {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-    ],
+    iceServers: (() => {
+      const list = [];
+      const stun = import.meta.env.VITE_STUN_URL || "stun:stun.l.google.com:19302";
+      const turn = import.meta.env.VITE_TURN_URL || "";
+      if (stun) list.push({ urls: stun });
+      if (turn) {
+        const username = import.meta.env.VITE_TURN_USERNAME || undefined;
+        const credential = import.meta.env.VITE_TURN_PASSWORD || undefined;
+        list.push({ urls: turn, username, credential });
+      }
+      return list;
+    })(),
   };
 
   // Initialize WebRTC Connection
@@ -80,6 +89,9 @@ const VideoRoom = () => {
       peerConnectionRef.current = peerConnection;
       console.log("[WebRTC] RTCPeerConnection created");
 
+      // candidate queue to handle early ICE candidates
+      peerConnection._pendingCandidates = [];
+
       // Add local tracks to peer connection
       let trackCount = 0;
       stream.getTracks().forEach((track) => {
@@ -124,6 +136,14 @@ const VideoRoom = () => {
           console.log("[WebRTC] ICE candidate generation completed (null candidate)");
         }
       };
+
+      // drain pending candidates if any
+      if (peerConnection._pendingCandidates && peerConnection._pendingCandidates.length) {
+        peerConnection._pendingCandidates.forEach((c) => {
+          try { peerConnection.addIceCandidate(c); } catch (e) { console.warn('[WebRTC] addIceCandidate drain failed', e); }
+        });
+        peerConnection._pendingCandidates = [];
+      }
 
       // Handle connection state changes
       peerConnection.onconnectionstatechange = () => {
@@ -192,14 +212,14 @@ const VideoRoom = () => {
   useEffect(() => {
     if (!roomId) return;
 
-    const socket = io("http://localhost:3000");
+    const token = localStorage.getItem("token");
+    const socket = initSocket(token);
     socketRef.current = socket;
 
     socket.on("connect", () => {
       console.log("Connected to socket server");
       const userId = localStorage.getItem("userId");
       userIdRef.current = userId;
-      
       // Initialize peer connection after socket connection
       initializePeerConnection();
     });

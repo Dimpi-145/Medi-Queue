@@ -1,95 +1,207 @@
 const express = require("express");
+
 const multer = require("multer");
+
 const path = require("path");
+
 const fs = require("fs");
-const chatRouter = express.Router();
 
-const authMiddleware = require("../middleware.js/auth.middleware");
-const roleMiddleware = require("../middleware.js/role.middleware");
-const chatController = require("../controllers/chat.controller");
+const chatRouter =
+  express.Router();
 
-// Configure multer for file uploads
-const uploadDir = path.join(__dirname, "../../uploads/chat");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const authMiddleware =
+  require("../middleware.js/auth.middleware");
+
+const roleMiddleware =
+  require("../middleware.js/role.middleware");
+
+const chatController =
+  require("../controllers/chat.controller");
+
+// ================= UPLOAD DIRECTORY =================
+
+const uploadDir =
+  path.join(
+    __dirname,
+    "../../uploads/chat"
+  );
+
+if (
+  !fs.existsSync(uploadDir)
+) {
+  fs.mkdirSync(
+    uploadDir,
+    {
+      recursive: true,
+    }
+  );
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// ================= MULTER STORAGE =================
 
-const fileFilter = (req, file, cb) => {
-  // Allow images, PDFs, and documents
-  const allowedMimes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ];
+const storage =
+  multer.diskStorage({
+    destination: (
+      req,
+      file,
+      cb
+    ) => {
+      cb(
+        null,
+        uploadDir
+      );
+    },
 
-  if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Invalid file type. Only images, PDFs, and documents are allowed."));
+    filename: (
+      req,
+      file,
+      cb
+    ) => {
+      const uniqueSuffix = `${Date.now()}-${Math.round(
+        Math.random() *
+          1e9
+      )}`;
+
+      cb(
+        null,
+        `${uniqueSuffix}${path.extname(
+          file.originalname
+        )}`
+      );
+    },
+  });
+
+// ================= FILE FILTER =================
+
+const allowedMimes = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+
+  "application/pdf",
+
+  "application/msword",
+
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+  "application/vnd.ms-excel",
+
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
+
+const fileFilter = (
+  req,
+  file,
+  cb
+) => {
+  if (
+    allowedMimes.includes(
+      file.mimetype
+    )
+  ) {
+    return cb(
+      null,
+      true
+    );
   }
+
+  return cb(
+    new Error(
+      "Invalid file type. Only images, PDFs, and documents are allowed."
+    )
+  );
 };
+
+// ================= MULTER INSTANCE =================
 
 const upload = multer({
   storage,
+
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+
+  limits: {
+    fileSize:
+      10 * 1024 * 1024,
+  },
 });
 
-// Send message (both doctor and patient)
+// ================= SEND TEXT MESSAGE =================
+
 chatRouter.post(
   "/send",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   chatController.sendMessage
 );
 
-// Send message with file attachment
+// ================= SEND FILE MESSAGE =================
+
 chatRouter.post(
   "/send-with-file",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   upload.single("file"),
+
   chatController.sendMessageWithFile
 );
 
-// Get chat history for a consultation
+// ================= CHAT HISTORY =================
+
+// Primary route
 chatRouter.get(
   "/history/:consultationId",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   chatController.getChatHistory
 );
 
-// Alias route for chat history by appointment id
+// Alias route
 chatRouter.get(
-  "/:appointmentId",
+  "/:consultationId",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   chatController.getChatHistory
 );
 
-// Get all follow-up consultations (completed appointments)
+// ================= FOLLOW-UP CONSULTATIONS =================
+
 chatRouter.get(
   "/follow-ups",
+
   authMiddleware,
-  roleMiddleware("doctor", "patient"),
+
+  roleMiddleware(
+    "doctor",
+    "patient"
+  ),
+
   chatController.getFollowUpConsultations
 );
 
-module.exports = chatRouter;
+module.exports =
+  chatRouter;

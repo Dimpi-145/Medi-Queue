@@ -26,15 +26,34 @@ const Login = () => {
     try {
       const response = await login(formData.username, formData.password);
       const user = response.user;
+      const token = response.token;
 
       handleLogin(user);
 
+<<<<<<< HEAD
       localStorage.setItem("token", response.token);
+=======
+      // 🔥 STORE FOR SOCKET + SESSION
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
+>>>>>>> 530d7e145700546f4c9fd5d212827a6bf3c565b4
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role);
       localStorage.setItem("userId", user._id);
 
+<<<<<<< HEAD
+=======
+      console.log("[Login][socket-debug] stored auth", {
+        hasToken: Boolean(token),
+        userId: user._id,
+        role: user.role,
+      });
+
+      // optional (only for doctor queue system)
+>>>>>>> 530d7e145700546f4c9fd5d212827a6bf3c565b4
       if (user.role === "doctor") {
         localStorage.setItem("doctorId", user._id);
       }
