@@ -22,4 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-Frontend\src\features\patient\pages\PatientDashboard.jsx

@@ -1,0 +1,358 @@
+.patient-dashboard {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= LAYOUT ================= */
+
+.dashboard-shell {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin-left: 250px;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 30px;
+  background: #f8fafc;
+  border-left: 1px solid #e2e8f0;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 4rem;
+}
+
+/* ================= GRID ================= */
+
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  min-height: 100%;
+  gap: 1.5rem;
+}
+
+/* ================= CARD PANEL ================= */
+
+.card-panel {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  padding: 1.7rem;
+  transition: 0.25s ease;
+}
+
+.card-panel:hover {
+  transform: translateY(-2px);
+}
+
+/* ================= PANEL HEADER ================= */
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header .eyebrow {
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #2563eb;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.panel-header h2 {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ================= LISTS ================= */
+
+.report-list,
+.history-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.report-row,
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.2rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  transition: 0.25s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.report-row:hover,
+.history-row:hover {
+  background: #eef4ff;
+  transform: translateY(-1px);
+}
+
+.report-row h4,
+.history-row h4 {
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.report-row p,
+.history-row p {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+/* ================= EMPTY STATE ================= */
+
+.panel-empty {
+  padding: 3rem 1.5rem;
+  border-radius: 18px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+}
+
+/* ================= STATUS BADGES ================= */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: capitalize;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ===== STATUS COLORS ===== */
+
+.status-badge.waiting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.approved {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ================= MODAL ================= */
+
+.appointment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.appointment-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.18);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ================= MODAL HEADER ================= */
+
+.appointment-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.4rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.appointment-modal-header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+/* ================= CLOSE BUTTON ================= */
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0.4rem;
+  border-radius: 8px;
+  transition: 0.2s ease;
+}
+
+.close-modal:hover {
+  background: #e2e8f0;
+}
+
+/* ================= MODAL BODY ================= */
+
+.appointment-modal-content {
+  padding: 1.5rem;
+}
+
+/* ================= SCROLLBAR ================= */
+
+.dashboard-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ================= QUEUE FILTERS ================= */
+
+.queue-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f1f5f9;
+  border-radius: 14px;
+}
+
+.filter-control {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-control label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-control select,
+.filter-control input {
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  color: #0f172a;
+  transition: 0.2s ease;
+  font-family: inherit;
+}
+
+.filter-control select:hover:not(:disabled),
+.filter-control input:hover:not(:disabled) {
+  border-color: #2563eb;
+}
+
+.filter-control select:focus,
+.filter-control input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.filter-control select:disabled,
+.filter-control input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* ================= QUEUE EMPTY STATE ================= */
+
+.queue-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: #f1f5f9;
+  border-radius: 14px;
+  border: 2px dashed #cbd5e1;
+}
+
+.queue-empty-state p {
+  color: #64748b;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1120px) {
+  .dashboard-shell {
+    margin-left: 0;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  .appointment-modal-overlay {
+    left: 0;
+  }
+
+  .queue-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-content {
+    padding: 20px;
+  }
+
+  .panel-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .card-panel {
+    padding: 1.2rem;
+  }
+}

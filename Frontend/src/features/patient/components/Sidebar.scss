@@ -1,0 +1,117 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 18px;
+  border-right: 1px solid #1e293b;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+/* ================= HEADER ================= */
+
+.sidebar-header {
+  margin-bottom: 32px;
+}
+
+.sidebar-header h2 {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sidebar-header p {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* ================= MENU ================= */
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ================= ITEMS ================= */
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 14px;
+
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* ICON */
+.sidebar-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+}
+
+/* LABEL */
+.sidebar-label {
+  flex: 1;
+}
+
+/* ================= HOVER ================= */
+
+.sidebar-item:hover {
+  background: #1e293b;
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.sidebar-item:hover .sidebar-icon {
+  color: #60a5fa;
+}
+
+/* ================= ACTIVE ================= */
+
+.sidebar-item.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: #ffffff;
+}
+
+/* 🔥 Left indicator bar (premium touch) */
+.sidebar-item.active::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 6px;
+  height: calc(100% - 12px);
+  width: 4px;
+  background: #3b82f6;
+  border-radius: 4px;
+}
+
+/* ===== ICON INTERACTION ===== */
+
+.sidebar-item.active .sidebar-icon {
+  transform: scale(1.1);
+}
+
+.sidebar-item:hover .sidebar-icon {
+  transform: scale(1.05);
+  transition: 0.2s;
+}
