@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["patient", "doctor", "admin"],
+      enum: ["patient", "doctor", "admin", "hospital"],
       default: "patient",
     },
 
@@ -44,17 +44,17 @@ const userSchema = new mongoose.Schema(
 
     specialization: String,
     department: {
-  type: String,
-  enum: [
-    "General",
-    "Cardiology",
-    "Neurology",
-    "Orthopedics",
-    "Dermatology",
-    "Pediatrics",
-    "ENT",
-  ],
-},
+      type: String,
+      enum: [
+        "General",
+        "Cardiology",
+        "Neurology",
+        "Orthopedics",
+        "Dermatology",
+        "Pediatrics",
+        "ENT",
+      ],
+    },
 
     isVerified: {
       type: Boolean,

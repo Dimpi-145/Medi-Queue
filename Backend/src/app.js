@@ -16,6 +16,8 @@ const videoRouter = require("./routes/video.routes");
 const reportRouter = require("./routes/report.routes");
 const doctorRouter = require("./routes/doctor.routes");
 
+const hospitalRouter = require("./routes/hospital.routes");
+
 // ================= APP =================
 
 const app = express();
@@ -112,6 +114,11 @@ app.use("/api/chat", chatRouter);
 app.use("/api/video", videoRouter);
 
 app.use("/api/doctor", doctorRouter);
+
+app.use(
+  "/api/hospital",
+  hospitalRouter
+);
 
 // ================= 404 =================
 

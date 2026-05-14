@@ -20,11 +20,11 @@ PrescriptionRouter.get(
   role("patient"),
   controller.getPatientPrescriptions
 );
-// Admin gets all prescriptions
+// Admin and hospital get all prescriptions
 PrescriptionRouter.get(
   "/all",
   auth,
-  role("admin"),
+  role("admin","hospital"),
   controller.getPrescriptions
 );
 

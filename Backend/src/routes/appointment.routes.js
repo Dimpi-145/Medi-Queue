@@ -55,6 +55,14 @@ appointmentRouter.get(
   appointmentController.getDoctorHistory,
 );
 
+// patient history
+appointmentRouter.get(
+  "/history",
+  authMiddleware,
+  roleMiddleware("patient"),
+  appointmentController.getMyHistory,
+);
+
 // cancel
 appointmentRouter.put(
   "/cancel/:id",

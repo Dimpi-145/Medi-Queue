@@ -6,7 +6,11 @@ const roleMiddleware = (...allowedRoles) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+
+      const userRole = req.user.role?.trim().toLowerCase();
+      const roles = allowedRoles.map(r => r.toLowerCase());
+
+    if (!roles.includes(userRole)) {
       return res.status(403).json({
         message: "Access denied",
       });

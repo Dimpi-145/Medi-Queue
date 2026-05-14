@@ -1,0 +1,63 @@
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.reports-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+
+.panel-empty,
+.panel-error {
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.panel-error {
+  color: #dc2626;
+}
+
+.reports-table {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1.25fr 1.5fr 1fr 0.9fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+}
+
+.header-row {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #2563eb;
+  font-weight: 600;
+}

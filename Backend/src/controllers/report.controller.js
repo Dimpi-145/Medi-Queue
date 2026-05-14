@@ -424,10 +424,30 @@ async function deleteReport(req, res) {
   }
 }
 
+async function getAllReports(req, res) {
+  try {
+    const reports = await ReportModel.find()
+      .populate("patientId", "username email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: reports,
+    });
+  } catch (err) {
+    console.error("GET ALL REPORTS ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error fetching reports",
+    });
+  }
+}
+
 module.exports = {
   uploadReport,
   getMyReports,
   getReportByToken,
+  getAllReports,
   renameReport,
   deleteReport,
 };

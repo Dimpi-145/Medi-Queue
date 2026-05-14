@@ -43,4 +43,12 @@ ReportRouter.get(
   reportController.getReportByToken,
 );
 
+// Admin and hospital get all reports
+ReportRouter.get(
+  "/all",
+  auth,
+  role("admin","hospital"),
+  reportController.getAllReports,
+);
+
 module.exports = ReportRouter;

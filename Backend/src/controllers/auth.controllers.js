@@ -7,13 +7,16 @@ async function registerController(req, res) {
   try {
     let { username, email, password, gender, age, profileImage } = req.body;
 
-    // Input validation
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Username, email, and password are required" });
+      return res.status(400).json({
+        message: "Username, email, and password are required",
+      });
     }
 
     if (String(password).trim().length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res.status(400).json({
+        message: "Password must be at least 6 characters",
+      });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,6 +27,7 @@ async function registerController(req, res) {
     const isUserAlreadyExists = await userModel.findOne({
       $or: [{ username }, { email }],
     });
+
     if (isUserAlreadyExists) {
       return res.status(409).json({
         message: "User already exists",
@@ -32,7 +36,6 @@ async function registerController(req, res) {
 
     const hashedPassword = await bcrypt.hash(String(password).trim(), 10);
 
-    // optional image upload
     if (req.file) {
       const client = new ImageKit({
         publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -51,7 +54,7 @@ async function registerController(req, res) {
       username,
       email,
       password: hashedPassword,
-      role: "patient", // 🔥 FIXED
+      role: "patient",
       gender: gender || "others",
       age: age || null,
       profileImage,
@@ -75,29 +78,33 @@ async function registerController(req, res) {
       token,
     });
   } catch (error) {
-    console.error("Register error");
+    console.error("Register error:", error);
     res.status(500).json({ message: "Registration failed" });
   }
 }
 
 async function loginController(req, res) {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
-    // Input validation
     if (!password || (!username && !email)) {
       return res.status(400).json({
         message: "Username or email and password are required",
       });
     }
 
-    const user = await userModel.findOne({
-      $or: [{ username }, { email }],
-    });
+    const query = email ? { email } : { username };
+    const user = await userModel.findOne(query);
 
     if (!user) {
       return res.status(404).json({
         message: "User not found",
+      });
+    }
+
+    if (role && user.role !== role) {
+      return res.status(401).json({
+        message: "Invalid role selected",
       });
     }
 
@@ -127,7 +134,7 @@ async function loginController(req, res) {
       },
     });
   } catch (error) {
-    console.error("Login error");
+    console.error("Login error:", error);
     res.status(500).json({ message: "Login failed" });
   }
 }

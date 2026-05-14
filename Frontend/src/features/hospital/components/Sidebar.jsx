@@ -5,6 +5,12 @@ import "./Sidebar.scss";
 const Sidebar = ({ currentPage, setCurrentPage }) => {
   const menuItems = [
     { key: 'dashboard', label: 'Dashboard' },
+    { key: 'patients', label: 'Patients' },
+    { key: 'doctors', label: 'Doctors' },
+    { key: 'appointments', label: 'Appointments' },
+    { key: 'queue', label: 'Queue' },
+    { key: 'prescriptions', label: 'Prescriptions' },
+    { key: 'reports', label: 'Reports' },
   ];
 
   return (

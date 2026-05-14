@@ -3,12 +3,20 @@ import { createBrowserRouter } from "react-router-dom"
 import Login from "./auth/pages/Login"
 import Register from "./auth/pages/Register"
 
-import PatientDashboard from "./patient/pages/PatientDashboard"
+import PatientDashboard, {
+  PatientDashboardOverview,
+  PatientAppointmentsPage,
+  PatientPrescriptionsPage,
+  PatientReportsPage,
+  PatientHistoryPage,
+  PatientQueueStatusPage,
+} from "./patient/pages/PatientDashboard"
 
 import DoctorDashboard from "./doctor/pages/DoctorDashboard"
 import DoctorPatientDetails from "./doctor/pages/DoctorPatientDetails"
 
 import AdminDashboard from "../features/admin/pages/AdminDashboard"
+import HospitalDashboard from "../features/hospital/pages/HospitalDashboard"
 
 import Homepage from "./homepage/homepage"
 import Terms from "./homepage/Terms"
@@ -40,7 +48,33 @@ export const router = createBrowserRouter([
 
     {
         path: "/patient-dashboard",
-        element: <PatientDashboard />
+        element: <PatientDashboard />,
+        children: [
+            {
+                index: true,
+                element: <PatientDashboardOverview />,
+            },
+            {
+                path: "appointments",
+                element: <PatientAppointmentsPage />,
+            },
+            {
+                path: "prescriptions",
+                element: <PatientPrescriptionsPage />,
+            },
+            {
+                path: "reports",
+                element: <PatientReportsPage />,
+            },
+            {
+                path: "queue-status",
+                element: <PatientQueueStatusPage />,
+            },
+            {
+                path: "history",
+                element: <PatientHistoryPage />,
+            },
+        ],
     },
 
     {
@@ -66,6 +100,10 @@ export const router = createBrowserRouter([
     {
         path: "/admin-dashboard",
         element: <AdminDashboard />
+    },
+    {
+        path: "/hospital-dashboard",
+        element: <HospitalDashboard />
     },
 
     {

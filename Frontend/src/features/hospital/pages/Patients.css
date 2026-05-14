@@ -1,0 +1,373 @@
+.patients-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ================= HERO ================= */
+.patients-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.8rem 2rem;
+  border-radius: 1.75rem;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.18);
+}
+
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hero-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.hero-eyebrow {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.45rem;
+}
+
+.patients-hero h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: white;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+}
+
+.hero-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+/* ================= TOOLBAR ================= */
+.patients-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patients-toolbar h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.3rem;
+}
+
+.patients-toolbar p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary,
+.btn-secondary {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.95rem 1.3rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.18);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #eef2f7;
+  color: #475569;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+/* ================= FORM CARD ================= */
+.patient-form-card {
+  background: #ffffff;
+  border-radius: 1.6rem;
+  padding: 1.8rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.form-header {
+  margin-bottom: 1.6rem;
+}
+
+.form-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.form-header p {
+  color: #64748b;
+}
+
+/* ================= FORM ================= */
+.patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.input-group.full-width {
+  grid-column: span 2;
+}
+
+.input-group label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.input-group input,
+.input-group select {
+  height: 54px;
+  border-radius: 1rem;
+  border: 1px solid #dbe3ee;
+  background: #f8fafc;
+  padding: 0 1rem;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* ================= ACTIONS ================= */
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-error {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+/* ================= TABLE CARD ================= */
+.patients-table-card {
+  background: white;
+  border-radius: 1.75rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.table-header {
+  padding: 1.7rem 1.8rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.35rem;
+}
+
+.table-header p {
+  color: #64748b;
+}
+
+/* ================= TABLE ================= */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.patients-table thead {
+  background: #f8fafc;
+}
+
+.patients-table th {
+  text-align: left;
+  padding: 1.1rem 1.4rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.patients-table td {
+  padding: 1.2rem 1.4rem;
+  border-top: 1px solid #eef2f7;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.patients-table tbody tr {
+  transition: 0.2s ease;
+}
+
+.patients-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ================= PATIENT CELL ================= */
+.patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.patient-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  font-weight: 700;
+}
+
+.patient-cell strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.patient-cell span {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* ================= GENDER BADGES ================= */
+.gender-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.gender-badge.male {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.gender-badge.female {
+  background: #fce7f3;
+  color: #db2777;
+}
+
+.gender-badge.others {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+/* ================= LOADING ================= */
+.table-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 980px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .input-group.full-width {
+    grid-column: span 1;
+  }
+  .form-actions {
+    grid-template-columns: 1fr;
+  }
+  .patients-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .patients-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 680px) {
+  .patients-page {
+    gap: 1rem;
+  }
+  .patients-hero,
+  .patient-form-card,
+  .patients-table-card {
+    border-radius: 1.2rem;
+  }
+  .patients-toolbar h2 {
+    font-size: 1.6rem;
+  }
+  .patients-hero h1 {
+    font-size: 1.8rem;
+  }
+}/*# sourceMappingURL=Patients.css.map */

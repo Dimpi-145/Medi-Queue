@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import "../style/form.scss";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -9,11 +9,10 @@ const Login = () => {
   const { handleLogin } = useAuth();
 
   const [formData, setFormData] = useState({
-    role: "",
+    role: "patient",
     username: "",
     password: "",
   });
-
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
 
@@ -38,22 +37,20 @@ const Login = () => {
     try {
       const response = await login(
         formData.username,
-        formData.password
+        formData.password,
+        formData.role,
       );
 
       const user = response.user;
       const token = response.token;
 
-      // Ensure selected role matches backend role
       if (formData.role && formData.role !== user.role) {
         setError("Selected role does not match account role");
         return;
       }
 
-      // Store auth context
       handleLogin(user);
 
-      // Store auth/session data
       if (token) {
         localStorage.setItem("token", token);
       }
@@ -63,13 +60,6 @@ const Login = () => {
       localStorage.setItem("role", user.role);
       localStorage.setItem("userId", user._id);
 
-      console.log("[Login][socket-debug] stored auth", {
-        hasToken: Boolean(token),
-        userId: user._id,
-        role: user.role,
-      });
-
-      // Doctor queue support
       if (user.role === "doctor") {
         localStorage.setItem("doctorId", user._id);
       }
@@ -78,15 +68,14 @@ const Login = () => {
         doctor: "/doctor-dashboard",
         patient: "/patient-dashboard",
         admin: "/admin-dashboard",
+        hospital: "/hospital-dashboard",
       };
 
-      navigate(routes[user?.role] || "/");
+      const normalizedRole = user?.role?.toLowerCase().trim();
+      navigate(routes[normalizedRole] || "/");
     } catch (err) {
       console.log("LOGIN ERROR:", err.response?.data);
-
-      setError(
-        err.response?.data?.message || "Login failed"
-      );
+      setError(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -94,43 +83,26 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Welcome Back</h2>
-
         <p>Login to continue to MediQueue</p>
 
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-        >
+        <form ref={formRef} onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Role</label>
-
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
               required
             >
-              <option value="" disabled>
-                Select your role
-              </option>
-
-              <option value="patient">
-                Patient
-              </option>
-
-              <option value="doctor">
-                Doctor
-              </option>
-
-              <option value="admin">
-                Admin
-              </option>
+              <option value="patient">Patient</option>
+              <option value="doctor">Doctor</option>
+              <option value="admin">Admin</option>
+              <option value="hospital">Hospital</option>
             </select>
           </div>
 
           <div className="form-group">
             <label>Username</label>
-
             <input
               type="text"
               name="username"
@@ -143,20 +115,9 @@ const Login = () => {
 
           <div className="form-group">
             <label>Password</label>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-              }}
-            >
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
                 value={formData.password}
@@ -166,65 +127,40 @@ const Login = () => {
 
               <button
                 type="button"
-                aria-label={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
-                onClick={() =>
-                  setShowPassword((s) => !s)
-                }
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((value) => !value)}
                 style={{
                   background: "transparent",
                   border: "none",
                   cursor: "pointer",
                 }}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexDirection: "column",
-            }}
-          >
-            <button className="auth-btn">
-              Login
-            </button>
+          <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
+            <button className="auth-btn">Login</button>
 
             <button
               type="button"
               className="auth-btn"
-              onClick={() =>
-                navigate("/demo-login")
-              }
+              onClick={() => navigate("/demo-login")}
             >
               Use Demo Credentials
             </button>
           </div>
 
           {error && (
-            <div
-              style={{
-                color:
-                  "var(--danger, #c00)",
-                marginTop: 8,
-              }}
-            >
+            <div style={{ color: "var(--danger, #c00)", marginTop: 8 }}>
               {error}
             </div>
           )}
         </form>
 
         <div className="auth-footer">
-          Don’t have an account?{" "}
-          <Link to="/register">
-            Create one
-          </Link>
+          Don&apos;t have an account? <Link to="/register">Create one</Link>
         </div>
       </div>
     </div>

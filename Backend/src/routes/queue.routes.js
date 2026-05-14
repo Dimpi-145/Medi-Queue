@@ -9,7 +9,7 @@ const roleMiddleware = require("../middleware.js/role.middleware")
 QueueRouter.get(
     "/live",
     authMiddleware,
-    roleMiddleware("doctor","admin","patient"),
+    roleMiddleware("doctor","admin","hospital","patient"),
     queueController.getLiveQueue
 )
 
@@ -45,11 +45,20 @@ QueueRouter.get(
     queueController.getPatientDetails
 )
 
-QueueRouter.post("/admin/add-to-queue",
+QueueRouter.post(
+  "/admin/add-to-queue",
   authMiddleware,
   roleMiddleware("admin"),
- queueController.addToQueue
+  queueController.addToQueue
 );
+
+QueueRouter.post(
+  "/hospital/add-to-queue",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  queueController.addToQueue
+);
+
 QueueRouter.put(
   "/complete",
   authMiddleware,

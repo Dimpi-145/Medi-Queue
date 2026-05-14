@@ -1,5 +1,3 @@
-// pages/AdminDashboard.jsx
-
 import React, { useState } from "react";
 
 import {
@@ -16,15 +14,21 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 
 import Dashboard from "./Dashboard";
+import Patients from "./Patients";
+import Doctors from "./Doctors";
+import Appointments from "./Appointments";
+import Queue from "./Queue";
+import Prescriptions from "./Prescriptions";
+import Reports from "./Reports";
 
-import "../AdminDashboard.scss";
+import "../HospitalDashboard.scss";
 
-const AdminDashboard = () => {
+const HospitalDashboard = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");
 
   const pageConfig = {
     dashboard: {
-      title: "Admin Dashboard",
+      title: "Hospital Dashboard",
       subtitle: "Hospital operations overview & analytics",
       icon: <LayoutDashboard size={22} />,
     },
@@ -58,6 +62,12 @@ const AdminDashboard = () => {
       subtitle: "Digital prescriptions and medical records",
       icon: <FileText size={22} />,
     },
+
+    reports: {
+      title: "Reports",
+      subtitle: "Medical reports and diagnostic files",
+      icon: <Activity size={22} />,
+    },
   };
 
   const renderPage = () => {
@@ -80,13 +90,16 @@ const AdminDashboard = () => {
       case "prescriptions":
         return <Prescriptions />;
 
+      case "reports":
+        return <Reports />;
+
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="admin-container">
+    <div className="hospital-container">
 
       {/* SIDEBAR */}
       <Sidebar
@@ -101,7 +114,7 @@ const AdminDashboard = () => {
         <Header />
 
         {/* PAGE HERO */}
-        <div className="admin-hero">
+        <div className="hospital-hero">
 
           <div className="hero-left">
 
@@ -111,7 +124,7 @@ const AdminDashboard = () => {
 
             <div>
               <p className="hero-eyebrow">
-                MediQueue Admin Panel
+                MediQueue Hospital Panel
               </p>
 
               <h1>
@@ -140,4 +153,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default HospitalDashboard;

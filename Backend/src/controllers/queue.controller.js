@@ -104,8 +104,10 @@ async function getLiveQueue(req, res) {
 
     if (req.user.role === "doctor") {
       filter.doctorId = req.user.id;
-    } else if (req.user.role === "admin" && req.query.doctorId) {
-      filter.doctorId = req.query.doctorId;
+    } else if (req.user.role === "admin" || req.user.role === "hospital") {
+      if (req.query.doctorId) {
+        filter.doctorId = req.query.doctorId;
+      }
     } else if (req.user.role === "patient") {
       let doctorId = req.query.doctorId;
 
