@@ -1,0 +1,288 @@
+.hospital-profile .profile-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.hospital-profile .profile-card .profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content .profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content .profile-avatar img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content .profile-info {
+  flex: 1;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content .profile-info h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  word-break: break-word;
+}
+.hospital-profile .profile-card .profile-header .profile-header-content .profile-info .role-badge {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.hospital-profile .profile-card .profile-header .edit-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.hospital-profile .profile-card .profile-header .edit-btn:hover {
+  background: #0056b3;
+}
+.hospital-profile .profile-card .profile-header .edit-btn:active {
+  transform: scale(0.98);
+}
+.hospital-profile .profile-card .alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.hospital-profile .profile-card .alert.alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+.hospital-profile .profile-card .alert.alert-success {
+  background: #efe;
+  color: #3a3;
+  border: 1px solid #cfc;
+}
+.hospital-profile .profile-card .unique-id-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.hospital-profile .profile-card .unique-id-section .id-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.hospital-profile .profile-card .unique-id-section .id-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.hospital-profile .profile-card .unique-id-section .id-container .id-value {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: #495057;
+  word-break: break-all;
+  flex: 1;
+  font-weight: 500;
+}
+.hospital-profile .profile-card .unique-id-section .id-container .copy-btn {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #495057;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.hospital-profile .profile-card .unique-id-section .id-container .copy-btn:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+  color: #007bff;
+}
+.hospital-profile .profile-card .unique-id-section .id-container .copy-btn:active {
+  transform: scale(0.95);
+}
+.hospital-profile .profile-card .unique-id-section .id-container .copy-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.hospital-profile .profile-card .unique-id-section .id-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}
+.hospital-profile .profile-card .profile-details .detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) {
+  .hospital-profile .profile-card .profile-details .detail-row {
+    grid-template-columns: 1fr;
+  }
+}
+.hospital-profile .profile-card .profile-details .detail-item {
+  display: flex;
+  gap: 12px;
+}
+.hospital-profile .profile-card .profile-details .detail-item.full-width {
+  grid-column: 1/-1;
+}
+.hospital-profile .profile-card .profile-details .detail-item svg {
+  color: #007bff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.hospital-profile .profile-card .profile-details .detail-item label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  display: block;
+}
+.hospital-profile .profile-card .profile-details .detail-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  word-break: break-word;
+}
+.hospital-profile .profile-card .profile-details .detail-item p.no-data {
+  color: #999;
+  font-style: italic;
+}
+.hospital-profile .profile-card .profile-details .detail-item .location-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  word-break: break-all;
+}
+.hospital-profile .profile-card .profile-details .detail-item .location-link:hover {
+  text-decoration: underline;
+}
+.hospital-profile .profile-card .profile-details .detail-item .location-link .external-icon {
+  font-size: 12px;
+  margin-left: 2px;
+}
+.hospital-profile .profile-card .profile-edit-form .form-group {
+  margin-bottom: 16px;
+}
+.hospital-profile .profile-card .profile-edit-form .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.hospital-profile .profile-card .profile-edit-form .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.hospital-profile .profile-card .profile-edit-form .form-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+.hospital-profile .profile-card .profile-edit-form .form-group .help-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-primary {
+  background: #007bff;
+  color: white;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+.hospital-profile .profile-card .profile-edit-form .form-actions .btn.btn-secondary:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+.hospital-profile.loading {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}/*# sourceMappingURL=HospitalProfile.css.map */

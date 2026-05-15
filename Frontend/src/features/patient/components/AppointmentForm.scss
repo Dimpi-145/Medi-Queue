@@ -139,6 +139,19 @@
   input {
     padding-left: 48px;
   }
+
+  select {
+    padding-left: 48px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+}
+
+.date-select-wrap {
+  select {
+    padding-right: 3rem;
+  }
 }
 
 /* ================= DOCTOR CARD ================= */
@@ -152,11 +165,7 @@
 
   border-radius: 1.2rem;
 
-  background: linear-gradient(
-    135deg,
-    #eff6ff,
-    #dbeafe
-  );
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
 
   border: 1px solid #bfdbfe;
 }
@@ -171,11 +180,7 @@
   align-items: center;
   justify-content: center;
 
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   color: white;
 
@@ -219,9 +224,9 @@
   }
 }
 
-/* ================= SLOT SECTION ================= */
+/* ================= TIME RANGE SECTION ================= */
 
-.slot-section {
+.time-range-section {
   display: grid;
   gap: 0.9rem;
 }
@@ -235,89 +240,23 @@
   color: #0f172a;
 }
 
-.slot-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.slot-chip {
-  border: 1px solid #cbd5e1;
-
-  background: #f8fafc;
-  color: #334155;
-
-  padding: 0.75rem 1rem;
-
-  border-radius: 999px;
-
-  font-size: 0.88rem;
-  font-weight: 600;
-
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.slot-chip:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
-
-.slot-chip.active {
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
-
-  color: white;
-
-  border-color: transparent;
-
-  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.25);
-}
-
-/* ================= SUMMARY ================= */
-
-.appointment-summary {
-  padding: 1.2rem;
-
-  border-radius: 1.2rem;
-
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-
-  h4 {
-    margin: 0 0 1rem;
-
-    font-size: 1rem;
-    font-weight: 700;
-
-    color: #0f172a;
-  }
-}
-
-.summary-grid {
+.time-range-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
 
-  div {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+  label {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
   }
+}
 
-  span {
-    font-size: 0.78rem;
-    color: #64748b;
-  }
-
-  strong {
-    color: #0f172a;
-    font-size: 0.95rem;
-  }
+.time-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
 }
 
 /* ================= BUTTON ================= */
@@ -331,11 +270,7 @@
   border: none;
   border-radius: 1rem;
 
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   color: white;
 
@@ -400,25 +335,12 @@
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 760px) {
-
   .booking-panel {
     padding: 1.2rem;
   }
 
   .booking-header h2 {
     font-size: 1.5rem;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .slot-grid {
-    gap: 0.55rem;
-  }
-
-  .slot-chip {
-    width: 100%;
   }
 
   .doctor-preview-card {

@@ -1,4 +1,5 @@
 const Appointment = require("../models/appointment.model");
+const User = require("../models/user.model");
 const {
   normalizeAppointmentDate,
   allocateNextQueueNumber,
@@ -12,7 +13,7 @@ async function bookAppointment(req, res) {
     console.log("[bookAppointment] incoming request body:", req.body);
     console.log("[bookAppointment] req.user:", req.user);
 
-    const { doctorId, date, timeSlot } = req.body;
+    const { doctorId, hospitalId, date, timeSlot } = req.body;
 
     if (!req.user || !req.user.id) {
       console.warn("[bookAppointment] missing req.user - unauthorized request");
@@ -22,6 +23,7 @@ async function bookAppointment(req, res) {
     if (!doctorId || !date || !timeSlot) {
       console.warn("[bookAppointment] missing required fields:", {
         doctorId,
+        hospitalId,
         date,
         timeSlot,
       });
@@ -74,11 +76,26 @@ async function bookAppointment(req, res) {
       });
     }
 
+    const doctor = await User.findOne({ _id: doctorId, role: "doctor" }).select(
+      "hospitalId",
+    );
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    if (hospitalId && String(doctor.hospitalId || "") !== String(hospitalId)) {
+      return res.status(400).json({
+        message: "Selected doctor does not belong to the selected hospital",
+      });
+    }
+
     let appointment;
     try {
       appointment = await Appointment.create({
         patientId: req.user.id,
         doctorId,
+        hospitalId: doctor.hospitalId,
         date: normalizedDate,
         timeSlot,
         queueNumber,
@@ -164,19 +181,30 @@ async function getMyAppointments(req, res) {
 // ================= DOCTOR =================
 async function getDoctorAppointments(req, res) {
   try {
-    const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0],
-    );
+    const selectedDate = req.query.date
+      ? normalizeAppointmentDate(req.query.date)
+      : null;
 
-    await syncActiveQueueSequential(req.user.id, selectedDate);
+    if (selectedDate) {
+      await syncActiveQueueSequential(req.user.id, selectedDate);
+    }
 
-    const appointments = await Appointment.find({
+    const filter = {
       doctorId: req.user.id,
-      date: selectedDate,
       status: { $in: ["pending", "approved"] },
-    })
+    };
+
+    if (selectedDate) {
+      filter.date = selectedDate;
+    }
+
+    const appointments = await Appointment.find(filter)
       .populate("patientId", "username age gender")
-      .sort({ queueNumber: 1, createdAt: 1 }); // queue order
+      .sort(
+        selectedDate
+          ? { queueNumber: 1, createdAt: 1 }
+          : { date: 1, queueNumber: 1, createdAt: 1 },
+      );
 
     const formattedAppointments = appointments.map((app) => ({
       _id: app._id,
@@ -250,23 +278,25 @@ async function getPatientHistory(req, res) {
   }
 }
 
-const User = require("../models/user.model");
-
 // ================= GET DOCTORS =================
 async function getDoctors(req, res) {
   try {
-    const { department } = req.query;
+    const { department, hospitalId } = req.query;
 
     const filter = {
       role: "doctor",
     };
+
+    if (hospitalId) {
+      filter.hospitalId = hospitalId;
+    }
 
     if (department) {
       filter.specialization = department;
     }
 
     const doctors = await User.find(filter).select(
-      "username department specialization",
+      "username department specialization hospitalId schedule",
     );
 
     return res.status(200).json(doctors);

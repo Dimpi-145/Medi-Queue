@@ -73,11 +73,7 @@
 
 .doctor-sidebar nav ul li:hover,
 .doctor-sidebar nav ul li.active {
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   color: white;
 
@@ -124,11 +120,7 @@
 
   border-radius: 50%;
 
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   display: flex;
   align-items: center;
@@ -169,11 +161,7 @@
 
   border-radius: 12px;
 
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   color: white;
 
@@ -246,6 +234,35 @@
   font-size: 0.9rem;
 }
 
+.date-group-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.date-group-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.date-group-header span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
 /* ================= PROFILE ================= */
 
 .profile-body {
@@ -260,17 +277,21 @@
   gap: 1rem;
 }
 
+.doctor-hospital-name {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .doctor-avatar {
   width: 68px;
   height: 68px;
 
   border-radius: 18px;
 
-  background: linear-gradient(
-    135deg,
-    #3b82f6,
-    #6366f1
-  );
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
 
   display: flex;
   align-items: center;
@@ -644,4 +665,53 @@
   .empty-card p {
     font-size: 0.88rem;
   }
+}
+
+/* ================= MODAL ================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  width: min(720px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35);
+  z-index: 1001;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.modal input[type="text"],
+.modal input[type="date"],
+.modal select,
+.modal textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.modal textarea {
+  min-height: 80px;
+  resize: vertical;
 }

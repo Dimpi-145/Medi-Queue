@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { formatTimeWithAMPM } from "../../../utils/timeFormatter";
+import React, { useState, useEffect, useMemo } from "react";
 import { getDoctors } from "../services/appointment.api";
+import { getHospitals } from "../../auth/services/auth.api";
 import {
   X,
   Calendar,
@@ -12,35 +12,41 @@ import {
 
 import "./AppointmentForm.scss";
 
-const slotOptions = [
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "02:00",
-  "02:30",
-  "03:00",
-  "03:30",
-];
-
 const AppointmentForm = ({ onBook, loading, onClose }) => {
+  const today = useMemo(() => new Date(), []);
+  const bookingWindowDays = 30;
+  const [hospitals, setHospitals] = useState([]);
+  const [hospitalId, setHospitalId] = useState("");
   const [department, setDepartment] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [doctorId, setDoctorId] = useState("");
   const [date, setDate] = useState("");
-  const [timeSlot, setTimeSlot] = useState("");
+  const [timeSlot] = useState("09:00");
   const [reason, setReason] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // ================= FETCH HOSPITALS =================
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const res = await getHospitals();
+        setHospitals(Array.isArray(res) ? res : []);
+      } catch (err) {
+        console.error("Hospital Fetch Error:", err);
+        setHospitals([]);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
+
   // ================= FETCH DOCTORS =================
   useEffect(() => {
-    if (!department) return;
+    if (!hospitalId) return;
 
     const fetchDoctors = async () => {
       try {
-        const res = await getDoctors(department);
+        const res = await getDoctors({ hospitalId, department });
         setDoctors(res.data || []);
       } catch (err) {
         console.error("Doctor Fetch Error:", err);
@@ -49,22 +55,130 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
     };
 
     fetchDoctors();
-  }, [department]);
+  }, [hospitalId, department]);
+
+  const departments = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (doctors || []).map((doc) => doc.specialization).filter(Boolean),
+        ),
+      ).sort(),
+    [doctors],
+  );
 
   // ================= SELECTED DOCTOR =================
   const selectedDoctor = doctors.find((doc) => doc._id === doctorId);
+
+  const selectedDateLabel = useMemo(() => {
+    if (!date) return "";
+    const parsed = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, [date]);
+
+  const selectedTimeWindow = useMemo(() => {
+    if (!selectedDoctor || !date) return null;
+
+    const selectedDayName = new Date(`${date}T00:00:00`)
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
+
+    const weeklySlot = (selectedDoctor.schedule?.weekly || []).find(
+      (slot) => String(slot.day || "").toLowerCase() === selectedDayName,
+    );
+
+    const isToday = date === new Date().toISOString().split("T")[0];
+    const start = isToday
+      ? selectedDoctor.schedule?.todayStart || weeklySlot?.start || ""
+      : weeklySlot?.start || selectedDoctor.schedule?.todayStart || "";
+    const end = isToday
+      ? selectedDoctor.schedule?.todayEnd || weeklySlot?.end || ""
+      : weeklySlot?.end || selectedDoctor.schedule?.todayEnd || "";
+
+    if (!start || !end) return null;
+
+    return { start, end };
+  }, [selectedDoctor, date]);
+
+  const availableDates = useMemo(() => {
+    if (!selectedDoctor?.schedule?.weekly?.length) return [];
+
+    const allowedDays = new Set(
+      selectedDoctor.schedule.weekly.map((slot) =>
+        String(slot.day || "").toLowerCase(),
+      ),
+    );
+
+    const options = [];
+    const start = new Date(today);
+    start.setHours(0, 0, 0, 0);
+
+    for (let offset = 0; offset < bookingWindowDays; offset += 1) {
+      const candidate = new Date(start);
+      candidate.setDate(start.getDate() + offset);
+
+      const weekday = candidate
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase();
+
+      if (!allowedDays.has(weekday)) continue;
+
+      if (offset === 0 && selectedDoctor.schedule.isActiveToday === false) {
+        continue;
+      }
+
+      const isoDate = candidate.toISOString().split("T")[0];
+      options.push({
+        value: isoDate,
+        label: candidate.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+      });
+    }
+
+    return options;
+  }, [selectedDoctor, today]);
+
+  useEffect(() => {
+    if (!availableDates.length) {
+      setDate("");
+      return;
+    }
+
+    if (!availableDates.some((option) => option.value === date)) {
+      setDate(availableDates[0].value);
+    }
+  }, [availableDates, date]);
 
   // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!doctorId || !date || !timeSlot) {
+    if (!hospitalId || !department || !doctorId || !date) {
       alert("Please fill all required fields");
+      return;
+    }
+
+    if (
+      availableDates.length &&
+      !availableDates.some((option) => option.value === date)
+    ) {
+      alert("Please select an available date within the next 30 days.");
       return;
     }
 
     try {
       await onBook({
+        hospitalId,
         doctorId,
         date,
         timeSlot,
@@ -74,10 +188,10 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
       setSuccess(true);
 
       // reset form
+      setHospitalId("");
       setDepartment("");
       setDoctorId("");
       setDate("");
-      setTimeSlot("");
       setReason("");
     } catch (err) {
       console.error("[AppointmentForm] booking error:", err);
@@ -124,6 +238,26 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
       </div>
 
       <form className="appointment-form" onSubmit={handleSubmit}>
+        {/* HOSPITAL */}
+        <label>
+          Hospital
+          <select
+            value={hospitalId}
+            onChange={(e) => {
+              setHospitalId(e.target.value);
+              setDepartment("");
+              setDoctorId("");
+            }}
+          >
+            <option value="">Select Hospital</option>
+            {hospitals.map((hospital) => (
+              <option key={hospital._id} value={hospital._id}>
+                {hospital.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         {/* DEPARTMENT */}
         <label>
           Department
@@ -133,12 +267,14 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
               setDepartment(e.target.value);
               setDoctorId("");
             }}
+            disabled={!hospitalId}
           >
             <option value="">Select Department</option>
-            <option value="Cardiology">Cardiology</option>
-            <option value="Dermatology">Dermatology</option>
-            <option value="Neurology">Neurology</option>
-            <option value="Orthopedics">Orthopedics</option>
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -148,7 +284,7 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
           <select
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
-            disabled={!department}
+            disabled={!hospitalId || !department}
           >
             <option value="">Select Doctor</option>
 
@@ -175,7 +311,10 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
                 {department}
               </p>
 
-              <span>Available Today</span>
+              <span>
+                {hospitals.find((h) => h._id === hospitalId)?.name ||
+                  "Selected Hospital"}
+              </span>
             </div>
           </div>
         )}
@@ -183,36 +322,49 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         {/* DATE */}
         <label>
           Date
-          <div className="input-icon">
+          <div className="input-icon date-select-wrap">
             <Calendar size={18} />
 
-            <input
-              type="date"
+            <select
+              className="date-select"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-            />
+              disabled={!selectedDoctor}
+            >
+              <option value="">Select Available Date</option>
+              {availableDates.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
         </label>
 
-        {/* SLOT CHIPS */}
-        <div className="slot-section">
+        {selectedDoctor && !availableDates.length && (
+          <p className="time-note">
+            No available dates in the next 30 days for this doctor.
+          </p>
+        )}
+
+        {/* APPOINTMENT TIME INFO */}
+        <div className="time-range-section">
           <p className="slot-title">
             <Clock3 size={16} />
-            Available Time Slots
+            Appointment Time
           </p>
 
-          <div className="slot-grid">
-            {slotOptions.map((slot) => (
-              <button
-                type="button"
-                key={slot}
-                className={`slot-chip ${timeSlot === slot ? "active" : ""}`}
-                onClick={() => setTimeSlot(slot)}
-              >
-                {formatTimeWithAMPM(slot)}
-              </button>
-            ))}
-          </div>
+          {selectedTimeWindow ? (
+            <p className="time-note">
+              {selectedDateLabel
+                ? `${selectedDateLabel}: ${selectedTimeWindow.start} to ${selectedTimeWindow.end}`
+                : `${selectedTimeWindow.start} to ${selectedTimeWindow.end}`}
+            </p>
+          ) : (
+            <p className="time-note">
+              Select a valid date to see the doctor’s available time window.
+            </p>
+          )}
         </div>
 
         {/* REASON */}
@@ -225,32 +377,6 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
             placeholder="Describe symptoms or consultation purpose..."
           />
         </label>
-
-        {/* SUMMARY CARD */}
-        {(doctorId || date || timeSlot) && (
-          <div className="appointment-summary">
-            <h4>Appointment Summary</h4>
-
-            <div className="summary-grid">
-              <div>
-                <span>Doctor</span>
-                <strong>{selectedDoctor?.username || "--"}</strong>
-              </div>
-
-              <div>
-                <span>Date</span>
-                <strong>{date || "--"}</strong>
-              </div>
-
-              <div>
-                <span>Time</span>
-                <strong>
-                  {timeSlot ? formatTimeWithAMPM(timeSlot) : "--"}
-                </strong>
-              </div>
-            </div>
-          </div>
-        )}
 
         <button
           type="submit"

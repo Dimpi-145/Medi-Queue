@@ -32,27 +32,6 @@ const doctorRouter = require("./routes/doctor.routes");
 
 const app = express();
 
-<<<<<<< HEAD
-// Secure CORS configuration
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? (process.env.ALLOWED_ORIGINS || "").split(",")
-    : ["http://localhost:5173", "http://localhost:3000"];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"), false);
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-=======
 // ================= CORS =================
 
 const allowedOrigins = [
@@ -95,7 +74,6 @@ app.use(
     extended: true,
     limit: "20mb",
   })
->>>>>>> 530d7e145700546f4c9fd5d212827a6bf3c565b4
 );
 
 app.use(cookieParser());

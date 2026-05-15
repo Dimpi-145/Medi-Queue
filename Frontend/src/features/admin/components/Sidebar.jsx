@@ -4,12 +4,13 @@ import "./Sidebar.scss";
 
 const Sidebar = ({ currentPage, setCurrentPage }) => {
   const menuItems = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'patients', label: 'Patients' },
-    { key: 'doctors', label: 'Doctors' },
-    { key: 'appointments', label: 'Appointments' },
-    { key: 'queue', label: 'Queue' },
-    { key: 'prescriptions', label: 'Prescriptions' },
+    { key: "dashboard", label: "Dashboard" },
+    { key: "patients", label: "Patients" },
+    { key: "doctors", label: "Doctors" },
+    { key: "appointments", label: "Appointments" },
+    { key: "queue", label: "Queue" },
+    { key: "prescriptions", label: "Prescriptions" },
+    { key: "reports", label: "Reports" },
   ];
 
   return (
@@ -17,10 +18,10 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
       <h2>MediQueue</h2>
 
       <ul>
-        {menuItems.map(item => (
+        {menuItems.map((item) => (
           <li
             key={item.key}
-            className={currentPage === item.key ? 'active' : ''}
+            className={currentPage === item.key ? "active" : ""}
             onClick={() => setCurrentPage(item.key)}
           >
             {item.label}

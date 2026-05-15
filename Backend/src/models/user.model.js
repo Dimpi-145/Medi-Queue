@@ -6,14 +6,12 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      unique: true,
       required: [true, "Username is required"],
       trim: true,
     },
 
     email: {
       type: String,
-      unique: true,
       required: [true, "Email is required"],
       lowercase: true,
       trim: true,
@@ -27,14 +25,24 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["patient", "doctor", "admin"],
+      enum: ["patient", "doctor", "admin", "hospital"],
       default: "patient",
+    },
+
+    hospitalName: {
+      type: String,
+      trim: true,
+    },
+
+    locationUrl: {
+      type: String,
+      trim: true,
     },
 
     phone: String,
     gender: {
       type: String,
-      enum: ["male", "female", "others"]
+      enum: ["male", "female", "others"],
     },
     age: Number,
     doctorId: {
@@ -43,18 +51,22 @@ const userSchema = new mongoose.Schema(
     },
 
     specialization: String,
+    hospitalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     department: {
-  type: String,
-  enum: [
-    "General",
-    "Cardiology",
-    "Neurology",
-    "Orthopedics",
-    "Dermatology",
-    "Pediatrics",
-    "ENT",
-  ],
-},
+      type: String,
+      enum: [
+        "General",
+        "Cardiology",
+        "Neurology",
+        "Orthopedics",
+        "Dermatology",
+        "Pediatrics",
+        "ENT",
+      ],
+    },
 
     isVerified: {
       type: Boolean,
@@ -63,12 +75,48 @@ const userSchema = new mongoose.Schema(
 
     profileImage: {
       type: String,
-      default: "https://ik.imagekit.io/in2kqh3ai/cohort-2-insta-clone-posts/images.png"
+      default:
+        "https://ik.imagekit.io/in2kqh3ai/cohort-2-insta-clone-posts/images.png",
+    },
+
+    // Weekly schedule and today's active status for doctors
+    schedule: {
+      weekly: [
+        {
+          day: { type: String },
+          start: { type: String },
+          end: { type: String },
+        },
+      ],
+      isActiveToday: { type: Boolean, default: false },
+      todayStart: { type: String },
+      todayEnd: { type: String },
     },
   },
   {
     timestamps: true,
-  }
+  },
+);
+
+// Compound unique indexes: username + hospitalId for doctors, email + hospitalId for multi-hospital usage
+// For patients, admins, and hospitals (non-doctor roles), username and email are globally unique
+userSchema.index(
+  { username: 1, hospitalId: 1 },
+  { unique: true, sparse: true, name: "username_hospitalId_unique" },
+);
+userSchema.index(
+  { email: 1, hospitalId: 1 },
+  { unique: true, sparse: true, name: "email_hospitalId_unique" },
+);
+
+// Global unique index for non-doctor users
+userSchema.index(
+  { username: 1, role: 1 },
+  { unique: true, sparse: true, name: "username_role_unique" },
+);
+userSchema.index(
+  { email: 1 },
+  { unique: true, sparse: true, name: "email_unique" },
 );
 
 module.exports = mongoose.model("User", userSchema);

@@ -5,6 +5,7 @@ import io from "socket.io-client";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ProfileCard from "../components/ProfileCard";
+import PatientProfile from "../components/PatientProfile";
 import EditProfileModal from "../components/EditProfileModal";
 import QueueList from "../components/QueueList";
 import AppointmentTable from "../components/AppointmentTable";
@@ -365,14 +366,19 @@ const PatientDashboard = () => {
 
         <main className="dashboard-content">
           {activeTab === "Dashboard" && (
-            <ProfileCard
-              patient={patient}
-              loading={loading}
-              appointmentsCount={appointments.length}
-              reportsAvailable={reports.length}
-              onBookClick={() => setShowModal(true)}
-              onEditClick={() => setShowEditProfile(true)}
-            />
+            <>
+              <PatientProfile />
+              <div style={{ marginTop: "24px" }}>
+                <ProfileCard
+                  patient={patient}
+                  loading={loading}
+                  appointmentsCount={appointments.length}
+                  reportsAvailable={reports.length}
+                  onBookClick={() => setShowModal(true)}
+                  onEditClick={() => setShowEditProfile(true)}
+                />
+              </div>
+            </>
           )}
 
           {activeTab === "My Appointments" && (

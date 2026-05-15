@@ -19,6 +19,10 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
       key: "History",
       label: "History",
     },
+    {
+      key: "Reports",
+      label: "Reports",
+    },
   ];
 
   return (
@@ -33,14 +37,8 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
           {navItems.map((item) => (
             <li
               key={item.key}
-              className={
-                activeSection === item.key
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                setActiveSection(item.key)
-              }
+              className={activeSection === item.key ? "active" : ""}
+              onClick={() => setActiveSection(item.key)}
             >
               <span>{item.label}</span>
             </li>

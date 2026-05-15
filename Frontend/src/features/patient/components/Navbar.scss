@@ -126,3 +126,84 @@
 .logout-button:hover {
   background: #1d4ed8;
 }
+
+@media (max-width: 900px) {
+  .top-navbar {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 1rem;
+  }
+
+  .brand-section {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .profile-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .profile-pill {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .profile-text {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .top-navbar {
+    padding: 0.9rem;
+    border-radius: 14px;
+  }
+
+  .brand-section {
+    gap: 10px;
+  }
+
+  .brand-section h1 {
+    font-size: 17px;
+    line-height: 1.15;
+  }
+
+  .profile-pill {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .profile-text p,
+  .profile-text strong {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .top-navbar {
+    border-radius: 14px;
+  }
+
+  .brand-section h1 {
+    font-size: 18px;
+  }
+
+  .brand-chip {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .profile-actions {
+    gap: 10px;
+  }
+
+  .profile-pill {
+    padding: 7px 12px;
+  }
+
+  .logout-button {
+    width: 100%;
+  }
+}

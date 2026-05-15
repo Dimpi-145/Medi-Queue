@@ -15,9 +15,11 @@ async function doctorDashboard(req, res) {
 
     await syncActiveQueueSequential(doctorId, selectedDate);
 
-    const doctor = await User.findById(doctorId).select(
-      "username email specialization department profileImage role",
-    );
+    const doctor = await User.findById(doctorId)
+      .select(
+        "username email specialization department profileImage role schedule hospitalId",
+      )
+      .populate("hospitalId", "hospitalName username profileImage");
 
     const currentPatient = await Appointment.findOne({
       doctorId,

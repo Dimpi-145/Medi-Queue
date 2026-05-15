@@ -1,88 +1,109 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter } from "react-router-dom";
 
-import Login from "./auth/pages/Login"
-import Register from "./auth/pages/Register"
+import Login from "./auth/pages/Login";
+import Register from "./auth/pages/Register";
 
-import PatientDashboard from "./patient/pages/PatientDashboard"
+import PatientDashboard from "./patient/pages/PatientDashboard";
 
-import DoctorDashboard from "./doctor/pages/DoctorDashboard"
-import DoctorPatientDetails from "./doctor/pages/DoctorPatientDetails"
+import DoctorDashboard from "./doctor/pages/DoctorDashboard";
+import DoctorPatientDetails from "./doctor/pages/DoctorPatientDetails";
 
-import AdminDashboard from "../features/admin/pages/AdminDashboard"
+import AdminDashboard from "../features/admin/pages/AdminDashboard";
+import HospitalDashboard from "./hospital/pages/HospitalDashboard";
 
-import Homepage from "./homepage/homepage"
-import Terms from "./homepage/Terms"
-import Privacy from "./homepage/Privacy"
-import Support from "./homepage/support"
+import Homepage from "./homepage/homepage";
+import Terms from "./homepage/Terms";
+import Privacy from "./homepage/Privacy";
+import Support from "./homepage/support";
 
-import VideoRoom from "./video/VideoRoom"
+import VideoRoom from "./video/VideoRoom";
 
-import ChatConsultation from "./patient/pages/ChatConsultation"
-import DoctorChatConsultation from "./doctor/pages/DoctorChatConsultation"
+import ChatConsultation from "./patient/pages/ChatConsultation";
+import DoctorChatConsultation from "./doctor/pages/DoctorChatConsultation";
 
 export const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <Homepage />
-    },
+  {
+    path: "/",
+    element: <Homepage />,
+  },
 
-    {
-        path: "/login",
-        element: <Login />
-    },
+  {
+    path: "/login",
+    element: <Login />,
+  },
 
-    {
-        path: "/register",
-        element: <Register />
-    },
+  {
+    path: "/register",
+    element: <Register />,
+  },
 
-    {
-        path: "/patient-dashboard",
-        element: <PatientDashboard />
-    },
+  {
+    path: "/patient-dashboard",
+    element: <PatientDashboard />,
+  },
 
-    {
-        path: "/patient/chat/:appointmentId",
-        element: <ChatConsultation />
-    },
+  {
+    path: "/patient-portal",
+    element: <PatientDashboard />,
+  },
 
-    {
-        path: "/doctor-dashboard",
-        element: <DoctorDashboard />
-    },
+  {
+    path: "/patient/chat/:appointmentId",
+    element: <ChatConsultation />,
+  },
 
-    {
-        path: "/doctor-dashboard/patient/:patientId",
-        element: <DoctorPatientDetails />
-    },
+  {
+    path: "/doctor-dashboard",
+    element: <DoctorDashboard />,
+  },
 
-    {
-        path: "/doctor/chat/:appointmentId",
-        element: <DoctorChatConsultation />
-    },
+  {
+    path: "/doctor-portal",
+    element: <DoctorDashboard />,
+  },
 
-    {
-        path: "/admin-dashboard",
-        element: <AdminDashboard />
-    },
+  {
+    path: "/doctor-dashboard/patient/:patientId",
+    element: <DoctorPatientDetails />,
+  },
 
-    {
-        path: "/video-room/:roomId",
-        element: <VideoRoom />
-    },
+  {
+    path: "/doctor/chat/:appointmentId",
+    element: <DoctorChatConsultation />,
+  },
 
-    {
-        path: "/terms",
-        element: <Terms />
-    },
+  {
+    path: "/admin-dashboard",
+    element: <AdminDashboard />,
+  },
 
-    {
-        path: "/privacy",
-        element: <Privacy />
-    },
+  {
+    path: "/admin-portal",
+    element: <AdminDashboard />,
+  },
 
-    {
-        path: "/support",
-        element: <Support />
-    }
-])
+  {
+    path: "/hospital-dashboard",
+    element: <HospitalDashboard />,
+  },
+
+  {
+    path: "/video-room/:roomId",
+    element: <VideoRoom />,
+  },
+
+  {
+    path: "/terms",
+    element: <Terms />,
+  },
+
+  {
+    path: "/privacy",
+    element: <Privacy />,
+  },
+
+  {
+    path: "/support",
+    element: <Support />,
+  },
+]);

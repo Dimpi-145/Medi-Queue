@@ -5,15 +5,48 @@ const ImageKit = require("@imagekit/nodejs");
 
 async function registerController(req, res) {
   try {
-    let { username, email, password, gender, age, profileImage } = req.body;
+    let {
+      username,
+      hospitalName,
+      email,
+      password,
+      role = "patient",
+      gender,
+      age,
+      profileImage,
+    } = req.body;
+
+    const normalizedRole = String(role || "patient").toLowerCase();
+    const allowedRoles = ["patient", "hospital"];
+
+    if (!allowedRoles.includes(normalizedRole)) {
+      return res.status(400).json({
+        message:
+          "Registration is only available for patient and hospital accounts",
+      });
+    }
+
+    if (normalizedRole === "hospital") {
+      username = username || hospitalName;
+    }
 
     // Input validation
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Username, email, and password are required" });
+      return res.status(400).json({
+        message: "Username, email, and password are required",
+      });
+    }
+
+    if (normalizedRole === "hospital" && !hospitalName) {
+      return res.status(400).json({
+        message: "Hospital name is required for hospital registration",
+      });
     }
 
     if (String(password).trim().length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,7 +84,8 @@ async function registerController(req, res) {
       username,
       email,
       password: hashedPassword,
-      role: "patient", // 🔥 FIXED
+      role: normalizedRole,
+      hospitalName: normalizedRole === "hospital" ? hospitalName : undefined,
       gender: gender || "others",
       age: age || null,
       profileImage,
@@ -82,7 +116,11 @@ async function registerController(req, res) {
 
 async function loginController(req, res) {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role, hospitalId } = req.body;
+    const normalizedRole = String(role || "")
+      .toLowerCase()
+      .trim();
+    const allowedRoles = ["patient", "doctor", "admin", "hospital"];
 
     // Input validation
     if (!password || (!username && !email)) {
@@ -91,13 +129,28 @@ async function loginController(req, res) {
       });
     }
 
-    const user = await userModel.findOne({
+    if (!allowedRoles.includes(normalizedRole)) {
+      return res.status(400).json({
+        message: "Valid role is required",
+      });
+    }
+
+    const query = {
+      role: normalizedRole,
       $or: [{ username }, { email }],
-    });
+    };
+
+    if (normalizedRole === "doctor" && hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    const user = await userModel
+      .findOne(query)
+      .populate("hospitalId", "hospitalName username profileImage");
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+      return res.status(401).json({
+        message: "Invalid credentials for selected role",
       });
     }
 
@@ -124,6 +177,9 @@ async function loginController(req, res) {
         email: user.email,
         role: user.role,
         profileImage: user.profileImage,
+        hospitalId: user.hospitalId?._id || user.hospitalId || null,
+        hospitalName: user.hospitalId?.hospitalName || null,
+        schedule: user.schedule,
       },
     });
   } catch (error) {
@@ -180,6 +236,22 @@ async function updateProfileController(req, res) {
     res.status(500).json({ message: "Server error", error });
   }
 }
+async function getHospitals(req, res) {
+  try {
+    const hospitals = await userModel
+      .find({ role: "hospital" })
+      .select("_id hospitalName username");
+
+    const formatted = hospitals.map((h) => ({
+      _id: h._id,
+      name: h.hospitalName || h.username,
+    }));
+
+    res.status(200).json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching hospitals", error });
+  }
+}
 
 module.exports = {
   registerController,
@@ -187,4 +259,5 @@ module.exports = {
   logoutController,
   getPatientById,
   updateProfileController,
+  getHospitals,
 };

@@ -4,8 +4,14 @@ import API from "../../../utils/axios";
 export const bookAppointment = (data) => API.post("/appointments/book", data);
 
 // GET DOCTORS
-export const getDoctors = (department) =>
-  API.get(`/appointments/get-doctors?department=${department}`);
+export const getDoctors = ({ hospitalId = "", department = "" } = {}) => {
+  const params = [];
+  if (hospitalId) params.push(`hospitalId=${hospitalId}`);
+  if (department) params.push(`department=${department}`);
+  return API.get(
+    `/appointments/get-doctors${params.length ? `?${params.join("&")}` : ""}`,
+  );
+};
 
 // GET MY APPOINTMENTS
 export const getMyAppointments = () => API.get("/appointments/my");

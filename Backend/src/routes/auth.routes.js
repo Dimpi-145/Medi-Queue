@@ -75,6 +75,17 @@ authRouter.get("/doctor-dashboard", authMiddleware, (req, res) => {
 });
 
 /**
+ * PATCH /api/auth/profile/schedule
+ * Allow doctors to update their own schedule (isActiveToday, todayStart, todayEnd)
+ */
+authRouter.put(
+  "/profile/schedule",
+  authMiddleware,
+  roleMiddleware("doctor"),
+  adminController.updateMySchedule,
+);
+
+/**
  * GET /api/auth/patients/:id
  */
 authRouter.get(
@@ -83,5 +94,10 @@ authRouter.get(
   roleMiddleware("doctor"),
   authController.getPatientById,
 );
+
+/**
+ * GET /api/auth/hospitals
+ */
+authRouter.get("/hospitals", authController.getHospitals);
 
 module.exports = authRouter;

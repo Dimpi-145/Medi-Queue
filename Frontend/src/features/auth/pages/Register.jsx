@@ -7,9 +7,12 @@ const Register = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    role: "patient",
     username: "",
+    hospitalName: "",
     email: "",
     password: "",
+    confirmPassword: "",
     termsAccepted: false,
   });
 
@@ -30,11 +33,28 @@ const Register = () => {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    const isHospital = formData.role === "hospital";
+    const displayName = isHospital
+      ? formData.hospitalName.trim()
+      : formData.username.trim();
+
+    if (!displayName || !formData.email.trim() || !formData.password) {
+      alert("Please complete all required fields");
+      return;
+    }
+
     try {
       await register({
-        username: formData.username,
-        email: formData.email,
+        username: isHospital ? displayName : formData.username.trim(),
+        hospitalName: isHospital ? displayName : undefined,
+        email: formData.email.trim(),
         password: formData.password,
+        role: formData.role,
         termsAccepted: formData.termsAccepted,
       });
 
@@ -44,29 +64,47 @@ const Register = () => {
     }
   };
 
+  const isHospital = formData.role === "hospital";
+
   return (
     <div className="auth-container">
-
       <div className="auth-layout">
-
-        {/* LEFT: FORM */}
         <div className="auth-card">
-
           <h2>Create Account</h2>
-          <p>Register to start using MediQueue</p>
+          <p>Register to start using Medi-Queue</p>
 
           <form onSubmit={handleSubmit}>
-
             <div className="form-group">
-              <label>Username</label>
-              <input
-                type="text"
-                name="username"
-                placeholder="Enter username"
-                value={formData.username}
-                onChange={handleChange}
-              />
+              <label>Role</label>
+              <select name="role" value={formData.role} onChange={handleChange}>
+                <option value="patient">Patient</option>
+                <option value="hospital">Hospital</option>
+              </select>
             </div>
+
+            {isHospital ? (
+              <div className="form-group">
+                <label>Hospital Name</label>
+                <input
+                  type="text"
+                  name="hospitalName"
+                  placeholder="Enter hospital name"
+                  value={formData.hospitalName}
+                  onChange={handleChange}
+                />
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Enter username"
+                  value={formData.username}
+                  onChange={handleChange}
+                />
+              </div>
+            )}
 
             <div className="form-group">
               <label>Email</label>
@@ -90,7 +128,17 @@ const Register = () => {
               />
             </div>
 
-            {/* CLEAN CHECKBOX (NO LINKS) */}
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+              />
+            </div>
+
             <div className="form-group checkbox">
               <label>
                 <input
@@ -103,26 +151,18 @@ const Register = () => {
               </label>
             </div>
 
-            <button
-              className="auth-btn"
-              disabled={!formData.termsAccepted}
-            >
+            <button className="auth-btn" disabled={!formData.termsAccepted}>
               Register
             </button>
-
           </form>
 
           <div className="auth-footer">
-            Already have an account?{" "}
-            <Link to="/login">Login</Link>
+            Already have an account? <Link to="/login">Login</Link>
           </div>
-
         </div>
 
-        {/* RIGHT: WHY US */}
         <div className="auth-info">
-
-          <h3>Why choose MediQueue?</h3>
+          <h3>Why choose Medi-Queue?</h3>
 
           <div className="info-item">
             ⚡ <span>Instant appointment booking</span>
@@ -135,14 +175,10 @@ const Register = () => {
           <div className="info-item">
             🏥 <span>Efficient patient management</span>
           </div>
-
         </div>
-
       </div>
 
-      {/* FOOTER (LINKS LIVE HERE NOW) */}
       <div className="auth-footer-bar">
-
         <div className="footer-links">
           <Link to="/terms">Terms of Use</Link>
           <span className="divider">|</span>
@@ -150,11 +186,9 @@ const Register = () => {
         </div>
 
         <div className="footer-copy">
-          © 2026 MediQueue. All rights reserved.
+          Copyright 2026 Medi-Queue. All rights reserved.
         </div>
-
       </div>
-
     </div>
   );
 };

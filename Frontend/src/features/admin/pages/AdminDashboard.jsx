@@ -1,130 +1,70 @@
 // pages/AdminDashboard.jsx
 
-import React, { useState } from "react";
-
+import React from "react";
 import {
-  LayoutDashboard,
-  Users,
-  UserRound,
-  CalendarDays,
-  ClipboardList,
-  FileText,
   Activity,
+  Bell,
+  FileText,
+  Settings2,
+  ShieldCheck,
+  Users,
 } from "lucide-react";
 
-import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-
-import Dashboard from "./Dashboard";
-import Patients from "./Patients";
-import Doctors from "./Doctors";
-import Appointments from "./Appointments";
-import Queue from "./Queue";
-import Prescriptions from "./Prescriptions";
 
 import "../AdminDashboard.scss";
 
+const adminCards = [
+  {
+    title: "Access Control",
+    value: "12 roles",
+    icon: <ShieldCheck size={22} />,
+    note: "Review permissions and account policies",
+  },
+  {
+    title: "Staff Accounts",
+    value: "48 active",
+    icon: <Users size={22} />,
+    note: "Manage administrators and support staff",
+  },
+  {
+    title: "Notifications",
+    value: "7 pending",
+    icon: <Bell size={22} />,
+    note: "Pending system alerts and approvals",
+  },
+  {
+    title: "Audit Logs",
+    value: "Today",
+    icon: <FileText size={22} />,
+    note: "Track recent administrative activity",
+  },
+];
+
+const actionItems = [
+  "Review role assignments and account access",
+  "Monitor system notices and overdue approvals",
+  "Check audit trail for sensitive operations",
+  "Update hospital-wide configuration policies",
+];
+
 const AdminDashboard = () => {
-  const [currentPage, setCurrentPage] = useState("dashboard");
-
-  const pageConfig = {
-    dashboard: {
-      title: "Admin Dashboard",
-      subtitle: "Hospital operations overview & analytics",
-      icon: <LayoutDashboard size={22} />,
-    },
-
-    patients: {
-      title: "Patients Management",
-      subtitle: "Manage patient records and activity",
-      icon: <Users size={22} />,
-    },
-
-    doctors: {
-      title: "Doctors Management",
-      subtitle: "Monitor doctors and department assignments",
-      icon: <UserRound size={22} />,
-    },
-
-    appointments: {
-      title: "Appointments",
-      subtitle: "Track schedules and patient visits",
-      icon: <CalendarDays size={22} />,
-    },
-
-    queue: {
-      title: "Queue Monitoring",
-      subtitle: "Live patient queue and consultation tracking",
-      icon: <ClipboardList size={22} />,
-    },
-
-    prescriptions: {
-      title: "Prescriptions",
-      subtitle: "Digital prescriptions and medical records",
-      icon: <FileText size={22} />,
-    },
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "dashboard":
-        return <Dashboard />;
-
-      case "patients":
-        return <Patients />;
-
-      case "doctors":
-        return <Doctors />;
-
-      case "appointments":
-        return <Appointments />;
-
-      case "queue":
-        return <Queue />;
-
-      case "prescriptions":
-        return <Prescriptions />;
-
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
     <div className="admin-container">
-
-      {/* SIDEBAR */}
-      <Sidebar
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-      />
-
-      {/* MAIN */}
       <div className="main">
-
-        {/* TOP HEADER */}
         <Header />
 
-        {/* PAGE HERO */}
         <div className="admin-hero">
-
           <div className="hero-left">
-
             <div className="hero-icon">
-              {pageConfig[currentPage]?.icon}
+              <Settings2 size={22} />
             </div>
 
             <div>
-              <p className="hero-eyebrow">
-                MediQueue Admin Panel
-              </p>
-
-              <h1>
-                {pageConfig[currentPage]?.title}
-              </h1>
-
+              <p className="hero-eyebrow">MediQueue Administration</p>
+              <h1>Admin Control Center</h1>
               <p className="hero-subtitle">
-                {pageConfig[currentPage]?.subtitle}
+                Manage permissions, system settings, and oversight workflows.
               </p>
             </div>
           </div>
@@ -135,11 +75,123 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* CONTENT */}
         <div className="content">
-          {renderPage()}
-        </div>
+          <section style={{ marginBottom: "1.5rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "1rem",
+              }}
+            >
+              {adminCards.map((card) => (
+                <div
+                  key={card.title}
+                  style={{
+                    background: "white",
+                    borderRadius: "18px",
+                    padding: "1.25rem",
+                    boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: "0.9rem",
+                      background: "linear-gradient(135deg, #0f172a, #334155)",
+                      color: "white",
+                    }}
+                  >
+                    {card.icon}
+                  </div>
 
+                  <p
+                    style={{ margin: 0, color: "#64748b", fontSize: "0.92rem" }}
+                  >
+                    {card.title}
+                  </p>
+
+                  <h3 style={{ margin: "0.35rem 0", fontSize: "1.6rem" }}>
+                    {card.value}
+                  </h3>
+
+                  <p style={{ margin: 0, color: "#475569", lineHeight: 1.5 }}>
+                    {card.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section
+            style={{
+              background: "white",
+              borderRadius: "22px",
+              padding: "1.5rem",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "1rem",
+                alignItems: "center",
+                marginBottom: "1rem",
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0 }}>Admin Operations</h2>
+                <p style={{ margin: "0.35rem 0 0", color: "#64748b" }}>
+                  Centralized governance and operational oversight.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  padding: "0.6rem 0.9rem",
+                  borderRadius: "999px",
+                  background: "#f1f5f9",
+                  color: "#0f172a",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Review queue
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "0.85rem",
+              }}
+            >
+              {actionItems.map((item, index) => (
+                <div
+                  key={item}
+                  style={{
+                    padding: "1rem",
+                    borderRadius: "16px",
+                    background: index % 2 === 0 ? "#f8fafc" : "#eef2ff",
+                    color: "#0f172a",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

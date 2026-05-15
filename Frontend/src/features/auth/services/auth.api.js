@@ -5,11 +5,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export async function login(identifier, password) {
-  const response = await api.post("/login", {
+export async function login(identifier, password, role, hospitalId = null) {
+  const payload = {
     username: identifier,
     password,
-  });
+    role,
+  };
+
+  if (hospitalId) {
+    payload.hospitalId = hospitalId;
+  }
+
+  const response = await api.post("/login", payload);
 
   return response.data;
 }
@@ -31,5 +38,10 @@ export const updateProfile = async (data) => {
 
 export const logout = async () => {
   const response = await api.post("/logout");
+  return response.data;
+};
+
+export const getHospitals = async () => {
+  const response = await api.get("/hospitals");
   return response.data;
 };

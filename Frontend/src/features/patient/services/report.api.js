@@ -11,6 +11,18 @@ export const uploadReport = (data) => api.post("/upload", data);
 // Get patient reports
 export const getMyReports = () => api.get("/my");
 
+// Get reports shared by hospital/doctor to current user
+export const getSharedReports = () => api.get("/admin/shared-reports");
+
+// Get report requests for current patient
+export const getReportRequests = () => api.get("/requests");
+
+// Fulfill a request by uploading a report file
+export const fulfillPatientReportRequest = (requestId, data) =>
+  api.post(`/requests/${requestId}/fulfill`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
 // Rename report
 export const renameReport = (id, data) => api.patch(`/${id}/rename`, data);
 

@@ -1,0 +1,580 @@
+* {
+  box-sizing: border-box;
+}
+
+.doctor-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ================= SIDEBAR ================= */
+.doctor-sidebar {
+  width: 250px;
+  min-width: 250px;
+  background: #0f172a;
+  padding: 26px 20px;
+  color: white;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 2.8rem;
+}
+
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3b82f6;
+}
+
+.sidebar-brand h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.doctor-sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.doctor-sidebar nav ul li {
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-bottom: 0.7rem;
+  cursor: pointer;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  transition: 0.2s ease;
+}
+
+.doctor-sidebar nav ul li:hover,
+.doctor-sidebar nav ul li.active {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.16);
+}
+
+/* ================= MAIN ================= */
+.doctor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= NAVBAR ================= */
+.doctor-navbar {
+  margin: 18px 20px 0;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.doctor-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.profile-meta .small-label {
+  display: block;
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
+}
+
+.profile-meta h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.btn-logout {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0.8rem 1.25rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.btn-logout:hover {
+  transform: translateY(-1px);
+}
+
+/* ================= CONTENT ================= */
+.doctor-content {
+  padding: 20px;
+}
+
+/* ================= GRID ================= */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.4rem;
+}
+
+/* ================= CARDS ================= */
+.profile-card,
+.appointments-panel,
+.history-panel {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+/* ================= PANEL HEADER ================= */
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.panel-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.date-group-card {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.date-group-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.date-group-header span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* ================= PROFILE ================= */
+.profile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.doctor-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.doctor-hospital-name {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.doctor-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.doctor-profile-top h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.doctor-profile-top p {
+  margin: 0 0 0.65rem;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.specialization-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.38rem 0.8rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+/* ================= STATS ================= */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.stat-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.stat-box span {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stat-box p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+/* ================= INFO GRID ================= */
+.doctor-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.info-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.info-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-card strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.action-btn {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.action-btn.blue {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  color: white;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= TABLE ================= */
+.table-container {
+  overflow-x: auto;
+}
+
+.appointment-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.appointment-table thead {
+  background: #f8fafc;
+}
+
+.appointment-table th {
+  text-align: left;
+  padding: 0.9rem 1rem;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.appointment-table td {
+  padding: 0.95rem 1rem;
+  border-top: 1px solid #eef2f7;
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.appointment-table tbody tr {
+  transition: 0.15s ease;
+}
+
+.appointment-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ================= STATUS ================= */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.completed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ================= HISTORY PANEL ================= */
+.history-panel {
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-panel .panel-header {
+  margin-bottom: 1.2rem;
+}
+
+.history-panel .panel-header h3 {
+  font-size: 1.28rem;
+}
+
+.history-panel .panel-header p {
+  font-size: 0.88rem;
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-card {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.4rem 1.5rem;
+  background: #f8fafc;
+  border: 1px dashed #dbe3ee;
+  border-radius: 16px;
+  text-align: left;
+  box-shadow: none;
+}
+
+.empty-card::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #94a3b8;
+  margin-right: 0.9rem;
+  flex-shrink: 0;
+}
+
+.empty-card p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+/* ================= EMPTY ROW ================= */
+.empty-row {
+  text-align: center;
+  color: #64748b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1024px) {
+  .stats-row,
+  .doctor-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 860px) {
+  .doctor-dashboard {
+    flex-direction: column;
+  }
+  .doctor-sidebar {
+    width: 100%;
+    min-width: 100%;
+  }
+  .doctor-navbar {
+    margin: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .doctor-content {
+    padding: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .profile-card,
+  .appointments-panel,
+  .history-panel {
+    padding: 1.2rem;
+  }
+  .doctor-profile-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .panel-header {
+    flex-direction: column;
+  }
+  .panel-header h3 {
+    font-size: 1.2rem;
+  }
+  .empty-card {
+    min-height: 100px;
+    padding: 1rem 1.1rem;
+  }
+  .empty-card p {
+    font-size: 0.88rem;
+  }
+}
+/* ================= MODAL ================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  width: min(720px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35);
+  z-index: 1001;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.modal input[type=text],
+.modal input[type=date],
+.modal select,
+.modal textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.modal textarea {
+  min-height: 80px;
+  resize: vertical;
+}/*# sourceMappingURL=doctorDashboard.css.map */

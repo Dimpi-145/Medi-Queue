@@ -5,38 +5,44 @@ const authMiddleware = require("../middleware.js/auth.middleware");
 const roleMiddleware = require("../middleware.js/role.middleware");
 const adminController = require("../controllers/admin.contoller");
 
+const reportController = require("../controllers/report.controller");
+const multer = require("multer");
+
+const adminOrHospital = roleMiddleware("admin", "hospital");
+const upload = multer({ storage: multer.memoryStorage() });
+
 // DASHBOARD STATS
 adminrouter.get(
   "/stats",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.getDashboardStats
+  adminOrHospital,
+  adminController.getDashboardStats,
 );
 adminrouter.get(
   "/getpatients",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.getPatients
+  adminOrHospital,
+  adminController.getPatients,
 );
 adminrouter.get(
   "/getdoctors",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.getDoctors
+  adminOrHospital,
+  adminController.getDoctors,
 );
 
 adminrouter.get(
   "/appointments",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.getAppointments
+  adminOrHospital,
+  adminController.getAppointments,
 );
 
 adminrouter.post(
   "/book-appointment",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.adminBookAppointment
+  adminOrHospital,
+  adminController.adminBookAppointment,
 );
 
 /**
@@ -45,8 +51,23 @@ adminrouter.post(
 adminrouter.post(
   "/create-doctor",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.admincreateDoctor
+  adminOrHospital,
+  adminController.admincreateDoctor,
+);
+
+// DOCTOR SCHEDULE ROUTES
+adminrouter.get(
+  "/doctor/:doctorId/schedule",
+  authMiddleware,
+  adminOrHospital,
+  adminController.getDoctorSchedule,
+);
+
+adminrouter.put(
+  "/doctor/:doctorId/schedule",
+  authMiddleware,
+  adminOrHospital,
+  adminController.updateDoctorSchedule,
 );
 
 /**
@@ -55,18 +76,93 @@ adminrouter.post(
 adminrouter.post(
   "/create-patient",
   authMiddleware,
-  roleMiddleware("admin"),
-  adminController.adminCreatePatient
+  adminOrHospital,
+  adminController.adminCreatePatient,
 );
 /**
  * POST /api/auth/admin/walkin-register
  */
-adminrouter.post( "/walkin-register",
-    authMiddleware,roleMiddleware("admin"), 
-    adminController.walkInRegister
+adminrouter.post(
+  "/walkin-register",
+  authMiddleware,
+  adminOrHospital,
+  adminController.walkInRegister,
 );
 /**
  * GET /api/auth/admin/prescriptions
  */
+
+// HOSPITAL PROFILE ROUTES
+adminrouter.get(
+  "/hospital-profile",
+  authMiddleware,
+  adminOrHospital,
+  adminController.getHospitalProfile,
+);
+
+adminrouter.put(
+  "/hospital-profile",
+  authMiddleware,
+  adminOrHospital,
+  adminController.updateHospitalProfile,
+);
+
+// GET HOSPITAL DETAILS BY ID (PUBLIC - for doctors/patients to view hospital info)
+adminrouter.get(
+  "/hospital-details/:hospitalId",
+  adminController.getHospitalDetailsById,
+);
+
+// HOSPITAL REPORT ROUTES
+adminrouter.post(
+  "/create-report",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  upload.single("file"),
+  reportController.createHospitalReport,
+);
+
+adminrouter.get(
+  "/reports",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  reportController.getHospitalReports,
+);
+
+adminrouter.post(
+  "/share-report-doctor",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  reportController.shareReportWithDoctor,
+);
+
+adminrouter.post(
+  "/share-report-patient",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  reportController.shareReportWithPatient,
+);
+
+adminrouter.get(
+  "/shared-reports",
+  authMiddleware,
+  reportController.getSharedReports,
+);
+
+// Hospital: view report requests targeted to this hospital
+adminrouter.get(
+  "/report-requests",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  reportController.getHospitalReportRequests,
+);
+
+adminrouter.post(
+  "/report-requests/:requestId/fulfill",
+  authMiddleware,
+  roleMiddleware("hospital"),
+  upload.single("file"),
+  reportController.fulfillHospitalReportRequest,
+);
 
 module.exports = adminrouter;

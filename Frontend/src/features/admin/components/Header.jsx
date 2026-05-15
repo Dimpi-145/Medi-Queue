@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { logout as logoutApi } from "../../auth/services/auth.api";
 import "./Header.scss";
 
-const Header = () => {
+const Header = ({ title = "Admin Dashboard", roleLabel = "Admin" }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -22,10 +22,10 @@ const Header = () => {
 
   return (
     <div className="header">
-      <h1>Admin Dashboard</h1>
+      <h1>{title}</h1>
 
       <div className="admin-info">
-        <span>Admin</span>
+        <span>{roleLabel}</span>
 
         <button className="logout-btn" onClick={handleLogout}>
           Logout

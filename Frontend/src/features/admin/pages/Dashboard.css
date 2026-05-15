@@ -1,0 +1,16 @@
+.dashboard h2 {
+  margin-bottom: 20px;
+}
+.dashboard .hospital-profile-section {
+  margin-bottom: 32px;
+}
+.dashboard .cards {
+  margin-top: 16px;
+}
+.dashboard .card {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}/*# sourceMappingURL=Dashboard.css.map */

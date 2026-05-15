@@ -43,4 +43,21 @@ ReportRouter.get(
   reportController.getReportByToken,
 );
 
+// Patient views incoming report requests
+ReportRouter.get(
+  "/requests",
+  auth,
+  role("patient"),
+  reportController.getPatientReportRequests,
+);
+
+// Patient fulfills a report request by uploading a file
+ReportRouter.post(
+  "/requests/:requestId/fulfill",
+  upload.single("report"),
+  auth,
+  role("patient"),
+  reportController.fulfillPatientReportRequest,
+);
+
 module.exports = ReportRouter;
