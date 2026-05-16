@@ -40,7 +40,7 @@ const DoctorPatientDetails = () => {
     const fetchPatient = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/queue/patient/${patientId}`,
+          `https://medi-queue-1.onrender.com/api/queue/patient/${patientId}`,
           { withCredentials: true },
         );
 
@@ -73,10 +73,13 @@ const DoctorPatientDetails = () => {
   // ================= FETCH QUEUE =================
   const fetchQueue = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/queue/live", {
-        params: { date: selectedDate },
-        withCredentials: true,
-      });
+      const res = await axios.get(
+        "https://medi-queue-1.onrender.com/api/queue/live",
+        {
+          params: { date: selectedDate },
+          withCredentials: true,
+        },
+      );
       const queueData = res.data?.patients || res.data || [];
       setQueue(Array.isArray(queueData) ? queueData : []);
     } catch (err) {
@@ -90,7 +93,7 @@ const DoctorPatientDetails = () => {
 
   // ================= SOCKET SETUP =================
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io("https://medi-queue-1.onrender.com");
     socketRef.current = socket;
 
     // Join doctor room
@@ -133,7 +136,7 @@ const DoctorPatientDetails = () => {
       console.log("SENDING:", payload);
 
       await axios.post(
-        "http://localhost:3000/api/prescriptions/create",
+        "https://medi-queue-1.onrender.com/api/prescriptions/create",
         payload,
         {
           withCredentials: true,

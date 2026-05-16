@@ -5,14 +5,12 @@ const joinedConsultationRooms = new Set();
 const joinedUserRooms = new Set();
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 const toConsultationRoom = (appointmentIdOrRoomId) => {
   const value = String(appointmentIdOrRoomId || "");
   if (!value) return "";
-  return value.startsWith("consultation-")
-    ? value
-    : `consultation-${value}`;
+  return value.startsWith("consultation-") ? value : `consultation-${value}`;
 };
 
 const rejoinRooms = () => {
@@ -149,10 +147,7 @@ export const joinConsultationRoom = (appointmentId) => {
 
   if (!socket) return;
 
-  socket.emit(
-    "joinConsultationRoom",
-    roomId
-  );
+  socket.emit("joinConsultationRoom", roomId);
 };
 
 export const leaveConsultationRoom = (appointmentId) => {
@@ -170,10 +165,7 @@ export const leaveConsultationRoom = (appointmentId) => {
 
   if (!socket) return;
 
-  socket.emit(
-    "leaveConsultationRoom",
-    roomId
-  );
+  socket.emit("leaveConsultationRoom", roomId);
 };
 
 export const joinUserRoom = (userId) => {

@@ -1,32 +1,21 @@
 const express = require("express");
-
 const cookieParser = require("cookie-parser");
-
 const path = require("path");
-
 const cors = require("cors");
 
 // ================= ROUTES =================
 
 const authRouter = require("./routes/auth.routes");
-
 const appointmentRouter = require("./routes/appointment.routes");
-
 const queueRouter = require("./routes/queue.routes");
-
 const dashboardRouter = require("./routes/dashboard.routes");
-
 const prescriptionRouter = require("./routes/prescription.routes");
-
 const adminRoutes = require("./routes/admin.routes");
-
 const chatRouter = require("./routes/chat.routes");
-
 const videoRouter = require("./routes/video.routes");
-
 const reportRouter = require("./routes/report.routes");
-
 const doctorRouter = require("./routes/doctor.routes");
+
 
 // ================= APP =================
 
@@ -77,6 +66,8 @@ app.use(
 );
 
 app.use(cookieParser());
+
+app.use(express.static(path.join(__dirname, '../public')));
 
 // ================= STATIC FILES =================
 
@@ -196,5 +187,9 @@ app.use(
       });
   }
 );
+
+app.get("*name", (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'))
+})
 
 module.exports = app;

@@ -154,7 +154,7 @@ const PatientDashboard = () => {
       return;
     }
 
-    const socket = io("http://localhost:3000");
+    const socket = io("https://medi-queue-1.onrender.com");
     const doctorDocId =
       activeAppointment.doctorId?._id || activeAppointment.doctorId;
     const patientId = localStorage.getItem("userId");

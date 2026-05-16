@@ -1,5 +1,5 @@
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 export const resolveAttachmentUrl = (url) => {
   if (!url) {
