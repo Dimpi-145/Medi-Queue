@@ -101,6 +101,25 @@ async function callNextPatient(req, res) {
 
     currentAppointment.status = "completed";
     currentAppointment.completedAt = new Date();
+    currentAppointment.consultationEndedAt = currentAppointment.completedAt;
+    const currentStartedAt = new Date(
+      currentAppointment.consultationStartedAt ||
+        currentAppointment.approvedAt ||
+        currentAppointment.createdAt,
+    );
+    const currentEndedAt = new Date(currentAppointment.consultationEndedAt);
+    if (
+      !Number.isNaN(currentStartedAt.getTime()) &&
+      !Number.isNaN(currentEndedAt.getTime()) &&
+      currentEndedAt > currentStartedAt
+    ) {
+      currentAppointment.consultationDurationMinutes = Math.max(
+        1,
+        Math.round(
+          (currentEndedAt.getTime() - currentStartedAt.getTime()) / 60000,
+        ),
+      );
+    }
     await currentAppointment.save();
 
     let nextAppointment = await Appointment.findOne({
@@ -140,6 +159,7 @@ async function callNextPatient(req, res) {
 
     nextAppointment.status = "approved";
     nextAppointment.approvedAt = new Date();
+    nextAppointment.consultationStartedAt = nextAppointment.approvedAt;
     await nextAppointment.save();
 
     await broadcastQueueUpdated(io, {
@@ -375,6 +395,21 @@ async function completeCurrent(req, res) {
 
     current.status = "completed";
     current.completedAt = new Date();
+    current.consultationEndedAt = current.completedAt;
+    const startedAt = new Date(
+      current.consultationStartedAt || current.approvedAt || current.createdAt,
+    );
+    const endedAt = new Date(current.consultationEndedAt);
+    if (
+      !Number.isNaN(startedAt.getTime()) &&
+      !Number.isNaN(endedAt.getTime()) &&
+      endedAt > startedAt
+    ) {
+      current.consultationDurationMinutes = Math.max(
+        1,
+        Math.round((endedAt.getTime() - startedAt.getTime()) / 60000),
+      );
+    }
     await current.save();
 
     const io = req.app.get("io");

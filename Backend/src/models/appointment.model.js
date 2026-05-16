@@ -32,6 +32,21 @@ const appointmentSchema = new mongoose.Schema(
       type: Number,
     },
 
+    consultationStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    consultationEndedAt: {
+      type: Date,
+      default: null,
+    },
+
+    consultationDurationMinutes: {
+      type: Number,
+      default: null,
+    },
+
     status: {
       type: String,
       enum: ["pending", "approved", "completed", "cancelled", "rescheduled"],

@@ -110,17 +110,18 @@ function getDoctorQueueStatus(schedule, dateInput, now = new Date()) {
   const isToday = selectedDate === today;
   const hasWeeklySchedule = workingDays.size > 0;
   const dayMatches = !hasWeeklySchedule || workingDays.has(weekday);
+  const isScheduleActive = schedule?.isActiveToday !== false;
 
   let reason = null;
 
-  if (!isToday) {
-    reason = "Queue is inactive for future dates";
+  if (!isScheduleActive) {
+    reason = "Doctor is marked inactive today";
   } else if (!dayMatches) {
     reason = "Doctor is not scheduled to work today";
   }
 
   return {
-    isActive: isToday && dayMatches,
+    isActive: isScheduleActive && dayMatches,
     isToday,
     selectedDate,
     today,
@@ -331,16 +332,28 @@ async function getAverageConsultationMinutes(doctorId) {
     doctorId: oid,
     status: "completed",
   })
-    .select("approvedAt completedAt createdAt updatedAt")
+    .select(
+      "approvedAt completedAt createdAt updatedAt consultationStartedAt consultationEndedAt consultationDurationMinutes",
+    )
     .lean();
 
   const durations = completedAppointments
     .map((appointment) => {
+      const storedDuration = Number(appointment.consultationDurationMinutes);
+      if (Number.isFinite(storedDuration) && storedDuration > 0) {
+        return Math.max(1, Math.round(storedDuration));
+      }
+
       const startedAt = new Date(
-        appointment.approvedAt || appointment.createdAt,
+        appointment.consultationStartedAt ||
+          appointment.approvedAt ||
+          appointment.createdAt,
       );
       const finishedAt = new Date(
-        appointment.completedAt || appointment.updatedAt || appointment.createdAt,
+        appointment.consultationEndedAt ||
+          appointment.completedAt ||
+          appointment.updatedAt ||
+          appointment.createdAt,
       );
 
       if (

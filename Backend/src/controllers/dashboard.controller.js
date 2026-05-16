@@ -6,6 +6,7 @@ const {
   syncActiveQueueSequential,
   getDoctorQueueStatus,
   getDoctorWorkingDateOptions,
+  getEstimatedWaitTimeForPatientsAhead,
 } = require("../utils/queueNumber.util");
 
 const getLocalDateString = (date = new Date()) => {
@@ -123,12 +124,20 @@ async function patientDashboard(req, res) {
       ).populate("doctorId", "username specialization");
 
       if (metrics) {
+        const waitMetrics = await getEstimatedWaitTimeForPatientsAhead(
+          activeAppointment.doctorId?._id || activeAppointment.doctorId,
+          metrics.patientsAhead,
+        );
+
         queueInfo = {
           appointmentId: metrics.appointmentId,
           status: metrics.status,
           queueNumber: metrics.liveQueueNumber,
           liveQueueNumber: metrics.liveQueueNumber,
           patientsAhead: metrics.patientsAhead,
+          averageConsultationMinutes: waitMetrics.averageConsultationMinutes,
+          estimatedWaitMinutes: waitMetrics.estimatedWaitMinutes,
+          estimatedWaitTime: `${waitMetrics.estimatedWaitMinutes} minutes`,
         };
       }
     }
