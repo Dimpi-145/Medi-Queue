@@ -81,7 +81,7 @@ const Homepage = () => {
           </Link>
         </p>
 
-        <p>Phone: +91 XXXXX XXXXX</p>
+
       </section>
 
     </div>
