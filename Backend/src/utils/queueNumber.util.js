@@ -12,6 +12,26 @@ const WEEKDAY_NAMES = [
   "Saturday",
 ];
 
+const WEEKDAY_ALIASES = {
+  sun: "Sunday",
+  sunday: "Sunday",
+  mon: "Monday",
+  monday: "Monday",
+  tue: "Tuesday",
+  tues: "Tuesday",
+  tuesday: "Tuesday",
+  wed: "Wednesday",
+  wednesday: "Wednesday",
+  thu: "Thursday",
+  thur: "Thursday",
+  thurs: "Thursday",
+  thursday: "Thursday",
+  fri: "Friday",
+  friday: "Friday",
+  sat: "Saturday",
+  saturday: "Saturday",
+};
+
 function normalizeAppointmentDate(dateInput) {
   if (dateInput == null || dateInput === "") {
     throw new Error("Appointment date is required");
@@ -37,6 +57,15 @@ function getWeekdayName(dateInput) {
   }
 
   return WEEKDAY_NAMES[date.getDay()];
+}
+
+function normalizeWeekdayName(dayName) {
+  const raw = String(dayName || "").trim().toLowerCase();
+  if (!raw) {
+    return "";
+  }
+
+  return WEEKDAY_ALIASES[raw] || raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
 function getDoctorWorkingDateOptions(schedule, daysAhead = 30, startDate = new Date()) {
@@ -97,13 +126,14 @@ function getDoctorWorkingDateOptions(schedule, daysAhead = 30, startDate = new D
   return options;
 }
 
-function getDoctorQueueStatus(schedule, dateInput, now = new Date()) {
+function getDoctorQueueStatus(schedule, dateInput, now = new Date(), options = {}) {
+  const { enforceToday = false } = options;
   const selectedDate = normalizeAppointmentDate(dateInput);
   const today = normalizeAppointmentDate(now);
   const weekday = getWeekdayName(selectedDate);
   const workingDays = new Set(
     (schedule?.weekly || [])
-      .map((entry) => entry?.day)
+      .map((entry) => normalizeWeekdayName(entry?.day))
       .filter(Boolean),
   );
 
@@ -117,11 +147,13 @@ function getDoctorQueueStatus(schedule, dateInput, now = new Date()) {
   if (!isScheduleActive) {
     reason = "Doctor is marked inactive today";
   } else if (!dayMatches) {
-    reason = "Doctor is not scheduled to work today";
+    reason = `Doctor is not scheduled to work on ${weekday}`;
+  } else if (enforceToday && !isToday) {
+    reason = "Queue is inactive for future dates";
   }
 
   return {
-    isActive: isScheduleActive && dayMatches,
+    isActive: isScheduleActive && dayMatches && (!enforceToday || isToday),
     isToday,
     selectedDate,
     today,
@@ -392,6 +424,7 @@ module.exports = {
   normalizeAppointmentDate,
   getDoctorQueueStatus,
   getDoctorWorkingDateOptions,
+  normalizeWeekdayName,
   allocateNextQueueNumber,
   reconcileDuplicateQueueNumbers,
   syncActiveQueueSequential,

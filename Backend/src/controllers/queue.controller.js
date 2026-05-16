@@ -60,7 +60,14 @@ async function callNextPatient(req, res) {
     const currentAppointmentId =
       req.body?.appointmentId || req.query.appointmentId;
     const doctor = await User.findById(req.user.id).select("schedule");
-    const queueStatus = getDoctorQueueStatus(doctor?.schedule, selectedDate);
+    const queueStatus = getDoctorQueueStatus(
+      doctor?.schedule,
+      selectedDate,
+      new Date(),
+      {
+        enforceToday: true,
+      },
+    );
 
     if (!queueStatus.isActive) {
       return res.status(403).json({
@@ -372,7 +379,14 @@ async function completeCurrent(req, res) {
       req.query.date || getLocalDateString(),
     );
     const doctor = await User.findById(req.user.id).select("schedule");
-    const queueStatus = getDoctorQueueStatus(doctor?.schedule, selectedDate);
+    const queueStatus = getDoctorQueueStatus(
+      doctor?.schedule,
+      selectedDate,
+      new Date(),
+      {
+        enforceToday: true,
+      },
+    );
 
     if (!queueStatus.isActive) {
       return res.status(403).json({
