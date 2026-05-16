@@ -12,16 +12,25 @@ const statusLabel = {
   cancelled: "Cancelled",
 };
 
-const QueueList = ({ queue, loading, currentQueueNumber, patientsAhead }) => {
+const QueueList = ({
+  queue,
+  loading,
+  currentQueueNumber,
+  patientsAhead,
+  estimatedWaitMinutes,
+}) => {
   const [estimatedWait, setEstimatedWait] = useState(0);
   const displayQueue = dedupeQueue(queue);
 
   /* ===== ESTIMATED WAIT ===== */
   useEffect(() => {
-    const wait = Number(patientsAhead || 0) * 8;
+    const backendWait = Number(estimatedWaitMinutes);
+    const wait = Number.isFinite(backendWait)
+      ? Math.max(0, backendWait)
+      : Number(patientsAhead || 0) * 8;
 
     setEstimatedWait(wait);
-  }, [patientsAhead]);
+  }, [patientsAhead, estimatedWaitMinutes]);
 
   /* ===== NEXT PATIENT ALERT ===== */
   useEffect(() => {

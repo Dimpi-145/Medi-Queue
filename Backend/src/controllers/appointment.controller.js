@@ -458,6 +458,8 @@ async function callNextPatient(req, res) {
     }
 
     nextAppointment.status = "approved";
+    nextAppointment.approvedAt = new Date();
+    nextAppointment.consultationStartedAt = nextAppointment.approvedAt;
     await nextAppointment.save();
 
     return res.json({
@@ -480,6 +482,24 @@ async function completeAppointment(req, res) {
     }
 
     appointment.status = "completed";
+    appointment.completedAt = new Date();
+    appointment.consultationEndedAt = appointment.completedAt;
+    const startedAt = new Date(
+      appointment.consultationStartedAt ||
+        appointment.approvedAt ||
+        appointment.createdAt,
+    );
+    const endedAt = new Date(appointment.consultationEndedAt);
+    if (
+      !Number.isNaN(startedAt.getTime()) &&
+      !Number.isNaN(endedAt.getTime()) &&
+      endedAt > startedAt
+    ) {
+      appointment.consultationDurationMinutes = Math.max(
+        1,
+        Math.round((endedAt.getTime() - startedAt.getTime()) / 60000),
+      );
+    }
     await appointment.save();
 
     const io = req.app.get("io");

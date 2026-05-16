@@ -301,6 +301,7 @@ const PatientDashboard = () => {
   // Otherwise use the queueInfo from dashboard
   let currentQueueNumber = "-";
   let patientsAhead = 0;
+  let estimatedWaitMinutes = null;
 
   if (selectedDepartment && selectedDoctor && selectedDate) {
     // In filtered queue view - use actual queue data
@@ -324,6 +325,10 @@ const PatientDashboard = () => {
       "-";
     patientsAhead =
       queuePosition?.patientsAhead ?? queueInfo?.patientsAhead ?? 0;
+    estimatedWaitMinutes =
+      queuePosition?.estimatedWaitMinutes ??
+      queueInfo?.estimatedWaitMinutes ??
+      null;
   }
 
   // Extract unique departments and doctors from appointments
@@ -471,6 +476,7 @@ const PatientDashboard = () => {
                   loading={loadingQueue}
                   currentQueueNumber={currentQueueNumber}
                   patientsAhead={patientsAhead}
+                  estimatedWaitMinutes={estimatedWaitMinutes}
                 />
               ) : (
                 <div className="queue-empty-state">
