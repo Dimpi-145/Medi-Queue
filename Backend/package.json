@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon server.js"
+    "dev": "npx nodemon server.js",
+    "build:web": "npm --prefix ../Frontend ci && npm --prefix ../Frontend run build",
+    "postinstall": "npm run build:web",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
