@@ -23,6 +23,15 @@ authRouter.post("/login", authLimiter, authController.loginController);
 authRouter.post("/logout", authController.logoutController);
 
 /**
+ * POST /api/auth/forgot-password
+ */
+authRouter.post(
+  "/forgot-password",
+  authLimiter,
+  authController.forgotPasswordController,
+);
+
+/**
  * Post / api/auth/admin/create-patient
  */
 authRouter.post(

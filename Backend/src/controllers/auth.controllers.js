@@ -196,6 +196,59 @@ async function logoutController(req, res) {
   res.status(200).json({ message: "Logged out successfully" });
 }
 
+async function forgotPasswordController(req, res) {
+  try {
+    const { identifier, username, email, role, hospitalId, newPassword } =
+      req.body;
+    const normalizedRole = String(role || "")
+      .toLowerCase()
+      .trim();
+    const accountIdentifier = String(identifier || username || email || "")
+      .trim();
+
+    if (!accountIdentifier || !newPassword || !normalizedRole) {
+      return res.status(400).json({
+        message: "Role, username or email, and new password are required",
+      });
+    }
+
+    if (!["patient", "doctor", "admin", "hospital"].includes(normalizedRole)) {
+      return res.status(400).json({ message: "Valid role is required" });
+    }
+
+    if (String(newPassword).trim().length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    const query = {
+      role: normalizedRole,
+      $or: [{ username: accountIdentifier }, { email: accountIdentifier }],
+    };
+
+    if (normalizedRole === "doctor" && hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    const user = await userModel.findOne(query);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "No account found for the selected role",
+      });
+    }
+
+    user.password = await bcrypt.hash(String(newPassword).trim(), 10);
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Forgot password error");
+    res.status(500).json({ message: "Password reset failed" });
+  }
+}
+
 async function getPatientById(req, res) {
   try {
     const { id } = req.params;
@@ -275,6 +328,7 @@ module.exports = {
   registerController,
   loginController,
   logoutController,
+  forgotPasswordController,
   getPatientById,
   updateProfileController,
   getHospitals,
