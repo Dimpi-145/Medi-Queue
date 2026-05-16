@@ -100,6 +100,17 @@ const Login = () => {
                 : [];
 
           setHospitals(nextHospitals);
+          setFormData((prev) => {
+            if (prev.role !== "doctor" || prev.hospitalId) {
+              return prev;
+            }
+
+            if (nextHospitals.length === 1) {
+              return { ...prev, hospitalId: nextHospitals[0]._id || "" };
+            }
+
+            return prev;
+          });
         })
         .catch((err) => {
           console.error("Error fetching hospitals:", err);
@@ -113,10 +124,19 @@ const Login = () => {
   }, [formData.role]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleHospitalChange = (e) => {
+    const hospitalId = String(e.target.value || "").trim();
+    setFormData((prev) => ({
+      ...prev,
+      hospitalId,
+    }));
   };
 
   const handleDemoFormChange = (e) => {
@@ -188,7 +208,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.role === "doctor" && !formData.hospitalId) {
+    const selectedHospitalId = String(formData.hospitalId || "").trim();
+
+    if (formData.role === "doctor" && !selectedHospitalId) {
       alert("Please select a hospital");
       return;
     }
@@ -198,7 +220,7 @@ const Login = () => {
         formData.identifier.trim(),
         formData.password,
         formData.role,
-        formData.role === "doctor" ? formData.hospitalId : null,
+        formData.role === "doctor" ? selectedHospitalId : null,
       );
       const user = response.user;
       const token = response.token;
@@ -260,7 +282,8 @@ const Login = () => {
                 <select
                   name="hospitalId"
                   value={formData.hospitalId}
-                  onChange={handleChange}
+                  onChange={handleHospitalChange}
+                  required
                   disabled={loadingHospitals}
                 >
                   <option value="">
@@ -270,7 +293,10 @@ const Login = () => {
                   </option>
                   {hospitals.map((hospital) => (
                     <option key={hospital._id} value={hospital._id}>
-                      {hospital.name || hospital.hospitalName || hospital.username || "Hospital"}
+                      {hospital.name ||
+                        hospital.hospitalName ||
+                        hospital.username ||
+                        "Hospital"}
                     </option>
                   ))}
                 </select>
