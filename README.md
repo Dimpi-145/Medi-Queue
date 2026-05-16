@@ -21,7 +21,7 @@ Recommended setup for a single Render service:
    - `SUPPORT_APP_PASSWORD`
    - `FRONTEND_URL` for a single frontend origin, or `FRONTEND_URLS` for multiple origins
 
-The backend serves the Vite production build from `Frontend/dist` when it exists, and falls back to `Backend/public` if needed.
+The backend serves the Vite production build from `Frontend/dist`.
 
 ## Local Development
 

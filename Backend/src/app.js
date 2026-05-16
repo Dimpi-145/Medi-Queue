@@ -1,7 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-const fs = require("fs");
 const cors = require("cors");
 
 // ================= ROUTES =================
@@ -99,19 +98,14 @@ app.use("/api/doctor", doctorRouter);
 // Frontend
 
 const frontendDistPath = path.join(__dirname, "..", "..", "Frontend", "dist");
-const backendPublicPath = path.join(__dirname, "..", "public");
-const frontendStaticPath = fs.existsSync(frontendDistPath)
-  ? frontendDistPath
-  : backendPublicPath;
-
-app.use(express.static(frontendStaticPath));
+app.use(express.static(frontendDistPath));
 
 app.use((req, res, next) => {
   if (req.method !== "GET" || req.path.startsWith("/api")) {
     return next();
   }
 
-  return res.sendFile(path.join(frontendStaticPath, "index.html"));
+  return res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
 // ================= ERROR HANDLER =================

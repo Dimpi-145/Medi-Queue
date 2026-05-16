@@ -21,7 +21,6 @@
     "bcryptjs": "^3.0.3",
     "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
-    "cookies-parser": "^1.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-fileupload": "^1.5.2",
@@ -29,13 +28,11 @@
     "form-data": "^4.0.5",
     "helmet": "^8.1.0",
     "imagekit": "^6.0.0",
-    "install": "^0.13.0",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "mongoose": "^9.4.1",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.7",
-    "parser": "^0.1.4",
     "socket.io": "^4.8.3"
   }
 }
