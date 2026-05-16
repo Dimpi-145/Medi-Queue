@@ -67,7 +67,6 @@ app.use(
 
 app.use(cookieParser());
 
-app.use(express.static(path.join(__dirname, '../public')));
 
 // ================= STATIC FILES =================
 
@@ -151,16 +150,14 @@ app.use(
   doctorRouter
 );
 
-// ================= 404 =================
+// Frontend
 
-app.use((req, res) => {
-  return res
-    .status(404)
-    .json({
-      message:
-        "Route not found",
-    });
-});
+app.use(express.static(path.join(__dirname, '../public')));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'))
+})
+
 
 // ================= ERROR HANDLER =================
 
@@ -188,8 +185,5 @@ app.use(
   }
 );
 
-app.get("*name", (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'))
-})
 
 module.exports = app;
