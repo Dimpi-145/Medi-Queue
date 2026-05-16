@@ -28,6 +28,7 @@ import {
   logout as logoutApi,
 } from "../../auth/services/auth.api";
 import { getQueuePosition } from "../services/queue.api";
+import { dedupeQueue } from "../utils/queue";
 
 import "../../shared/global.scss";
 import "../patientDashboard.scss";
@@ -94,7 +95,7 @@ const PatientDashboard = () => {
         `/queue/live?date=${date}${doctorId ? `&doctorId=${doctorId}` : ""}`,
       );
       const queueData = res.data?.patients || [];
-      setQueue(Array.isArray(queueData) ? queueData : []);
+      setQueue(dedupeQueue(Array.isArray(queueData) ? queueData : []));
     } catch (err) {
       console.error("Queue fetch error:", err);
       setQueue([]);
@@ -200,7 +201,9 @@ const PatientDashboard = () => {
       const formatted = (res.data || []).map((item) => ({
         id: item.id || item._id,
         doctor: item.doctor || item.doctorId?.username || "Doctor",
-        date: item.date ? new Date(item.date).toLocaleDateString() : "N/A",
+        date: item.date
+          ? new Date(`${item.date}T00:00:00`).toLocaleDateString()
+          : "N/A",
         time: item.timeSlot,
         status: item.status,
       }));

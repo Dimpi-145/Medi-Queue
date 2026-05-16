@@ -4,8 +4,19 @@ const {
   allocateNextQueueNumber,
   syncActiveQueueSequential,
   computeLiveQueueInfoForAppointmentId,
+  getDoctorQueueStatus,
+  getEstimatedWaitTimeForPatientsAhead,
 } = require("../utils/queueNumber.util");
+const { dedupeQueueEntries } = require("../utils/appointmentQueue.util");
+const User = require("../models/user.model");
 const { broadcastQueueUpdated } = require("../utils/queueEvents.util");
+
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 // ================= CURRENT PATIENT =================
 async function getCurrentPatient(req, res) {
@@ -38,38 +49,97 @@ async function getCurrentPatient(req, res) {
 async function callNextPatient(req, res) {
   try {
     const io = req.app.get("io");
-    const doctorRoom = req.user.id.toString();
     const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0]
+      req.query.date || getLocalDateString(),
     );
+    const requestedStatus = String(
+      req.body?.currentStatus || req.query.currentStatus || "completed",
+    ).toLowerCase();
+    const currentStatus =
+      requestedStatus === "pending" ? "pending" : "completed";
+    const currentAppointmentId =
+      req.body?.appointmentId || req.query.appointmentId;
+    const doctor = await User.findById(req.user.id).select("schedule");
+    const queueStatus = getDoctorQueueStatus(doctor?.schedule, selectedDate);
 
-    // complete previous approved patient for the selected date
-    await Appointment.updateMany(
-      {
-        doctorId: req.user.id,
-        status: "approved",
-        date: selectedDate,
-      },
-      {
-        status: "completed",
-      }
-    );
+    if (!queueStatus.isActive) {
+      return res.status(403).json({
+        message: queueStatus.reason || "Queue is inactive for this date",
+        queueStatus,
+      });
+    }
 
-    const nextAppointment = await Appointment.findOne({
+    const activeQuery = {
+      doctorId: req.user.id,
+      status: "approved",
+      date: selectedDate,
+    };
+
+    let currentAppointment = await Appointment.findOne(
+      currentAppointmentId
+        ? {
+            _id: currentAppointmentId,
+            doctorId: req.user.id,
+            date: selectedDate,
+            status: "approved",
+          }
+        : activeQuery,
+    ).populate("patientId", "username age gender email phone");
+
+    if (!currentAppointment) {
+      currentAppointment = await Appointment.findOne(activeQuery).populate(
+        "patientId",
+        "username age gender email phone",
+      );
+    }
+
+    if (!currentAppointment) {
+      return res.status(404).json({
+        message: "No active patient",
+      });
+    }
+
+    currentAppointment.status = "completed";
+    currentAppointment.completedAt = new Date();
+    await currentAppointment.save();
+
+    let nextAppointment = await Appointment.findOne({
       doctorId: req.user.id,
       date: selectedDate,
       status: "pending",
+      _id: { $ne: currentAppointment._id },
+      queueNumber: { $gt: currentAppointment.queueNumber },
     })
       .sort({ queueNumber: 1, createdAt: 1 })
       .populate("patientId", "username age gender email phone");
 
     if (!nextAppointment) {
-      return res.status(404).json({
-        message: "No patients left in queue",
+      nextAppointment = await Appointment.findOne({
+        doctorId: req.user.id,
+        date: selectedDate,
+        status: "pending",
+        _id: { $ne: currentAppointment._id },
+      })
+        .sort({ queueNumber: 1, createdAt: 1 })
+        .populate("patientId", "username age gender email phone");
+    }
+
+    if (!nextAppointment) {
+      await broadcastQueueUpdated(io, {
+        doctorId: req.user.id,
+        date: selectedDate,
+      });
+
+      return res.json({
+        message: "Current patient updated",
+        currentAppointmentId: currentAppointment._id,
+        currentStatus: currentAppointment.status,
+        queueStatus,
       });
     }
 
     nextAppointment.status = "approved";
+    nextAppointment.approvedAt = new Date();
     await nextAppointment.save();
 
     await broadcastQueueUpdated(io, {
@@ -79,10 +149,13 @@ async function callNextPatient(req, res) {
 
     return res.json({
       message: "Next patient called",
+      currentAppointmentId: currentAppointment._id,
+      currentStatus: currentAppointment.status,
       appointmentId: nextAppointment._id,
       queueNumber: nextAppointment.queueNumber,
       patientId: nextAppointment.patientId._id,
       patient: nextAppointment.patientId,
+      queueStatus,
     });
   } catch (error) {
     return res.status(500).json({
@@ -95,11 +168,17 @@ async function callNextPatient(req, res) {
 async function getLiveQueue(req, res) {
   try {
     const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0]
+      req.query.date || getLocalDateString(),
     );
+    const doctorId =
+      req.user.role === "doctor" ? req.user.id : req.query.doctorId || null;
+    const doctor = doctorId
+      ? await User.findById(doctorId).select("schedule")
+      : null;
+    const queueStatus = getDoctorQueueStatus(doctor?.schedule, selectedDate);
     const filter = {
       date: selectedDate,
-      status: { $nin: ["completed", "cancelled"] },
+      status: { $nin: ["cancelled"] },
     };
 
     if (req.user.role === "doctor") {
@@ -158,11 +237,13 @@ async function getLiveQueue(req, res) {
       .populate("patientId", "username age gender")
       .populate("doctorId", "username");
 
+    const uniqueQueue = dedupeQueueEntries(queue);
+
     console.log("🔍 Queue Query Debug:", {
       filter: JSON.stringify(filter),
       selectedDate,
-      queueLength: queue.length,
-      appointments: queue.map((a) => ({
+      queueLength: uniqueQueue.length,
+      appointments: uniqueQueue.map((a) => ({
         patient: a.patientId?.username,
         date: a.date,
         status: a.status,
@@ -173,8 +254,9 @@ async function getLiveQueue(req, res) {
     return res.status(200).json({
       doctorId: filter.doctorId || null,
       date: selectedDate,
-      totalWaiting: queue.length,
-      patients: queue,
+      queueStatus,
+      totalWaiting: uniqueQueue.length,
+      patients: uniqueQueue,
     });
   } catch (error) {
     return res.status(500).json({
@@ -200,9 +282,7 @@ async function getQueuePosition(req, res) {
       });
     }
 
-    const metrics = await computeLiveQueueInfoForAppointmentId(
-      req.params.id
-    );
+    const metrics = await computeLiveQueueInfoForAppointmentId(req.params.id);
 
     if (!metrics) {
       return res.status(404).json({
@@ -210,16 +290,19 @@ async function getQueuePosition(req, res) {
       });
     }
 
-    // ⏱️ 10 min per patient (you can change)
-    const avgTimePerPatient = 10;
-    const estimatedWaitTime = metrics.patientsAhead * avgTimePerPatient;
+    const waitMetrics = await getEstimatedWaitTimeForPatientsAhead(
+      appointment.doctorId,
+      metrics.patientsAhead,
+    );
 
     return res.status(200).json({
       appointmentId: metrics.appointmentId,
       doctorId: appointment.doctorId,
       yourQueueNumber: metrics.liveQueueNumber,
       patientsAhead: metrics.patientsAhead,
-      estimatedWaitTime: `${estimatedWaitTime} minutes`,
+      averageConsultationMinutes: waitMetrics.averageConsultationMinutes,
+      estimatedWaitMinutes: waitMetrics.estimatedWaitMinutes,
+      estimatedWaitTime: `${waitMetrics.estimatedWaitMinutes} minutes`,
     });
   } catch (error) {
     return res.status(500).json({
@@ -266,8 +349,17 @@ async function addToQueue(req, res) {
 async function completeCurrent(req, res) {
   try {
     const selectedDate = normalizeAppointmentDate(
-      req.query.date || new Date().toISOString().split("T")[0]
+      req.query.date || getLocalDateString(),
     );
+    const doctor = await User.findById(req.user.id).select("schedule");
+    const queueStatus = getDoctorQueueStatus(doctor?.schedule, selectedDate);
+
+    if (!queueStatus.isActive) {
+      return res.status(403).json({
+        message: queueStatus.reason || "Queue is inactive for this date",
+        queueStatus,
+      });
+    }
 
     const current = await Appointment.findOne({
       doctorId: req.user.id,
@@ -282,6 +374,7 @@ async function completeCurrent(req, res) {
     }
 
     current.status = "completed";
+    current.completedAt = new Date();
     await current.save();
 
     const io = req.app.get("io");
@@ -292,6 +385,7 @@ async function completeCurrent(req, res) {
 
     return res.json({
       message: "Patient completed",
+      queueStatus,
     });
   } catch (err) {
     return res.status(500).json({
@@ -309,10 +403,7 @@ async function getPatientDetails(req, res) {
       doctorId: req.user.id,
       patientId,
       status: { $in: ["pending", "approved", "completed"] },
-    }).populate(
-      "patientId",
-      "username age gender email phone"
-    );
+    }).populate("patientId", "username age gender email phone");
 
     if (!appointment) {
       return res.status(404).json({

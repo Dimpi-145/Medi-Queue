@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const prescriptionSchema = new mongoose.Schema({
+  appointmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Appointment",
+  },
   patientId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -19,6 +23,14 @@ const prescriptionSchema = new mongoose.Schema({
       duration: String,
     },
   ],
+  fileName: {
+    type: String,
+    default: "",
+  },
+  fileUrl: {
+    type: String,
+    default: "",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

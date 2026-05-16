@@ -5,6 +5,25 @@ import { getAppointmentHistory } from "../services/appointment.api";
 
 import "./History.scss";
 
+const CHAT_WINDOW_DAYS = 15;
+
+const isChatWindowActive = (item) => {
+  if (item.status !== "completed") {
+    return false;
+  }
+
+  const completedAt = new Date(item.updatedAt || item.createdAt || item.date);
+
+  if (Number.isNaN(completedAt.getTime())) {
+    return false;
+  }
+
+  const expiryTime = new Date(completedAt);
+  expiryTime.setDate(expiryTime.getDate() + CHAT_WINDOW_DAYS);
+
+  return new Date() <= expiryTime;
+};
+
 const History = ({ onChat }) => {
   const navigate = useNavigate();
 
@@ -105,7 +124,7 @@ const History = ({ onChat }) => {
                     <h3>Dr. {getDoctorName(item)}</h3>
 
                     <p className="timeline-date">
-                      {new Date(item.date).toLocaleDateString(undefined, {
+                      {new Date(`${item.date}T00:00:00`).toLocaleDateString(undefined, {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -125,7 +144,7 @@ const History = ({ onChat }) => {
                       : "Appointment was cancelled before consultation."}
                   </p>
 
-                  {item.status === "completed" && (
+                  {item.status === "completed" && isChatWindowActive(item) && (
                     <div className="history-card-actions">
                       <button
                         className="history-chat-button"
@@ -133,6 +152,14 @@ const History = ({ onChat }) => {
                       >
                         Open Chat
                       </button>
+                    </div>
+                  )}
+
+                  {item.status === "completed" && !isChatWindowActive(item) && (
+                    <div className="history-card-actions">
+                      <span className="history-chat-expired">
+                        Chat expired after 15 days
+                      </span>
                     </div>
                   )}
                 </div>

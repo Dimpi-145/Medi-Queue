@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { initSocket, joinUserRoom } from "../../../services/socket";
 
@@ -19,6 +19,9 @@ import {
   callNextPatient,
   completeCurrent,
 } from "../services/doctor.api";
+import PatientDetails from "../components/PatientDetails";
+import PrescriptionBox from "../components/PrescriptionBox";
+import axios from "../../../utils/axios";
 import {
   getDoctorSharedReports,
   requestReport,
@@ -26,17 +29,54 @@ import {
   getDoctorRequests,
 } from "../services/report.api";
 
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeQueueStatus = (status = "") => {
+  const value = String(status).toLowerCase();
+  return value === "approved" || value === "completed" || value === "treated"
+    ? "completed"
+    : value || "pending";
+};
+
+const mapAppointmentToPatient = (appointment) => {
+  if (!appointment) {
+    return null;
+  }
+
+  const patient = appointment.patientId || appointment.patient || {};
+
+  return {
+    name: patient.username || patient.name || "N/A",
+    age: patient.age || "—",
+    gender: patient.gender || "—",
+    queueNumber: appointment.queueNumber,
+    status: appointment.status,
+    note: appointment.note || "",
+    appointmentId: appointment._id || appointment.id,
+    patientId:
+      patient._id || appointment.patientId?._id || appointment.patientId,
+  };
+};
+
 const DoctorDashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [appointments, setAppointments] = useState([]);
   const [doctorInfo, setDoctorInfo] = useState(null);
   const [queue, setQueue] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatientStatus, setSelectedPatientStatus] = useState("pending");
+  const [prescriptionText, setPrescriptionText] = useState("");
+  const [prescriptionLoading, setPrescriptionLoading] = useState(false);
 
   const [dashboardStats, setDashboardStats] = useState({
     totalWaiting: 0,
     completedToday: 0,
     cancelledToday: 0,
-    currentPatient: null,
     nextPatient: null,
   });
 
@@ -57,9 +97,11 @@ const DoctorDashboard = () => {
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [loadingQueue, setLoadingQueue] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  const [queueStatus, setQueueStatus] = useState({
+    isActive: false,
+    reason: "Loading queue status...",
+  });
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
 
   const navigate = useNavigate();
 
@@ -86,7 +128,6 @@ const DoctorDashboard = () => {
           totalWaiting: dashboardRes.data?.totalWaiting || 0,
           completedToday: dashboardRes.data?.completedToday || 0,
           cancelledToday: dashboardRes.data?.cancelledToday || 0,
-          currentPatient: dashboardRes.data?.currentPatient || null,
           nextPatient: dashboardRes.data?.nextPatient || null,
         };
 
@@ -99,7 +140,24 @@ const DoctorDashboard = () => {
 
         setDoctorInfo(doctor);
         setDashboardStats(stats);
+        setQueueStatus(
+          dashboardRes.data?.queueStatus || {
+            isActive: false,
+            reason: "Queue status unavailable",
+          },
+        );
         setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+
+        const activePatient = dashboardRes.data?.currentPatient
+          ? mapAppointmentToPatient(dashboardRes.data.currentPatient)
+          : dashboardRes.data?.nextPatient
+            ? mapAppointmentToPatient(dashboardRes.data.nextPatient)
+            : null;
+
+        if (activePatient) {
+          setSelectedPatient(activePatient);
+          setSelectedPatientStatus("completed");
+        }
       } catch (err) {
         console.error("❌ Error fetching doctor data:", err);
         console.error("Error Details:", err.response?.data || err.message);
@@ -107,7 +165,7 @@ const DoctorDashboard = () => {
         setLoadingDashboard(false);
       }
     },
-    [selectedDate],
+    [selectedDate, selectedPatient],
   );
 
   const fetchAppointments = useCallback(async () => {
@@ -138,6 +196,12 @@ const DoctorDashboard = () => {
         });
         const queueRes = await getLiveQueue(doctorId, date);
         const queueData = queueRes.data?.patients || queueRes.data || [];
+        setQueueStatus(
+          queueRes.data?.queueStatus || {
+            isActive: false,
+            reason: "Queue status unavailable",
+          },
+        );
         console.log("✅ Queue fetched:", queueData.length, "patients");
         setQueue(Array.isArray(queueData) ? queueData : []);
       } catch (err) {
@@ -235,14 +299,6 @@ const DoctorDashboard = () => {
     }
   };
 
-  const handleDateChange = (event) => {
-    const date = event.target.value;
-    setSelectedDate(date);
-    localStorage.setItem("doctorQueueDate", date);
-    fetchData(date);
-    fetchQueue(date);
-  };
-
   // ================= INIT =================
   useEffect(() => {
     fetchData(selectedDate);
@@ -309,6 +365,20 @@ const DoctorDashboard = () => {
       return acc;
     }, {});
   }, [appointments]);
+
+  const waitingCount = useMemo(() => {
+    return (queue || []).filter((q) => {
+      const s = (q.status || "").toLowerCase();
+      return s !== "completed" && s !== "approved" && s !== "treated";
+    }).length;
+  }, [queue]);
+
+  const treatedCount = useMemo(() => {
+    return (queue || []).filter((q) => {
+      const s = (q.status || "").toLowerCase();
+      return s === "completed" || s === "approved" || s === "treated";
+    }).length;
+  }, [queue]);
   // ================= LOGOUT =================
   const handleLogout = async () => {
     try {
@@ -352,24 +422,39 @@ const DoctorDashboard = () => {
             {queue.map((item) => (
               <tr
                 key={item._id}
-                onClick={() =>
-                  navigate(`/doctor-dashboard/patient/${item.patientId?._id}`)
+                onClick={
+                  queueStatus.isActive
+                    ? () => {
+                        const p = mapAppointmentToPatient(item);
+                        setSelectedPatient(p);
+                        setSelectedPatientStatus("pending");
+                      }
+                    : undefined
                 }
-                style={{ cursor: "pointer", transition: "0.2s" }}
-                onMouseEnter={(e) =>
-                  (e.target.parentElement.style.backgroundColor = "#f0f4f8")
-                }
-                onMouseLeave={(e) =>
-                  (e.target.parentElement.style.backgroundColor = "transparent")
-                }
+                style={{
+                  cursor: queueStatus.isActive ? "pointer" : "not-allowed",
+                  transition: "0.2s",
+                  opacity: queueStatus.isActive ? 1 : 0.72,
+                }}
               >
                 <td>{item.queueNumber}</td>
                 <td>{item.patientId?.username || "N/A"}</td>
                 <td>{item.patientId?.age ?? "—"}</td>
                 <td>
-                  <span className={`status-badge ${item.status}`}>
-                    {item.status}
-                  </span>
+                  {(() => {
+                    const s = normalizeQueueStatus(item.status);
+                    const cls =
+                      s === "completed" ? "completed" : s || "pending";
+                    const label =
+                      s === "completed"
+                        ? "Completed"
+                        : s
+                          ? s.charAt(0).toUpperCase() + s.slice(1)
+                          : "N/A";
+                    return (
+                      <span className={`status-badge ${cls}`}>{label}</span>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}
@@ -380,6 +465,8 @@ const DoctorDashboard = () => {
   };
 
   const renderContent = () => {
+    const canOperateQueue = !!queueStatus?.isActive;
+
     if (activeSection === "Appointments") {
       return (
         <div className="appointments-panel">
@@ -394,7 +481,10 @@ const DoctorDashboard = () => {
             <p>Loading...</p>
           ) : appointments.length > 0 ? (
             Object.entries(groupedAppointments)
-              .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+              .sort(
+                (a, b) =>
+                  new Date(`${a[0]}T00:00:00`) - new Date(`${b[0]}T00:00:00`),
+              )
               .map(([dateLabel, items]) => (
                 <div key={dateLabel} className="date-group-card">
                   <div className="date-group-header">
@@ -455,29 +545,29 @@ const DoctorDashboard = () => {
             <div className="panel-header">
               <div>
                 <h3>Doctor Queue</h3>
-                <p>Manage your current queue and patients waiting.</p>
+                <p>Today's queue and patients waiting.</p>
               </div>
-              <div className="date-control">
-                <label htmlFor="queue-date">Queue Date</label>
-                <input
-                  id="queue-date"
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                />
-              </div>
+              <span
+                className={`queue-status-pill ${canOperateQueue ? "active" : "inactive"}`}
+              >
+                {canOperateQueue ? "Today Active" : "Today Inactive"}
+              </span>
             </div>
+
+            {!canOperateQueue && (
+              <div className="queue-lock-notice">
+                {queueStatus?.reason || "Today's queue is inactive."}
+              </div>
+            )}
 
             <div className="stats-row">
               <div className="stat-box">
-                <span>{queue.length}</span>
+                <span>{waitingCount}</span>
                 <p>Waiting</p>
               </div>
               <div className="stat-box">
-                <span>
-                  {dashboardStats.currentPatient?.patientId?.username ? 1 : 0}
-                </span>
-                <p>Being Treated</p>
+                <span>{treatedCount}</span>
+                <p>Treated</p>
               </div>
               <div className="stat-box">
                 <span>
@@ -489,15 +579,7 @@ const DoctorDashboard = () => {
               </div>
             </div>
 
-            <div className="queue-actions">
-              <button
-                className="action-btn"
-                onClick={handleCompleteCurrent}
-                disabled={loadingQueue || !dashboardStats.currentPatient}
-              >
-                Complete Current Patient
-              </button>
-            </div>
+            {/* Removed Complete Current Patient button - inline workflow available below */}
           </div>
 
           <div className="appointments-panel">
@@ -508,6 +590,114 @@ const DoctorDashboard = () => {
               </div>
             </div>
             {renderQueueList()}
+
+            <div style={{ marginTop: 18 }}>
+              <div className="panel-header">
+                <div>
+                  <h3>Prescription and Next Patient</h3>
+                  <p>
+                    Pick a waiting patient, prepare the prescription, then
+                    advance the queue.
+                  </p>
+                </div>
+              </div>
+              <div className="detail-and-prescription">
+                <div style={{ flex: 1 }}>
+                  <PatientDetails patient={selectedPatient} />
+                </div>
+                <div style={{ width: 360 }}>
+                  <PrescriptionBox
+                    prescriptionText={prescriptionText}
+                    onTextChange={setPrescriptionText}
+                    queueStatus={selectedPatientStatus}
+                    onQueueStatusChange={setSelectedPatientStatus}
+                    onSubmit={async () => {
+                      try {
+                        if (!selectedPatient) {
+                          alert("Select a patient first");
+                          return;
+                        }
+                        setPrescriptionLoading(true);
+                        await axios.post("/prescriptions/create", {
+                          patientId: selectedPatient.patientId,
+                          appointmentId: selectedPatient.appointmentId,
+                          notes: prescriptionText,
+                          medicines: [],
+                        });
+                        alert(
+                          "Prescription sent to the patient prescription section.",
+                        );
+                        setPrescriptionText("");
+                      } catch (err) {
+                        console.error("Prescription submit error", err);
+                        alert(
+                          err.response?.data?.message ||
+                            "Failed to submit prescription",
+                        );
+                      } finally {
+                        setPrescriptionLoading(false);
+                      }
+                    }}
+                    onNext={async () => {
+                      try {
+                        if (!selectedPatient) {
+                          alert("Select a patient first");
+                          return;
+                        }
+                        const response = await callNextPatient({
+                          date: selectedDate,
+                          appointmentId: selectedPatient.appointmentId,
+                          currentStatus: selectedPatientStatus,
+                        });
+                        const nextPatient = response.data?.patient;
+                        if (nextPatient) {
+                          setSelectedPatient({
+                            name: nextPatient.username || "N/A",
+                            age: nextPatient.age || "—",
+                            gender: nextPatient.gender || "—",
+                            queueNumber: response.data?.queueNumber,
+                            status: "approved",
+                            note: nextPatient.note || "",
+                            appointmentId: response.data?.appointmentId,
+                            patientId:
+                              response.data?.patientId || nextPatient._id,
+                          });
+                          setSelectedPatientStatus("completed");
+                        } else {
+                          setSelectedPatient((currentPatient) =>
+                            currentPatient
+                              ? {
+                                  ...currentPatient,
+                                  status:
+                                    response.data?.currentStatus ||
+                                    currentPatient.status,
+                                }
+                              : currentPatient,
+                          );
+                          setSelectedPatientStatus(
+                            response.data?.currentStatus ||
+                              selectedPatientStatus,
+                          );
+                        }
+                        setPrescriptionText("");
+                        await fetchQueue(selectedDate);
+                        await fetchData(selectedDate);
+                      } catch (err) {
+                        console.error("Call next failed", err);
+                        alert(
+                          err.response?.data?.message || "No patients left",
+                        );
+                      }
+                    }}
+                    disabled={
+                      !canOperateQueue ||
+                      prescriptionLoading ||
+                      !selectedPatient
+                    }
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -704,6 +894,13 @@ const DoctorDashboard = () => {
                 : prev,
             );
           }}
+          onProfileUpdate={(updatedUser) => {
+            if (updatedUser) {
+              setDoctorInfo(updatedUser);
+            } else {
+              fetchData(selectedDate);
+            }
+          }}
         />
 
         <div className="profile-card">
@@ -749,22 +946,6 @@ const DoctorDashboard = () => {
                   <p>Cancelled Today</p>
                 </div>
               </div>
-
-              <div className="doctor-info-grid">
-                <div className="info-card">
-                  <p className="info-label">Current Patient</p>
-                  <strong>
-                    {dashboardStats.currentPatient?.patientId?.username ||
-                      "None"}
-                  </strong>
-                </div>
-                <div className="info-card">
-                  <p className="info-label">Next Patient</p>
-                  <strong>
-                    {dashboardStats.nextPatient?.patientId?.username || "None"}
-                  </strong>
-                </div>
-              </div>
             </>
           ) : (
             <p>No doctor found</p>
@@ -800,7 +981,9 @@ const DoctorDashboard = () => {
                       <td>{item.patient?.username || "N/A"}</td>
                       <td>
                         {item.date
-                          ? new Date(item.date).toLocaleDateString()
+                          ? new Date(
+                              `${item.date}T00:00:00`,
+                            ).toLocaleDateString()
                           : "N/A"}
                       </td>
                       <td>{item.timeSlot || "N/A"}</td>

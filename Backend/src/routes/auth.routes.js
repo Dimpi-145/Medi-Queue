@@ -75,6 +75,17 @@ authRouter.get("/doctor-dashboard", authMiddleware, (req, res) => {
 });
 
 /**
+ * PUT /api/auth/profile
+ * Allow authenticated patients and doctors to update shared profile fields.
+ */
+authRouter.put(
+  "/profile",
+  authMiddleware,
+  roleMiddleware("patient", "doctor"),
+  authController.updateProfileController,
+);
+
+/**
  * PATCH /api/auth/profile/schedule
  * Allow doctors to update their own schedule (isActiveToday, todayStart, todayEnd)
  */

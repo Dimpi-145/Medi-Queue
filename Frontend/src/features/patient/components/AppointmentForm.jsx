@@ -12,6 +12,13 @@ import {
 
 import "./AppointmentForm.scss";
 
+const toLocalDateString = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const AppointmentForm = ({ onBook, loading, onClose }) => {
   const today = useMemo(() => new Date(), []);
   const bookingWindowDays = 30;
@@ -70,18 +77,6 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
   // ================= SELECTED DOCTOR =================
   const selectedDoctor = doctors.find((doc) => doc._id === doctorId);
 
-  const selectedDateLabel = useMemo(() => {
-    if (!date) return "";
-    const parsed = new Date(`${date}T00:00:00`);
-    if (Number.isNaN(parsed.getTime())) return "";
-    return parsed.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }, [date]);
-
   const selectedTimeWindow = useMemo(() => {
     if (!selectedDoctor || !date) return null;
 
@@ -93,7 +88,7 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
       (slot) => String(slot.day || "").toLowerCase() === selectedDayName,
     );
 
-    const isToday = date === new Date().toISOString().split("T")[0];
+    const isToday = date === toLocalDateString(new Date());
     const start = isToday
       ? selectedDoctor.schedule?.todayStart || weeklySlot?.start || ""
       : weeklySlot?.start || selectedDoctor.schedule?.todayStart || "";
@@ -133,7 +128,7 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         continue;
       }
 
-      const isoDate = candidate.toISOString().split("T")[0];
+      const isoDate = toLocalDateString(candidate);
       options.push({
         value: isoDate,
         label: candidate.toLocaleDateString(undefined, {
@@ -356,9 +351,7 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
 
           {selectedTimeWindow ? (
             <p className="time-note">
-              {selectedDateLabel
-                ? `${selectedDateLabel}: ${selectedTimeWindow.start} to ${selectedTimeWindow.end}`
-                : `${selectedTimeWindow.start} to ${selectedTimeWindow.end}`}
+              {`${selectedTimeWindow.start} to ${selectedTimeWindow.end}`}
             </p>
           ) : (
             <p className="time-note">

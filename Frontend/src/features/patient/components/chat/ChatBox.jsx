@@ -23,6 +23,13 @@ import {
   joinUserRoom,
 } from "../../../../services/socket";
 
+import {
+  getChatNotificationBody,
+  notifyDesktopMessage,
+} from "../../../../utils/desktopNotifications";
+
+import { resolveAttachmentUrl } from "../../../../utils/attachmentUrl";
+
 const ChatBox = ({ chatContext, onClose }) => {
   const navigate = useNavigate();
 
@@ -49,6 +56,9 @@ const ChatBox = ({ chatContext, onClose }) => {
   const currentUserRole =
     chatContext?.currentUserRole ||
     (chatContext?.isDoctor ? "doctor" : "patient");
+
+  const isDoctorView =
+    chatContext?.isDoctor || currentUserRole === "doctor";
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
@@ -86,15 +96,7 @@ const ChatBox = ({ chatContext, onClose }) => {
 
   // ================= LOAD VIDEO STATUS =================
 
-  useEffect(() => {
-    if (!appointmentId) return;
 
-    const loadVideoStatus = async () => {
-      try {
-        const res =
-          await getVideoRequestStatus(
-            appointmentId
-          );
 
         setVideoRequest(
           res.data.videoRequest || null
@@ -133,12 +135,21 @@ const ChatBox = ({ chatContext, onClose }) => {
         String(
           newMessage.appointmentId || ""
         );
+      const currentUserId = String(userId || localStorage.getItem("userId") || "");
 
       if (
         incomingAppointmentId !==
         String(appointmentId)
       ) {
         return;
+      }
+
+      if (String(newMessage.senderId || "") !== currentUserId) {
+        void notifyDesktopMessage({
+          title: newMessage.senderName || "New message",
+          body: getChatNotificationBody(newMessage),
+          tag: `appointment-${appointmentId}`,
+        });
       }
 
       setMessages((prev) => {
@@ -325,17 +336,35 @@ const ChatBox = ({ chatContext, onClose }) => {
           selectedFile
         );
 
-        await sendChatMessageWithFile(
+        const response = await sendChatMessageWithFile(
           formData
         );
+
+        const serverMessage = response.data?.chatMessage;
+        if (serverMessage) {
+          const socket = getSocket();
+          socket?.emit("sendMessage", {
+            roomId: `consultation-${appointmentId}`,
+            message: serverMessage,
+          });
+        }
 
         setSelectedFile(null);
         setFilePreview(null);
       } else {
-        await sendChatMessage(
+        const response = await sendChatMessage(
           appointmentId,
           text
         );
+
+        const serverMessage = response.data?.chatMessage;
+        if (serverMessage) {
+          const socket = getSocket();
+          socket?.emit("sendMessage", {
+            roomId: `consultation-${appointmentId}`,
+            message: serverMessage,
+          });
+        }
       }
     } catch (error) {
       console.error(
@@ -498,9 +527,7 @@ const ChatBox = ({ chatContext, onClose }) => {
                   "image/"
                 ) && (
                   <img
-                    src={
-                      msg.attachment.url
-                    }
+                    src={resolveAttachmentUrl(msg.attachment.url)}
                     alt="shared"
                     className="message-image"
                     style={{
@@ -581,11 +608,7 @@ const ChatBox = ({ chatContext, onClose }) => {
                       </div>
 
                       <a
-                        href={
-                          msg
-                            .attachment
-                            .url
-                        }
+                        href={resolveAttachmentUrl(msg.attachment.url)}
                         download
                         style={{
                           marginLeft:
@@ -626,94 +649,7 @@ const ChatBox = ({ chatContext, onClose }) => {
 
         </div>
 
-        {/* VIDEO ACTIONS */}
-
-        <div className="chat-actions">
-
-          {isDoctorView ? (
-            videoRequest?.status ===
-            "pending" ? (
-              <>
-
-                <button
-                  className="video-request-button"
-                  onClick={() =>
-                    handleVideoResponse(
-                      "accept"
-                    )
-                  }
-                  disabled={
-                    actionLoading
-                  }
-                >
-                  Accept Video Request
-                </button>
-
-                <button
-                  className="video-request-button reject"
-                  onClick={() =>
-                    handleVideoResponse(
-                      "reject"
-                    )
-                  }
-                  disabled={
-                    actionLoading
-                  }
-                >
-                  Reject Video Request
-                </button>
-
-              </>
-            ) : (
-              <div className="video-request-note">
-
-                {videoStatus ===
-                "accepted"
-                  ? "Video consultation accepted."
-                  : videoStatus ===
-                    "rejected"
-                  ? "Video consultation rejected."
-                  : "No active video request."}
-
-              </div>
-            )
-          ) : (
-            <>
-
-              <button
-                className="video-request-button"
-                onClick={
-                  handleVideoRequest
-                }
-                disabled={
-                  videoLoading ||
-                  videoStatus ===
-                    "pending" ||
-                  videoStatus ===
-                    "accepted"
-                }
-              >
-
-                {videoStatus ===
-                "pending"
-                  ? "Video Request Pending"
-                  : videoStatus ===
-                    "accepted"
-                  ? "Video Request Accepted"
-                  : "Request Video Consultation"}
-
-              </button>
-
-              {videoMessage && (
-                <p className="video-request-note">
-                  {videoMessage}
-                </p>
-              )}
-
-            </>
-          )}
-
-        </div>
+        {/* VIDEO ACTIONS removed - compact video icon added to input row */}
 
         {/* CHAT INPUT */}
 
@@ -883,6 +819,30 @@ const ChatBox = ({ chatContext, onClose }) => {
               }}
             >
               📎
+            </button>
+
+            <button
+              onClick={handleVideoRequest}
+              title="Request video consultation"
+              disabled={
+                videoLoading ||
+                videoStatus === "pending" ||
+                videoStatus === "accepted" ||
+                isDoctorView
+              }
+              style={{
+                padding: "8px 12px",
+                background: "#f0f0f0",
+                border: "none",
+                borderRadius: "4px",
+                cursor:
+                  videoLoading || isDoctorView
+                    ? "not-allowed"
+                    : "pointer",
+                marginLeft: "4px",
+              }}
+            >
+              📹
             </button>
 
             <button

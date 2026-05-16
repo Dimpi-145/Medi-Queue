@@ -4,24 +4,25 @@ import io from "socket.io-client";
 import { initSocket } from "../../services/socket";
 import "./VideoRoom.scss";
 
-const VideoRoom = () => {
-  const { roomId } = useParams();
+const VideoRoom = ({ roomId: propRoomId, onClose }) => {
+  const params = useParams();
+  const roomId = propRoomId || params.roomId;
   const navigate = useNavigate();
-  
+
   // Video references
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  
+
   // WebRTC
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
-  
+
   // Socket
   const socketRef = useRef(null);
   const userIdRef = useRef(null);
   const offerSentRef = useRef(false);
-  
+
   // State
   const [cameraOn, setCameraOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -33,7 +34,8 @@ const VideoRoom = () => {
   const RTCConfig = {
     iceServers: (() => {
       const list = [];
-      const stun = import.meta.env.VITE_STUN_URL || "stun:stun.l.google.com:19302";
+      const stun =
+        import.meta.env.VITE_STUN_URL || "stun:stun.l.google.com:19302";
       const turn = import.meta.env.VITE_TURN_URL || "";
       if (stun) list.push({ urls: stun });
       if (turn) {
@@ -56,15 +58,18 @@ const VideoRoom = () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: { 
-            echoCancellation: true, 
+          audio: {
+            echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl: true 
+            autoGainControl: true,
           },
         });
         console.log("[WebRTC] Got media stream with HD constraints");
       } catch (err) {
-        console.warn("[WebRTC] HD constraints failed, retrying with standard...", err.message);
+        console.warn(
+          "[WebRTC] HD constraints failed, retrying with standard...",
+          err.message,
+        );
         // Fallback to standard constraints
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -78,14 +83,16 @@ const VideoRoom = () => {
       }
 
       localStreamRef.current = stream;
-      
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
         console.log("[WebRTC] Local video element updated with stream");
       }
 
       // Create peer connection
-      const peerConnection = new RTCPeerConnection({ iceServers: RTCConfig.iceServers });
+      const peerConnection = new RTCPeerConnection({
+        iceServers: RTCConfig.iceServers,
+      });
       peerConnectionRef.current = peerConnection;
       console.log("[WebRTC] RTCPeerConnection created");
 
@@ -97,34 +104,50 @@ const VideoRoom = () => {
       stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
         trackCount++;
-        console.log("[WebRTC] Added track:", track.kind, "enabled:", track.enabled);
+        console.log(
+          "[WebRTC] Added track:",
+          track.kind,
+          "enabled:",
+          track.enabled,
+        );
       });
       console.log("[WebRTC] Total tracks added:", trackCount);
 
       // Handle remote stream
       peerConnection.ontrack = (event) => {
-        console.log("[WebRTC] Received remote track:", event.track.kind, "streams:", event.streams.length);
-        
+        console.log(
+          "[WebRTC] Received remote track:",
+          event.track.kind,
+          "streams:",
+          event.streams.length,
+        );
+
         if (!remoteStreamRef.current) {
           remoteStreamRef.current = new MediaStream();
           console.log("[WebRTC] Created new MediaStream for remote");
         }
-        
+
         remoteStreamRef.current.addTrack(event.track);
-        console.log("[WebRTC] Added remote track to stream, total tracks:", remoteStreamRef.current.getTracks().length);
-        
+        console.log(
+          "[WebRTC] Added remote track to stream, total tracks:",
+          remoteStreamRef.current.getTracks().length,
+        );
+
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = remoteStreamRef.current;
           console.log("[WebRTC] Remote video element updated");
         }
-        
+
         setRemoteUserConnected(true);
       };
 
       // Handle ICE candidates
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log("[WebRTC] Generated ICE candidate:", event.candidate.candidate.substring(0, 50) + "...");
+          console.log(
+            "[WebRTC] Generated ICE candidate:",
+            event.candidate.candidate.substring(0, 50) + "...",
+          );
           if (socketRef.current) {
             socketRef.current.emit("sendIceCandidate", {
               roomId,
@@ -133,22 +156,34 @@ const VideoRoom = () => {
             });
           }
         } else {
-          console.log("[WebRTC] ICE candidate generation completed (null candidate)");
+          console.log(
+            "[WebRTC] ICE candidate generation completed (null candidate)",
+          );
         }
       };
 
       // drain pending candidates if any
-      if (peerConnection._pendingCandidates && peerConnection._pendingCandidates.length) {
+      if (
+        peerConnection._pendingCandidates &&
+        peerConnection._pendingCandidates.length
+      ) {
         peerConnection._pendingCandidates.forEach((c) => {
-          try { peerConnection.addIceCandidate(c); } catch (e) { console.warn('[WebRTC] addIceCandidate drain failed', e); }
+          try {
+            peerConnection.addIceCandidate(c);
+          } catch (e) {
+            console.warn("[WebRTC] addIceCandidate drain failed", e);
+          }
         });
         peerConnection._pendingCandidates = [];
       }
 
       // Handle connection state changes
       peerConnection.onconnectionstatechange = () => {
-        console.log("[WebRTC] Connection state:", peerConnection.connectionState);
-        
+        console.log(
+          "[WebRTC] Connection state:",
+          peerConnection.connectionState,
+        );
+
         if (peerConnection.connectionState === "failed") {
           console.error("[WebRTC] Connection failed - attempting recovery");
           setError("Connection failed. Please try again.");
@@ -164,11 +199,17 @@ const VideoRoom = () => {
 
       // Handle ICE connection state changes
       peerConnection.oniceconnectionstatechange = () => {
-        console.log("[WebRTC] ICE Connection state:", peerConnection.iceConnectionState);
-        
+        console.log(
+          "[WebRTC] ICE Connection state:",
+          peerConnection.iceConnectionState,
+        );
+
         if (peerConnection.iceConnectionState === "failed") {
           console.warn("[WebRTC] ICE connection failed");
-        } else if (peerConnection.iceConnectionState === "connected" || peerConnection.iceConnectionState === "completed") {
+        } else if (
+          peerConnection.iceConnectionState === "connected" ||
+          peerConnection.iceConnectionState === "completed"
+        ) {
           console.log("[WebRTC] ICE connection established");
         }
       };
@@ -186,13 +227,16 @@ const VideoRoom = () => {
       // Join video room without creating an offer yet.
       if (socketRef.current) {
         console.log("[WebRTC] Joining video room:", roomId);
-        socketRef.current.emit("joinVideoRoom", { roomId, userId: userIdRef.current });
+        socketRef.current.emit("joinVideoRoom", {
+          roomId,
+          userId: userIdRef.current,
+        });
       } else {
         console.error("[WebRTC] Socket not available for room join");
       }
     } catch (err) {
       console.error("[WebRTC] Error initializing peer connection:", err);
-      
+
       // Provide specific error messages
       let errorMsg = err.message;
       if (err.name === "NotAllowedError") {
@@ -202,7 +246,7 @@ const VideoRoom = () => {
       } else if (err.name === "NotReadableError") {
         errorMsg = "Camera/Microphone already in use by another application.";
       }
-      
+
       setError(errorMsg);
       setConnecting(false);
     }
@@ -228,7 +272,7 @@ const VideoRoom = () => {
     socket.on("receiveOffer", async (data) => {
       const { offer, from } = data;
       console.log("[Socket] Received offer from:", from);
-      
+
       try {
         if (!peerConnectionRef.current) {
           console.log("[Socket] No peer connection, initializing...");
@@ -240,13 +284,15 @@ const VideoRoom = () => {
         }
 
         console.log("[WebRTC] Setting remote description (offer)");
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+        await peerConnectionRef.current.setRemoteDescription(
+          new RTCSessionDescription(offer),
+        );
         console.log("[WebRTC] Remote description set, creating answer...");
-        
+
         const answer = await peerConnectionRef.current.createAnswer();
         console.log("[WebRTC] Answer created, setting local description...");
         await peerConnectionRef.current.setLocalDescription(answer);
-        
+
         console.log("[Socket] Sending answer back to peer");
         socket.emit("sendAnswer", {
           roomId,
@@ -263,22 +309,27 @@ const VideoRoom = () => {
     socket.on("receiveAnswer", async (data) => {
       const { answer, from } = data;
       console.log("[Socket] Received answer from:", from);
-      
+
       try {
         if (!peerConnectionRef.current) {
           console.error("[WebRTC] No peer connection to set answer on");
           return;
         }
 
-        console.log("[WebRTC] Current signaling state:", peerConnectionRef.current.signalingState);
-        
+        console.log(
+          "[WebRTC] Current signaling state:",
+          peerConnectionRef.current.signalingState,
+        );
+
         if (peerConnectionRef.current.signalingState === "stable") {
           console.warn("[WebRTC] Signaling state is stable, cannot set answer");
           return;
         }
 
         console.log("[WebRTC] Setting remote description (answer)");
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        await peerConnectionRef.current.setRemoteDescription(
+          new RTCSessionDescription(answer),
+        );
         console.log("[WebRTC] Answer processed successfully");
       } catch (err) {
         console.error("[WebRTC] Error handling answer:", err);
@@ -290,7 +341,7 @@ const VideoRoom = () => {
     socket.on("receiveIceCandidate", async (data) => {
       const { candidate, from } = data;
       console.log("[Socket] Received ICE candidate from:", from);
-      
+
       try {
         if (!peerConnectionRef.current) {
           console.error("[WebRTC] No peer connection to add ICE candidate");
@@ -303,7 +354,9 @@ const VideoRoom = () => {
         }
 
         console.log("[WebRTC] Adding ICE candidate...");
-        await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        await peerConnectionRef.current.addIceCandidate(
+          new RTCIceCandidate(candidate),
+        );
         console.log("[WebRTC] ICE candidate added successfully");
       } catch (err) {
         console.warn("[WebRTC] Error adding ICE candidate:", err.message);
@@ -313,9 +366,11 @@ const VideoRoom = () => {
     // Listen for remote user joining
     socket.on("userJoinedVideo", async (data) => {
       console.log("[Socket] Remote user joined video room:", data.userId);
-      
+
       if (!peerConnectionRef.current) {
-        console.warn("[WebRTC] Received userJoinedVideo before peer connection created");
+        console.warn(
+          "[WebRTC] Received userJoinedVideo before peer connection created",
+        );
         return;
       }
 
@@ -341,7 +396,10 @@ const VideoRoom = () => {
           offerSentRef.current = true;
           console.log("[WebRTC] Offer sent after remote join");
         } catch (err) {
-          console.error("[WebRTC] Error creating/sending offer after remote joined:", err);
+          console.error(
+            "[WebRTC] Error creating/sending offer after remote joined:",
+            err,
+          );
           setError(`Signaling error: ${err.message}`);
         }
       }
@@ -354,9 +412,13 @@ const VideoRoom = () => {
 
     socket.on("disconnect", () => {
       console.log("[Socket] Disconnected from socket server");
-      if (peerConnectionRef.current?.connectionState === "connected" || 
-          peerConnectionRef.current?.connectionState === "connecting") {
-        console.log("[WebRTC] Peer connection active but socket disconnected, ending call");
+      if (
+        peerConnectionRef.current?.connectionState === "connected" ||
+        peerConnectionRef.current?.connectionState === "connecting"
+      ) {
+        console.log(
+          "[WebRTC] Peer connection active but socket disconnected, ending call",
+        );
         handleHangUp();
       }
     });
@@ -388,12 +450,12 @@ const VideoRoom = () => {
 
     const videoTracks = localStreamRef.current.getVideoTracks();
     console.log("[Media] Toggling camera, current tracks:", videoTracks.length);
-    
+
     videoTracks.forEach((track) => {
       track.enabled = !track.enabled;
       console.log("[Media] Video track", track.id, "enabled:", track.enabled);
     });
-    
+
     const newState = !cameraOn;
     setCameraOn(newState);
 
@@ -415,12 +477,12 @@ const VideoRoom = () => {
 
     const audioTracks = localStreamRef.current.getAudioTracks();
     console.log("[Media] Toggling mic, current tracks:", audioTracks.length);
-    
+
     audioTracks.forEach((track) => {
       track.enabled = !track.enabled;
       console.log("[Media] Audio track", track.id, "enabled:", track.enabled);
     });
-    
+
     const newState = !micOn;
     setMicOn(newState);
 
@@ -439,7 +501,10 @@ const VideoRoom = () => {
 
     // Close peer connection
     if (peerConnectionRef.current) {
-      console.log("[WebRTC] Peer connection state:", peerConnectionRef.current.connectionState);
+      console.log(
+        "[WebRTC] Peer connection state:",
+        peerConnectionRef.current.connectionState,
+      );
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
       console.log("[WebRTC] Peer connection closed");
@@ -468,10 +533,18 @@ const VideoRoom = () => {
     setConnected(false);
     setRemoteUserConnected(false);
     console.log("[WebRTC] Call ended, navigating back...");
-    
-    // Navigate back
+
+    // Navigate back or call onClose if provided
     setTimeout(() => {
-      navigate(-1);
+      if (typeof onClose === "function") {
+        try {
+          onClose();
+        } catch (e) {
+          navigate(-1);
+        }
+      } else {
+        navigate(-1);
+      }
     }, 500);
   }, [roomId, navigate]);
 
@@ -489,9 +562,7 @@ const VideoRoom = () => {
           <div className="error-icon">❌</div>
           <h2>Unable to start video call</h2>
           <p>{error}</p>
-          <p className="error-hint">
-            Troubleshooting steps:
-          </p>
+          <p className="error-hint">Troubleshooting steps:</p>
           <ul className="error-hints-list">
             <li>Check camera/microphone permissions in browser settings</li>
             <li>Ensure no other application is using your camera</li>
@@ -499,7 +570,10 @@ const VideoRoom = () => {
             <li>Check your internet connection</li>
             <li>Open browser console (F12) to see detailed error logs</li>
           </ul>
-          <button onClick={() => window.location.reload()} className="retry-btn">
+          <button
+            onClick={() => window.location.reload()}
+            className="retry-btn"
+          >
             Retry
           </button>
           <button onClick={() => navigate(-1)} className="back-btn">
@@ -595,4 +669,3 @@ const VideoRoom = () => {
 };
 
 export default VideoRoom;
-

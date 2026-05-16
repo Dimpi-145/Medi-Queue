@@ -5,19 +5,44 @@ const PatientDetails = ({ patient }) => {
   if (!patient) {
     return (
       <div className="detail-card empty-card">
-        <h3>Select a patient from the queue</h3>
-        <p>Patient details will appear here once you choose a name.</p>
+        <h3>Current patient will appear here</h3>
+        <p>
+          The active patient is shown automatically when the queue is loaded.
+        </p>
       </div>
     );
   }
 
+  const statusValue = String(patient.status || "").toLowerCase();
+  const statusLabel =
+    statusValue === "approved" ||
+    statusValue === "completed" ||
+    statusValue === "treated"
+      ? "Completed"
+      : statusValue
+        ? statusValue.charAt(0).toUpperCase() + statusValue.slice(1)
+        : "N/A";
+  const statusClass =
+    statusValue === "approved" ||
+    statusValue === "completed" ||
+    statusValue === "treated"
+      ? "completed"
+      : statusValue || "pending";
+
   return (
     <div className="detail-card">
       <div className="detail-header">
-        <div className="patient-avatar">{patient.name.split(" ").map((part) => part[0]).join("")}</div>
+        <div className="patient-avatar">
+          {patient.name
+            .split(" ")
+            .map((part) => part[0])
+            .join("")}
+        </div>
         <div>
           <h3>{patient.name}</h3>
-          <p className="subtle-text">{patient.age} years · {patient.gender}</p>
+          <p className="subtle-text">
+            {patient.age} years · {patient.gender}
+          </p>
         </div>
       </div>
 
@@ -28,7 +53,7 @@ const PatientDetails = ({ patient }) => {
         </div>
         <div>
           <span className="label">Status</span>
-          <p className={`status-badge ${patient.status}`}>{patient.status}</p>
+          <p className={`status-badge ${statusClass}`}>{statusLabel}</p>
         </div>
       </div>
 

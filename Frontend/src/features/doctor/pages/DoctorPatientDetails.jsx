@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
-import {generatePrescriptionPDF} from "../../../utils/prescription";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import PatientDetails from "../components/PatientDetails";
@@ -12,18 +11,27 @@ import { callNextPatient } from "../services/doctor.api";
 
 import "../doctorDashboard.scss";
 
+const getLocalDateString = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const DoctorPatientDetails = () => {
   const navigate = useNavigate();
   const { patientId } = useParams();
+  const today = getLocalDateString();
 
   const [patient, setPatient] = useState(null);
   const [prescriptionText, setPrescriptionText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [queueStatusValue, setQueueStatusValue] = useState("pending");
   const [queue, setQueue] = useState([]);
   const [selectedDate, setSelectedDate] = useState(
-    localStorage.getItem("doctorQueueDate") ||
-      new Date().toISOString().split("T")[0]
+    localStorage.getItem("doctorQueueDate") || getLocalDateString(),
   );
+  const isQueueActive = selectedDate === today;
 
   const socketRef = React.useRef(null);
 
@@ -33,7 +41,7 @@ const DoctorPatientDetails = () => {
       try {
         const res = await axios.get(
           `http://localhost:3000/api/queue/patient/${patientId}`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         // Transform the data to match component expectations
@@ -48,7 +56,7 @@ const DoctorPatientDetails = () => {
           status: appointmentData.status,
           email: patientData.email,
           phone: patientData.phone,
-          appointmentId: appointmentData.id
+          appointmentId: appointmentData.id,
         };
 
         setPatient(transformedPatient);
@@ -65,10 +73,10 @@ const DoctorPatientDetails = () => {
   // ================= FETCH QUEUE =================
   const fetchQueue = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/queue/live",
-        { withCredentials: true }
-      );
+      const res = await axios.get("http://localhost:3000/api/queue/live", {
+        params: { date: selectedDate },
+        withCredentials: true,
+      });
       const queueData = res.data?.patients || res.data || [];
       setQueue(Array.isArray(queueData) ? queueData : []);
     } catch (err) {
@@ -111,52 +119,46 @@ const DoctorPatientDetails = () => {
     };
   }, []);
 
-  // ================= PDF GENERATE =================
-  const handleGeneratePdf = () => {
-  if (!patient) return;
-
-  generatePrescriptionPDF({
-    patient,
-    doctor: "Dr. Sharma",
-    prescriptionText,
-  });
-};
   // ================= SUBMIT PRESCRIPTION =================
   const handleSubmitPrescription = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const payload = {
-      patientId: patientId,   // from URL
-      notes: prescriptionText,
-      medicines: []
-    };
+      const payload = {
+        patientId: patientId, // from URL
+        notes: prescriptionText,
+        medicines: [],
+      };
 
-    console.log("SENDING:", payload);
+      console.log("SENDING:", payload);
 
-    await axios.post(
-      "http://localhost:3000/api/prescriptions/create",
-      payload,
-      {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
+      await axios.post(
+        "http://localhost:3000/api/prescriptions/create",
+        payload,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-    alert("Prescription submitted successfully");
-    setPrescriptionText("");
-
-  } catch (err) {
-    console.error("Prescription error:", err.response?.data || err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      alert("Prescription submitted successfully");
+      setPrescriptionText("");
+    } catch (err) {
+      console.error("Prescription error:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ================= NEXT PATIENT =================
   const handleNextPatient = async () => {
+    if (!isQueueActive) {
+      toast.error("Queue is inactive for this date");
+      return;
+    }
+
     try {
       const response = await callNextPatient(selectedDate);
 
@@ -171,8 +173,7 @@ const DoctorPatientDetails = () => {
       }
     } catch (err) {
       const message =
-        err.response?.data?.message ||
-        "No patients left in queue";
+        err.response?.data?.message || "No patients left in queue";
       toast.error(message);
       console.error("Error calling next patient:", err);
 
@@ -189,17 +190,13 @@ const DoctorPatientDetails = () => {
 
   return (
     <div className="doctor-dashboard">
-
       <Sidebar activeSection="Dashboard" setActiveSection={() => {}} />
 
       <div className="doctor-main">
-
         <Navbar doctorName="Dr. Sharma" onLogout={() => {}} />
 
         <div className="doctor-content">
-
           <div className="patient-detail-page">
-
             <button
               className="back-button"
               onClick={() => navigate("/doctor-dashboard")}
@@ -210,18 +207,24 @@ const DoctorPatientDetails = () => {
             {/* PATIENT INFO */}
             <PatientDetails patient={patient} />
 
+            <div
+              className={`queue-state-banner ${isQueueActive ? "active" : "inactive"}`}
+            >
+              Queue status: {isQueueActive ? "Active" : "Inactive"}
+            </div>
+
             {/* PRESCRIPTION BOX */}
             <PrescriptionBox
               prescriptionText={prescriptionText}
               onTextChange={setPrescriptionText}
-              onGenerate={handleGeneratePdf}
               onSubmit={handleSubmitPrescription}
               onNext={handleNextPatient}
+              queueStatus={queueStatusValue}
+              onQueueStatusChange={setQueueStatusValue}
               loading={loading}
+              disabled={!isQueueActive}
             />
-
           </div>
-
         </div>
       </div>
     </div>

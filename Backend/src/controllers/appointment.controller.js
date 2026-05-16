@@ -5,6 +5,9 @@ const {
   allocateNextQueueNumber,
   syncActiveQueueSequential,
 } = require("../utils/queueNumber.util");
+const {
+  findActiveAppointmentConflict,
+} = require("../utils/appointmentQueue.util");
 const { broadcastQueueUpdated } = require("../utils/queueEvents.util");
 
 // ================= BOOK =================
@@ -41,20 +44,19 @@ async function bookAppointment(req, res) {
       return res.status(400).json({ message: err.message });
     }
 
-    // ✅ CHECK DUPLICATE (date + timeSlot)
+    // Block a second active appointment for the same patient, doctor, and date.
     try {
-      const existingAppointment = await Appointment.findOne({
+      const existingAppointment = await findActiveAppointmentConflict({
         patientId: req.user.id,
         doctorId,
         date: normalizedDate,
-        timeSlot,
-        status: { $in: ["pending", "approved"] },
       });
 
       if (existingAppointment) {
-        console.log("[bookAppointment] duplicate appointment found");
+        console.log("[bookAppointment] duplicate active appointment found");
         return res.status(400).json({
-          message: "You already booked this slot",
+          message:
+            "You already have an appointment with this doctor on this date",
         });
       }
     } catch (err) {
@@ -268,6 +270,7 @@ async function getPatientHistory(req, res) {
       timeSlot: app.timeSlot,
       queueNumber: app.queueNumber,
       status: app.status,
+      updatedAt: app.updatedAt,
     }));
 
     return res.status(200).json(formattedAppointments);
@@ -388,16 +391,17 @@ async function rescheduleAppointment(req, res) {
     const normalizedNewDate = normalizeAppointmentDate(newDate);
 
     // Check if new slot already exists
-    const existingSlot = await Appointment.findOne({
+    const existingSlot = await findActiveAppointmentConflict({
+      patientId: req.user.id,
       doctorId: appointment.doctorId._id,
       date: normalizedNewDate,
-      timeSlot: newTimeSlot,
-      status: { $in: ["pending", "approved"] },
+      excludeAppointmentId: appointment._id,
     });
 
     if (existingSlot) {
       return res.status(400).json({
-        message: "This time slot is already booked",
+        message:
+          "You already have an appointment with this doctor on this date",
       });
     }
 

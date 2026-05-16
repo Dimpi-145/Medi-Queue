@@ -408,11 +408,125 @@
   color: #0f172a;
 }
 
+.date-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 220px;
+}
+
+.date-control label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.date-control select {
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.date-control small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.queue-status-pill {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.queue-status-pill.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.queue-status-pill.inactive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.queue-lock-notice {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.queue-state-banner {
+  margin: 0 0 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.queue-state-banner.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.queue-state-banner.inactive {
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
 .queue-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1.25rem;
+}
+
+/* Selected patient + prescription layout */
+.detail-and-prescription {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.detail-and-prescription > div:last-child {
+  position: sticky;
+  top: 18px;
+}
+
+.detail-and-prescription > div:first-child {
+  min-width: 320px;
+}
+
+.detail-and-prescription .prescription-card {
+  width: 360px;
+  min-width: 260px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 920px) {
+  .detail-and-prescription {
+    flex-direction: column-reverse;
+  }
+  .detail-and-prescription .prescription-card {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .action-btn {
@@ -654,6 +768,11 @@
 
   .panel-header h3 {
     font-size: 1.2rem;
+  }
+
+  .date-control {
+    width: 100%;
+    min-width: 0;
   }
 
   .empty-card {

@@ -9,15 +9,24 @@ import {
   Building2,
 } from "lucide-react";
 import { authContext } from "../../auth/auth.context";
+import { updateProfile } from "../../auth/services/auth.api";
 import axios from "../../../utils/axios";
 import "./DoctorProfile.scss";
 
-const DoctorProfile = ({ doctorData, onScheduleUpdate }) => {
+const DoctorProfile = ({ doctorData, onScheduleUpdate, onProfileUpdate }) => {
   const { user, setUser } = useContext(authContext);
   const [toggling, setToggling] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [hospitalName, setHospitalName] = useState(null);
   const [loadingHospital, setLoadingHospital] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileForm, setProfileForm] = useState({
+    email: "",
+    phone: "",
+    videoUrl: "",
+  });
   const profileUser = doctorData || user;
   const doctorId = profileUser?._id || profileUser?.id || "N/A";
   const hospitalIdValue =
@@ -35,6 +44,70 @@ const DoctorProfile = ({ doctorData, onScheduleUpdate }) => {
       fetchHospitalDetails(hospitalIdValue);
     }
   }, [hospitalIdValue, profileHospitalName]);
+
+  useEffect(() => {
+    setProfileForm({
+      email: profileUser?.email || "",
+      phone: profileUser?.phone || "",
+      videoUrl: profileUser?.videoUrl || profileUser?.video_url || "",
+    });
+  }, [profileUser?.email, profileUser?.phone]);
+
+  const handleEditToggle = () => {
+    setProfileError("");
+    setEditingProfile((current) => !current);
+  };
+
+  const handleProfileChange = (event) => {
+    const { name, value } = event.target;
+    setProfileForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleCancelEdit = () => {
+    setProfileError("");
+    setEditingProfile(false);
+    setProfileForm({
+      email: profileUser?.email || "",
+      phone: profileUser?.phone || "",
+    });
+  };
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault();
+
+    try {
+      setSavingProfile(true);
+      setProfileError("");
+
+      const payload = {
+        email: profileForm.email.trim(),
+        phone: profileForm.phone.trim(),
+        videoUrl: profileForm.videoUrl?.trim() || "",
+      };
+
+      const response = await updateProfile(payload);
+      const updatedUser = response?.user || null;
+
+      if (updatedUser) {
+        setUser(updatedUser);
+        if (typeof onProfileUpdate === "function") {
+          onProfileUpdate(updatedUser);
+        }
+      }
+
+      setEditingProfile(false);
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      setProfileError(
+        err.response?.data?.message || "Unable to update profile right now",
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const fetchHospitalDetails = async (hospitalId) => {
     try {
@@ -77,6 +150,13 @@ const DoctorProfile = ({ doctorData, onScheduleUpdate }) => {
             </div>
           </div>
           <div className="profile-header-actions">
+            <button
+              type="button"
+              className="edit-profile-btn"
+              onClick={editingProfile ? handleCancelEdit : handleEditToggle}
+            >
+              {editingProfile ? "Cancel Edit" : "Edit Profile"}
+            </button>
             <div className="status-toggle">
               <span className="status-label">Status</span>
               <div className="status-control">
@@ -146,21 +226,112 @@ const DoctorProfile = ({ doctorData, onScheduleUpdate }) => {
         </div>
 
         <div className="profile-details">
-          <div className="detail-item">
-            <Mail size={18} />
-            <div>
-              <label>Email</label>
-              <p>{profileUser?.email || "Not provided"}</p>
-            </div>
-          </div>
+          {editingProfile ? (
+            <form className="profile-edit-form" onSubmit={handleSaveProfile}>
+              <div className="detail-item editable-field">
+                <Mail size={18} />
+                <div>
+                  <label htmlFor="doctor-email">Email</label>
+                  <input
+                    id="doctor-email"
+                    name="email"
+                    type="email"
+                    value={profileForm.email}
+                    onChange={handleProfileChange}
+                    placeholder="Enter email"
+                  />
+                </div>
+              </div>
 
-          <div className="detail-item">
-            <Phone size={18} />
-            <div>
-              <label>Phone</label>
-              <p>{profileUser?.phone || "Not provided"}</p>
-            </div>
-          </div>
+              <div className="detail-item editable-field">
+                <Phone size={18} />
+                <div>
+                  <label htmlFor="doctor-phone">Phone</label>
+                  <input
+                    id="doctor-phone"
+                    name="phone"
+                    type="tel"
+                    value={profileForm.phone}
+                    onChange={handleProfileChange}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="detail-item editable-field">
+                <Briefcase size={18} />
+                <div>
+                  <label htmlFor="doctor-video">Video Consultation URL</label>
+                  <input
+                    id="doctor-video"
+                    name="videoUrl"
+                    type="url"
+                    value={profileForm.videoUrl}
+                    onChange={handleProfileChange}
+                    placeholder="https://zoom.us/... or https://meet.example/..."
+                  />
+                </div>
+              </div>
+
+              {profileError && <p className="profile-error">{profileError}</p>}
+
+              <div className="profile-form-actions">
+                <button
+                  type="submit"
+                  className="save-profile-btn"
+                  disabled={savingProfile}
+                >
+                  {savingProfile ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  className="cancel-profile-btn"
+                  onClick={handleCancelEdit}
+                  disabled={savingProfile}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div className="detail-item">
+                <Mail size={18} />
+                <div>
+                  <label>Email</label>
+                  <p>{profileUser?.email || "Not provided"}</p>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <Phone size={18} />
+                <div>
+                  <label>Phone</label>
+                  <p>{profileUser?.phone || "Not provided"}</p>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <Briefcase size={18} />
+                <div>
+                  <label>Video Consultation URL</label>
+                  {profileUser?.videoUrl || profileUser?.video_url ? (
+                    <p>
+                      <a
+                        href={profileUser?.videoUrl || profileUser?.video_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {profileUser?.videoUrl || profileUser?.video_url}
+                      </a>
+                    </p>
+                  ) : (
+                    <p>Not configured</p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {profileUser?.specialization && (
             <div className="detail-item">

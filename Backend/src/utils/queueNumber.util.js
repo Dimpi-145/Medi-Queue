@@ -2,6 +2,16 @@ const mongoose = require("mongoose");
 const Appointment = require("../models/appointment.model");
 const QueueCounter = require("../models/queueCounter.model");
 
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 function normalizeAppointmentDate(dateInput) {
   if (dateInput == null || dateInput === "") {
     throw new Error("Appointment date is required");
@@ -10,9 +20,113 @@ function normalizeAppointmentDate(dateInput) {
     return dateInput.trim().split("T")[0];
   }
   if (dateInput instanceof Date && !Number.isNaN(dateInput.getTime())) {
-    return dateInput.toISOString().split("T")[0];
+    const year = dateInput.getFullYear();
+    const month = String(dateInput.getMonth() + 1).padStart(2, "0");
+    const day = String(dateInput.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
   throw new Error("Invalid appointment date");
+}
+
+function getWeekdayName(dateInput) {
+  const normalized = normalizeAppointmentDate(dateInput);
+  const date = new Date(`${normalized}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid appointment date");
+  }
+
+  return WEEKDAY_NAMES[date.getDay()];
+}
+
+function getDoctorWorkingDateOptions(schedule, daysAhead = 30, startDate = new Date()) {
+  const workingDays = new Set(
+    (schedule?.weekly || [])
+      .map((entry) => entry?.day)
+      .filter(Boolean),
+  );
+
+  const normalizedStart = normalizeAppointmentDate(startDate);
+  const start = new Date(`${normalizedStart}T00:00:00`);
+
+  if (Number.isNaN(start.getTime())) {
+    throw new Error("Invalid appointment date");
+  }
+
+  if (workingDays.size === 0) {
+    return [
+      {
+        value: normalizedStart,
+        label: normalizedStart,
+        weekday: WEEKDAY_NAMES[start.getDay()],
+        isToday: true,
+      },
+    ];
+  }
+
+  const options = [];
+  const seen = new Set();
+
+  for (let offset = 0; offset < daysAhead; offset += 1) {
+    const candidate = new Date(start);
+    candidate.setDate(start.getDate() + offset);
+
+    const value = normalizeAppointmentDate(candidate);
+    if (seen.has(value)) {
+      continue;
+    }
+
+    const weekday = WEEKDAY_NAMES[candidate.getDay()];
+    if (!workingDays.has(weekday)) {
+      continue;
+    }
+
+    seen.add(value);
+    options.push({
+      value,
+      label: `${weekday}, ${candidate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`,
+      weekday,
+      isToday: offset === 0,
+    });
+  }
+
+  return options;
+}
+
+function getDoctorQueueStatus(schedule, dateInput, now = new Date()) {
+  const selectedDate = normalizeAppointmentDate(dateInput);
+  const today = normalizeAppointmentDate(now);
+  const weekday = getWeekdayName(selectedDate);
+  const workingDays = new Set(
+    (schedule?.weekly || [])
+      .map((entry) => entry?.day)
+      .filter(Boolean),
+  );
+
+  const isToday = selectedDate === today;
+  const hasWeeklySchedule = workingDays.size > 0;
+  const dayMatches = !hasWeeklySchedule || workingDays.has(weekday);
+
+  let reason = null;
+
+  if (!isToday) {
+    reason = "Queue is inactive for future dates";
+  } else if (!dayMatches) {
+    reason = "Doctor is not scheduled to work today";
+  }
+
+  return {
+    isActive: isToday && dayMatches,
+    isToday,
+    selectedDate,
+    today,
+    weekday,
+    reason,
+  };
 }
 
 function toObjectId(doctorId) {
@@ -210,10 +324,65 @@ async function computeLiveQueueInfoForAppointmentId(appointmentId) {
   };
 }
 
+async function getAverageConsultationMinutes(doctorId) {
+  const oid = toObjectId(doctorId);
+
+  const completedAppointments = await Appointment.find({
+    doctorId: oid,
+    status: "completed",
+  })
+    .select("approvedAt completedAt createdAt updatedAt")
+    .lean();
+
+  const durations = completedAppointments
+    .map((appointment) => {
+      const startedAt = new Date(
+        appointment.approvedAt || appointment.createdAt,
+      );
+      const finishedAt = new Date(
+        appointment.completedAt || appointment.updatedAt || appointment.createdAt,
+      );
+
+      if (
+        Number.isNaN(startedAt.getTime()) ||
+        Number.isNaN(finishedAt.getTime()) ||
+        finishedAt <= startedAt
+      ) {
+        return null;
+      }
+
+      const minutes = (finishedAt.getTime() - startedAt.getTime()) / 60000;
+      return Math.max(1, Math.round(minutes));
+    })
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (durations.length === 0) {
+    return null;
+  }
+
+  const totalMinutes = durations.reduce((sum, value) => sum + value, 0);
+  return Math.max(1, Math.round(totalMinutes / durations.length));
+}
+
+async function getEstimatedWaitTimeForPatientsAhead(doctorId, patientsAhead) {
+  const averageConsultationMinutes = await getAverageConsultationMinutes(doctorId);
+  const fallbackAverage = 10;
+  const activeAverage = averageConsultationMinutes || fallbackAverage;
+
+  return {
+    averageConsultationMinutes: activeAverage,
+    estimatedWaitMinutes: Math.max(0, Number(patientsAhead || 0) * activeAverage),
+  };
+}
+
 module.exports = {
   normalizeAppointmentDate,
+  getDoctorQueueStatus,
+  getDoctorWorkingDateOptions,
   allocateNextQueueNumber,
   reconcileDuplicateQueueNumbers,
   syncActiveQueueSequential,
   computeLiveQueueInfoForAppointmentId,
+  getAverageConsultationMinutes,
+  getEstimatedWaitTimeForPatientsAhead,
 };

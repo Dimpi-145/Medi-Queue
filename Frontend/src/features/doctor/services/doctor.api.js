@@ -33,8 +33,18 @@ export const getLiveQueue = (doctorId, date) => {
   return API.get(`/queue/live${params.length ? `?${params.join("&")}` : ""}`);
 };
 
-export const callNextPatient = (date) =>
-  API.put(`/queue/next${date ? `?date=${date}` : ""}`);
+export const callNextPatient = (params) => {
+  const isString = typeof params === "string";
+  const date = isString ? params : params?.date;
+  const body = isString
+    ? {}
+    : {
+        appointmentId: params?.appointmentId,
+        currentStatus: params?.currentStatus,
+      };
+
+  return API.put(`/queue/next${date ? `?date=${date}` : ""}`, body);
+};
 
 export const completeCurrent = (date) =>
   API.put(`/queue/complete${date ? `?date=${date}` : ""}`);

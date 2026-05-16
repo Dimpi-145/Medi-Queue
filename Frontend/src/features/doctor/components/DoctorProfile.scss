@@ -63,6 +63,28 @@
       .profile-header-actions {
         display: flex;
         align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .edit-profile-btn {
+        background: #111827;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+          background: #1f2937;
+        }
+
+        &:active {
+          transform: translateY(1px);
+        }
       }
 
       .status-toggle {
@@ -246,6 +268,80 @@
             color: #999;
             font-style: italic;
           }
+        }
+      }
+
+      .profile-edit-form {
+        display: contents;
+      }
+
+      .editable-field input {
+        width: 100%;
+        margin-top: 6px;
+        border: 1px solid #d7dbe0;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: #333;
+
+        &:focus {
+          outline: none;
+          border-color: #7b1fa2;
+          box-shadow: 0 0 0 3px rgba(123, 31, 162, 0.1);
+        }
+      }
+
+      .profile-error {
+        grid-column: 1 / -1;
+        margin: 0;
+        color: #c22b2b;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .profile-form-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .save-profile-btn,
+      .cancel-profile-btn {
+        border: none;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .save-profile-btn {
+        background: #7b1fa2;
+        color: #fff;
+
+        &:hover {
+          background: #6a1b91;
+        }
+
+        &:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+      }
+
+      .cancel-profile-btn {
+        background: #f3f4f6;
+        color: #374151;
+
+        &:hover {
+          background: #e5e7eb;
+        }
+
+        &:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
       }
     }

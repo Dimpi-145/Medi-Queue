@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import "./QueueList.scss";
+import { dedupeQueue } from "../utils/queue";
 
 const statusLabel = {
   pending: "Waiting",
@@ -13,6 +14,7 @@ const statusLabel = {
 
 const QueueList = ({ queue, loading, currentQueueNumber, patientsAhead }) => {
   const [estimatedWait, setEstimatedWait] = useState(0);
+  const displayQueue = dedupeQueue(queue);
 
   /* ===== ESTIMATED WAIT ===== */
   useEffect(() => {
@@ -106,9 +108,9 @@ const QueueList = ({ queue, loading, currentQueueNumber, patientsAhead }) => {
         <>
           <div className="queue-summary-card">
             <h3>Current Active Patient</h3>
-            {queue.some((item) => item.status === "approved") ? (
+            {displayQueue.some((item) => item.status === "approved") ? (
               (() => {
-                const activePatient = queue.find(
+                const activePatient = displayQueue.find(
                   (item) => item.status === "approved",
                 );
                 return (
@@ -146,7 +148,7 @@ const QueueList = ({ queue, loading, currentQueueNumber, patientsAhead }) => {
           </div>
 
           <div className="queue-list">
-            {queue
+            {displayQueue
               .filter((item) => item.status !== "approved")
               .map((item) => (
                 <div

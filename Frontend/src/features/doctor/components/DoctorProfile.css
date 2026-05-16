@@ -58,6 +58,25 @@
 .doctor-profile .profile-card .profile-header .profile-header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.doctor-profile .profile-card .profile-header .edit-profile-btn {
+  background: #111827;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.doctor-profile .profile-card .profile-header .edit-profile-btn:hover {
+  background: #1f2937;
+}
+.doctor-profile .profile-card .profile-header .edit-profile-btn:active {
+  transform: translateY(1px);
 }
 .doctor-profile .profile-card .profile-header .status-toggle {
   display: flex;
@@ -219,6 +238,68 @@
 .doctor-profile .profile-card .profile-details .detail-item p.no-data {
   color: #999;
   font-style: italic;
+}
+.doctor-profile .profile-card .profile-details .profile-edit-form {
+  display: contents;
+}
+.doctor-profile .profile-card .profile-details .editable-field input {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #d7dbe0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #333;
+}
+.doctor-profile .profile-card .profile-details .editable-field input:focus {
+  outline: none;
+  border-color: #7b1fa2;
+  box-shadow: 0 0 0 3px rgba(123, 31, 162, 0.1);
+}
+.doctor-profile .profile-card .profile-details .profile-error {
+  grid-column: 1/-1;
+  margin: 0;
+  color: #c22b2b;
+  font-size: 13px;
+  font-weight: 500;
+}
+.doctor-profile .profile-card .profile-details .profile-form-actions {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.doctor-profile .profile-card .profile-details .save-profile-btn,
+.doctor-profile .profile-card .profile-details .cancel-profile-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.doctor-profile .profile-card .profile-details .save-profile-btn {
+  background: #7b1fa2;
+  color: #fff;
+}
+.doctor-profile .profile-card .profile-details .save-profile-btn:hover {
+  background: #6a1b91;
+}
+.doctor-profile .profile-card .profile-details .save-profile-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.doctor-profile .profile-card .profile-details .cancel-profile-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+.doctor-profile .profile-card .profile-details .cancel-profile-btn:hover {
+  background: #e5e7eb;
+}
+.doctor-profile .profile-card .profile-details .cancel-profile-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 .doctor-profile.loading {
   padding: 40px;

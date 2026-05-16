@@ -91,7 +91,15 @@ const Login = () => {
       setLoadingHospitals(true);
       getHospitals()
         .then((data) => {
-          setHospitals(Array.isArray(data) ? data : []);
+          const nextHospitals = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.hospitals)
+              ? data.hospitals
+              : Array.isArray(data?.data)
+                ? data.data
+                : [];
+
+          setHospitals(nextHospitals);
         })
         .catch((err) => {
           console.error("Error fetching hospitals:", err);
@@ -262,7 +270,7 @@ const Login = () => {
                   </option>
                   {hospitals.map((hospital) => (
                     <option key={hospital._id} value={hospital._id}>
-                      {hospital.name}
+                      {hospital.name || hospital.hospitalName || hospital.username || "Hospital"}
                     </option>
                   ))}
                 </select>

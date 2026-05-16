@@ -2,6 +2,25 @@ const ChatMessage = require("../models/chatMessage.model");
 const Appointment = require("../models/appointment.model");
 const User = require("../models/user.model");
 
+const CHAT_WINDOW_DAYS = 15;
+
+function isChatWindowActive(appointment, now = new Date()) {
+  if (!appointment || appointment.status !== "completed") {
+    return false;
+  }
+
+  const completedAt = new Date(appointment.updatedAt || appointment.createdAt);
+
+  if (Number.isNaN(completedAt.getTime())) {
+    return false;
+  }
+
+  const expiryTime = new Date(completedAt);
+  expiryTime.setDate(expiryTime.getDate() + CHAT_WINDOW_DAYS);
+
+  return now <= expiryTime;
+}
+
 // ================= SEND MESSAGE =================
 
 async function sendMessage(req, res) {
@@ -67,16 +86,20 @@ async function sendMessage(req, res) {
         });
     }
 
-    if (
-      appointment.status !==
-      "completed"
-    ) {
+    if (appointment.status !== "completed") {
       return res
         .status(400)
         .json({
           message:
             "Chat is only available after consultation completion",
         });
+    }
+
+    if (!isChatWindowActive(appointment)) {
+      return res.status(403).json({
+        message:
+          "Chat window has expired. This consultation is only available for 15 days after completion.",
+      });
     }
 
     const receiverId =
@@ -540,16 +563,20 @@ async function sendMessageWithFile(
         });
     }
 
-    if (
-      appointment.status !==
-      "completed"
-    ) {
+    if (appointment.status !== "completed") {
       return res
         .status(400)
         .json({
           message:
             "Chat is only available after consultation completion",
         });
+    }
+
+    if (!isChatWindowActive(appointment)) {
+      return res.status(403).json({
+        message:
+          "Chat window has expired. This consultation is only available for 15 days after completion.",
+      });
     }
 
     const receiverId =
@@ -690,19 +717,12 @@ async function sendMessageWithFile(
       .to(roomId)
       .to(senderRoomId)
       .to(receiverRoomId)
-      .emit(
-        "newMessage",
-        payload
-      );
+      .emit("newMessage", payload);
 
-    return res
-      .status(201)
-      .json({
-        message:
-          "Message sent with file",
-        chatMessage:
-          payload,
-      });
+    return res.status(201).json({
+      message: "Message sent with file",
+      chatMessage: payload,
+    });
   } catch (error) {
     console.error(
       "[sendMessageWithFile] Error:",

@@ -79,6 +79,12 @@ const userSchema = new mongoose.Schema(
         "https://ik.imagekit.io/in2kqh3ai/cohort-2-insta-clone-posts/images.png",
     },
 
+    // Optional URL for external video consultation (Zoom/Meet/etc.)
+    videoUrl: {
+      type: String,
+      trim: true,
+    },
+
     // Weekly schedule and today's active status for doctors
     schedule: {
       weekly: [

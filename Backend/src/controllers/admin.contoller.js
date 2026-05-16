@@ -5,6 +5,9 @@ const {
   normalizeAppointmentDate,
   allocateNextQueueNumber,
 } = require("../utils/queueNumber.util");
+const {
+  findActiveAppointmentConflict,
+} = require("../utils/appointmentQueue.util");
 const { broadcastQueueUpdated } = require("../utils/queueEvents.util");
 
 // ================= DASHBOARD STATS =================
@@ -446,16 +449,17 @@ async function adminBookAppointment(req, res) {
 
     const normalizedDate = normalizeAppointmentDate(date);
 
-    const existing = await Appointment.findOne({
+    const existing = await findActiveAppointmentConflict({
       patientId,
       doctorId,
       date: normalizedDate,
-      timeSlot,
-      status: { $in: ["pending", "approved"] },
     });
 
     if (existing) {
-      return res.status(400).json({ message: "Slot already booked" });
+      return res.status(400).json({
+        message:
+          "Patient already has an appointment with this doctor on this date",
+      });
     }
 
     const queueNumber = await allocateNextQueueNumber(doctorId, normalizedDate);

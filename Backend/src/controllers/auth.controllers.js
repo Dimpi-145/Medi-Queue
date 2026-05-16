@@ -211,7 +211,7 @@ async function getPatientById(req, res) {
 
 async function updateProfileController(req, res) {
   try {
-    const { username, age, gender, phone } = req.body;
+    const { username, age, gender, phone, email } = req.body;
     const userId = req.user.id;
 
     const updates = {};
@@ -219,6 +219,10 @@ async function updateProfileController(req, res) {
     if (age !== undefined) updates.age = age;
     if (gender) updates.gender = gender;
     if (phone) updates.phone = phone;
+    if (email) updates.email = email.trim().toLowerCase();
+    if (req.body.videoUrl !== undefined) {
+      updates.videoUrl = String(req.body.videoUrl || "").trim();
+    }
 
     const updatedUser = await userModel
       .findByIdAndUpdate(userId, updates, { new: true, runValidators: true })
@@ -233,18 +237,32 @@ async function updateProfileController(req, res) {
       user: updatedUser,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.email) {
+      return res.status(409).json({
+        message: "Email is already in use",
+      });
+    }
+
     res.status(500).json({ message: "Server error", error });
   }
 }
 async function getHospitals(req, res) {
   try {
     const hospitals = await userModel
-      .find({ role: "hospital" })
-      .select("_id hospitalName username");
+      .find({
+        $or: [
+          { role: "hospital" },
+          { hospitalName: { $exists: true, $ne: "" } },
+        ],
+      })
+      .select("_id hospitalName username")
+      .sort({ hospitalName: 1, username: 1 });
 
     const formatted = hospitals.map((h) => ({
       _id: h._id,
       name: h.hospitalName || h.username,
+      hospitalName: h.hospitalName || null,
+      username: h.username || null,
     }));
 
     res.status(200).json(formatted);

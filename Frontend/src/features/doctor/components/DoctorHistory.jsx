@@ -8,7 +8,7 @@ import {
 import "./DoctorHistory.scss";
 
 const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString(undefined, {
+  new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
     day: "numeric",
