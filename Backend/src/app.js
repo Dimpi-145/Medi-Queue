@@ -106,8 +106,12 @@ const frontendStaticPath = fs.existsSync(frontendDistPath)
 
 app.use(express.static(frontendStaticPath));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendStaticPath, "index.html"));
+app.use((req, res, next) => {
+  if (req.method !== "GET" || req.path.startsWith("/api")) {
+    return next();
+  }
+
+  return res.sendFile(path.join(frontendStaticPath, "index.html"));
 });
 
 // ================= ERROR HANDLER =================
