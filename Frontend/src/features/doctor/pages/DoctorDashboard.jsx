@@ -405,11 +405,8 @@ const DoctorDashboard = () => {
   }, [queue]);
 
   const treatedCount = useMemo(() => {
-    return (queue || []).filter((q) => {
-      const s = (q.status || "").toLowerCase();
-      return s === "completed" || s === "approved" || s === "treated";
-    }).length;
-  }, [queue]);
+    return dashboardStats.completedToday || 0;
+  }, [dashboardStats.completedToday]);
   // ================= LOGOUT =================
   const handleLogout = async () => {
     try {

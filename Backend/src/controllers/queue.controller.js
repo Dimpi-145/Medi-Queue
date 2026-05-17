@@ -93,7 +93,7 @@ async function callNextPatient(req, res) {
     ).populate("patientId", "username age gender email phone");
 
     if (!currentAppointment && currentAppointmentId) {
-       currentAppointment = await Appointment.findOne(activeQuery).populate(
+      currentAppointment = await Appointment.findOne(activeQuery).populate(
         "patientId",
         "username age gender email phone",
       );
@@ -211,6 +211,7 @@ async function getLiveQueue(req, res) {
 
     if (req.user.role === "doctor") {
       filter.doctorId = req.user.id;
+      filter.status = "pending";
     } else if (req.user.role === "admin" && req.query.doctorId) {
       filter.doctorId = req.query.doctorId;
     } else if (req.user.role === "patient") {

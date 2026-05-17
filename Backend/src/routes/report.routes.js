@@ -27,11 +27,11 @@ ReportRouter.patch(
   reportController.renameReport,
 );
 
-// Patient deletes own report
+// Delete report - allow owner patient or hospital that created the report
 ReportRouter.delete(
   "/:id",
   auth,
-  role("patient"),
+  role("patient", "hospital"),
   reportController.deleteReport,
 );
 

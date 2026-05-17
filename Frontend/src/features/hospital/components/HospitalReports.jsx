@@ -23,6 +23,7 @@ import {
 } from "../services/hospital.api";
 import "./HospitalReports.scss";
 import { resolveAttachmentUrl } from "../../../utils/attachmentUrl";
+import API from "../../../utils/axios";
 
 const HospitalReports = () => {
   const { user } = useContext(authContext);
@@ -276,6 +277,26 @@ const HospitalReports = () => {
       toast.error(
         "Unable to download file. It may be missing from the server.",
       );
+    }
+  };
+
+  const handleDeleteReport = async (report) => {
+    const confirmed = window.confirm(
+      `Delete ${report.fileName || "this report"}? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      await API.delete(`/reports/${report._id}`);
+      setSuccess("Report deleted successfully");
+      await fetchReports();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Hospital delete report error:", err);
+      setError(err?.response?.data?.message || "Failed to delete report");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -652,6 +673,15 @@ const HospitalReports = () => {
                       <Share2 size={16} />
                       Share
                     </button>
++                    {user && user.role === "hospital" && (
++                      <button
++                        className="action-btn delete"
++                        onClick={() => handleDeleteReport(report)}
++                      >
++                        <Trash2 size={16} />
++                        Delete
++                      </button>
++                    )}
                   </div>
                 </div>
               ))}
