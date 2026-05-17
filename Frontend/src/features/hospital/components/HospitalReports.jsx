@@ -9,6 +9,7 @@ import {
   X,
   Check,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { authContext } from "../../auth/auth.context";
 import {
   createHospitalReport,
@@ -21,6 +22,7 @@ import {
   getHospitalDoctors,
 } from "../services/hospital.api";
 import "./HospitalReports.scss";
+import { resolveAttachmentUrl } from "../../../utils/attachmentUrl";
 
 const HospitalReports = () => {
   const { user } = useContext(authContext);
@@ -253,13 +255,12 @@ const HospitalReports = () => {
 
   const handleDownloadReport = async (report) => {
     try {
-      const response = await fetch(report.fileUrl, {
-        credentials: "include",
-      });
+      if (!report?.fileUrl) throw new Error("No file URL");
 
-      if (!response.ok) {
-        throw new Error("Unable to download file");
-      }
+      const resolved = resolveAttachmentUrl(report.fileUrl);
+      const response = await fetch(resolved, { credentials: "include" });
+
+      if (!response.ok) throw new Error("Unable to download file");
 
       const blob = await response.blob();
       const objectUrl = window.URL.createObjectURL(blob);
@@ -271,13 +272,33 @@ const HospitalReports = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(objectUrl);
     } catch (err) {
-      setError("Failed to download report file");
+      console.error("Download report error:", err);
+      toast.error(
+        "Unable to download file. It may be missing from the server.",
+      );
     }
   };
 
   const handleRunSearch = () => {
     setAppliedPatientSearch(patientSearchInput.trim());
     setAppliedReportType(reportTypeInput);
+  };
+
+  const openReportFile = async (fileUrl) => {
+    if (!fileUrl) return toast.error("No file available");
+
+    try {
+      const resolved = resolveAttachmentUrl(fileUrl);
+      const res = await fetch(resolved, { credentials: "include" });
+      if (!res.ok) throw new Error("Unable to fetch file");
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank");
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Open report error:", err);
+      toast.error("Unable to load file. It may be missing from the server.");
+    }
   };
 
   const handleResetSearch = () => {
@@ -554,13 +575,20 @@ const HospitalReports = () => {
                       <span className="label">File:</span>
                       <span className="value">
                         {report.fileName ? (
-                          <a
-                            href={report.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            className="link-button"
+                            onClick={() => openReportFile(report.fileUrl)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              color: "inherit",
+                              cursor: "pointer",
+                            }}
                           >
                             {report.fileName}
-                          </a>
+                          </button>
                         ) : (
                           "No file name available"
                         )}

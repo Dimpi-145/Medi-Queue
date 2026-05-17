@@ -11,6 +11,7 @@ import {
   renameReport,
   uploadReport,
 } from "../services/report.api";
+import { resolveAttachmentUrl } from "../../../utils/attachmentUrl";
 
 import "./Report.scss";
 
@@ -200,6 +201,36 @@ const Reports = () => {
       toast.error(serverMsg || "Failed to fulfill request");
     } finally {
       setSendingRequestId("");
+    }
+  };
+
+  const openReport = async (fileUrl, fileName, asDownload = false) => {
+    if (!fileUrl) return toast.error("No file available");
+
+    try {
+      const resolved = resolveAttachmentUrl(fileUrl);
+      const res = await fetch(resolved, { credentials: "include" });
+
+      if (!res.ok) throw new Error("Unable to fetch file");
+
+      const blob = await res.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+
+      if (asDownload) {
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = fileName || "report";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        window.open(objectUrl, "_blank");
+      }
+
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Open Report Error:", err);
+      toast.error("Unable to load file. It may be missing from the server.");
     }
   };
 
@@ -400,14 +431,19 @@ const Reports = () => {
 
                           {item.status === "fulfilled" &&
                             item.reportId?.fileUrl && (
-                              <a
-                                href={item.reportId.fileUrl}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                type="button"
                                 className="secondary-button"
+                                onClick={() =>
+                                  openReport(
+                                    item.reportId.fileUrl,
+                                    item.reportId.fileName ||
+                                      item.reportId.fileName,
+                                  )
+                                }
                               >
                                 View Report
-                              </a>
+                              </button>
                             )}
                         </div>
 
@@ -525,14 +561,15 @@ const Reports = () => {
                       </div>
                     ) : (
                       <div className="report-actions">
-                        <a
-                          href={item.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
                           className="secondary-button"
+                          onClick={() =>
+                            openReport(item.fileUrl, item.fileName)
+                          }
                         >
                           View Report
-                        </a>
+                        </button>
 
                         {item.reportSource === "own" && (
                           <>
