@@ -204,12 +204,13 @@ const Reports = () => {
     }
   };
 
-  const openReport = async (fileUrl, fileName, asDownload = false) => {
-    if (!fileUrl) return toast.error("No file available");
+  const openReport = async (reportId, fileName, asDownload = false) => {
+    if (!reportId) return toast.error("No report specified");
 
     try {
-      const resolved = resolveAttachmentUrl(fileUrl);
-      const res = await fetch(resolved, { credentials: "include" });
+      const res = await fetch(`/api/reports/${reportId}/file`, {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error("Unable to fetch file");
 
@@ -436,7 +437,7 @@ const Reports = () => {
                                 className="secondary-button"
                                 onClick={() =>
                                   openReport(
-                                    item.reportId.fileUrl,
+                                    item.reportId._id,
                                     item.reportId.fileName ||
                                       item.reportId.fileName,
                                   )
@@ -472,13 +473,14 @@ const Reports = () => {
                               {sendingRequestId === item._id
                                 ? "Sending..."
                                 : "Send"}
+                              </button>
+                              <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => openReport(item._id, item.fileName)}
+                            >
+                              View Report
                             </button>
-
-                            {requestFiles[item._id]?.name && (
-                              <span className="selected-file">
-                                Selected: {requestFiles[item._id].name}
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>

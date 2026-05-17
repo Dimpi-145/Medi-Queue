@@ -284,12 +284,13 @@ const HospitalReports = () => {
     setAppliedReportType(reportTypeInput);
   };
 
-  const openReportFile = async (fileUrl) => {
-    if (!fileUrl) return toast.error("No file available");
+  const openReportFile = async (reportId) => {
+    if (!reportId) return toast.error("No file available");
 
     try {
-      const resolved = resolveAttachmentUrl(fileUrl);
-      const res = await fetch(resolved, { credentials: "include" });
+      const res = await fetch(`/api/reports/${reportId}/file`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Unable to fetch file");
       const blob = await res.blob();
       const objectUrl = window.URL.createObjectURL(blob);
@@ -578,7 +579,7 @@ const HospitalReports = () => {
                           <button
                             type="button"
                             className="link-button"
-                            onClick={() => openReportFile(report.fileUrl)}
+                            onClick={() => openReportFile(report._id)}
                             style={{
                               background: "none",
                               border: "none",

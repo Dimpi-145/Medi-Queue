@@ -43,6 +43,9 @@ ReportRouter.get(
   reportController.getReportByToken,
 );
 
+// Stream or redirect report file by report id (accessible to authorized users)
+ReportRouter.get("/:id/file", auth, reportController.getReportFile);
+
 // Patient views incoming report requests
 ReportRouter.get(
   "/requests",

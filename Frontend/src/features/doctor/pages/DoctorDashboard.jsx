@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { initSocket, joinUserRoom, joinDoctorRoom } from "../../../services/socket";
+import {
+  initSocket,
+  joinUserRoom,
+  joinDoctorRoom,
+} from "../../../services/socket";
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -10,6 +14,8 @@ import DoctorHistory from "../components/DoctorHistory";
 import { logout as logoutApi } from "../../auth/services/auth.api";
 
 import "../doctorDashboard.scss";
+import toast from "react-hot-toast";
+import { resolveAttachmentUrl } from "../../../utils/attachmentUrl";
 
 import {
   getDoctorDashboard,
@@ -796,14 +802,28 @@ const DoctorDashboard = () => {
                           : "N/A"}
                       </td>
                       <td>
-                        <a
-                          href={item.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
                           className="action-btn"
+                          onClick={async () => {
+                            if (!item._id) return toast.error("No file available");
+                            try {
+                              const res = await fetch(`/api/reports/${item._id}/file`, {
+                                credentials: "include",
+                              });
+                              if (!res.ok) throw new Error("Unable to fetch file");
+                              const blob = await res.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              window.open(url, "_blank");
+                              setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+                            } catch (err) {
+                              console.error("Open report error:", err);
+                              toast.error("Unable to load file. It may be missing from the server.");
+                            }
+                          }}
                         >
                           View
-                        </a>
+                        </button>
                       </td>
                     </tr>
                   ))}
