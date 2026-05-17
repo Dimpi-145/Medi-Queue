@@ -33,6 +33,9 @@ import { dedupeQueue } from "../utils/queue";
 import "../../shared/global.scss";
 import "../patientDashboard.scss";
 
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
+
 const PatientDashboard = () => {
   const navigate = useNavigate();
 
@@ -154,7 +157,7 @@ const PatientDashboard = () => {
       return;
     }
 
-    const socket = io("https://medi-queue-1.onrender.com");
+    const socket = io(BACKEND_URL);
     const doctorDocId =
       activeAppointment.doctorId?._id || activeAppointment.doctorId;
     const patientId = localStorage.getItem("userId");

@@ -1,10 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "/api/prescriptions",
-  withCredentials: true,
-});
+import API from "../../../utils/axios";
 
 // Get patient prescriptions
-export const getMyPrescriptions = () =>
-  api.get("/my");
+export const getMyPrescriptions = () => API.get("/prescriptions/my");
