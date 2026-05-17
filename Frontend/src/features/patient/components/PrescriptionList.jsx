@@ -6,6 +6,19 @@ const PrescriptionList = ({ prescriptions = [], loading = false, patient }) => {
   /* ===== SEARCH ===== */
   const [searchTerm, setSearchTerm] = useState("");
 
+  const buildFallbackFileName = (item) =>
+    `prescription_${(patient?.username || "patient")
+      .replace(/\s+/g, "_")
+      .toLowerCase()}_${new Date(item.createdAt).toISOString().slice(0, 10)}.pdf`;
+
+  const fetchPrescriptionBlob = async (item) => {
+    return createPrescriptionPdfBlob({
+      patient,
+      doctor: item.doctorId?.username || "Doctor",
+      prescriptionText: item.notes || "No notes provided.",
+    });
+  };
+
   /* ===== FILTERED PRESCRIPTIONS ===== */
   const filteredPrescriptions = prescriptions.filter((item) => {
     const doctorName = item.doctorId?.username?.toLowerCase() || "";
@@ -15,27 +28,8 @@ const PrescriptionList = ({ prescriptions = [], loading = false, patient }) => {
 
   /* ===== DOWNLOAD ===== */
   const downloadPrescription = async (item) => {
-    if (item.fileUrl) {
-      const link = document.createElement("a");
-      link.href = item.fileUrl;
-      link.download = item.fileName || "prescription.pdf";
-      link.click();
-      return;
-    }
-
-    const blob = await createPrescriptionPdfBlob({
-      patient,
-      doctor: item.doctorId?.username || "Doctor",
-
-      prescriptionText: item.notes || "No notes provided.",
-    });
-
-    const fileName = `prescription_${(patient?.username || "patient")
-      .replace(/\s+/g, "_")
-      .toLowerCase()}_${new Date(item.createdAt)
-      .toISOString()
-      .slice(0, 10)}.pdf`;
-
+    const blob = await fetchPrescriptionBlob(item);
+    const fileName = item.fileName || buildFallbackFileName(item);
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -50,17 +44,7 @@ const PrescriptionList = ({ prescriptions = [], loading = false, patient }) => {
 
   /* ===== VIEW ===== */
   const viewPrescription = async (item) => {
-    if (item.fileUrl) {
-      window.open(item.fileUrl, "_blank");
-      return;
-    }
-
-    const blob = await createPrescriptionPdfBlob({
-      patient,
-      doctor: item.doctorId?.username || "Doctor",
-
-      prescriptionText: item.notes || "No notes provided.",
-    });
+    const blob = await fetchPrescriptionBlob(item);
 
     const url = URL.createObjectURL(blob);
 
