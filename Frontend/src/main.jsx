@@ -1,6 +1,5 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 
 import App from "./App.jsx";
 import { initSocket } from "./services/socket";
@@ -11,9 +10,17 @@ const token = localStorage.getItem("token");
 if (token) initSocket(token);
 
 if ("serviceWorker" in navigator) {
-  registerSW({
-    immediate: true,
-  });
+  const pwaRegisterModule = "virtual:pwa-register";
+
+  import(/* @vite-ignore */ pwaRegisterModule)
+    .then(({ registerSW }) => {
+      registerSW({
+        immediate: true,
+      });
+    })
+    .catch(() => {
+      // PWA registration is skipped when vite-plugin-pwa is not installed locally.
+    });
 }
 
 createRoot(document.getElementById("root")).render(
