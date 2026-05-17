@@ -158,7 +158,10 @@ const QueueList = ({
 
           <div className="queue-list">
             {displayQueue
-              .filter((item) => item.status !== "approved")
+              .filter(
+                (item) =>
+                  item.status !== "approved" && item.status !== "completed",
+              )
               .map((item) => (
                 <div
                   key={item._id}
