@@ -325,6 +325,10 @@ const Login = () => {
               />
             </div>
 
+            <div className="auth-inline-link">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </div>
+
             <button className="auth-btn">Login</button>
 
             <button

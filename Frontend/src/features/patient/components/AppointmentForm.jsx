@@ -102,12 +102,10 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
   }, [selectedDoctor, date]);
 
   const availableDates = useMemo(() => {
-    if (!selectedDoctor?.schedule?.weekly?.length) return [];
-
+    const schedule = selectedDoctor?.schedule;
+    const weeklySlots = schedule?.weekly || [];
     const allowedDays = new Set(
-      selectedDoctor.schedule.weekly.map((slot) =>
-        String(slot.day || "").toLowerCase(),
-      ),
+      weeklySlots.map((slot) => String(slot.day || "").toLowerCase()),
     );
 
     const options = [];
@@ -122,9 +120,15 @@ const AppointmentForm = ({ onBook, loading, onClose }) => {
         .toLocaleDateString("en-US", { weekday: "long" })
         .toLowerCase();
 
-      if (!allowedDays.has(weekday)) continue;
+      const isToday = offset === 0;
+      const isScheduledToday = allowedDays.has(weekday);
+      const hasTodayOverride =
+        isToday && schedule?.isActiveToday !== false &&
+        schedule?.todayStart && schedule?.todayEnd;
 
-      if (offset === 0 && selectedDoctor.schedule.isActiveToday === false) {
+      if (!isScheduledToday && !hasTodayOverride) continue;
+
+      if (isToday && schedule?.isActiveToday === false) {
         continue;
       }
 

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 
 import Login from "./auth/pages/Login";
 import Register from "./auth/pages/Register";
+import ForgotPasswordSimple from "./auth/pages/ForgotPasswordSimple";
 
 import PatientDashboard from "./patient/pages/PatientDashboard";
 
@@ -35,6 +36,16 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordSimple />,
+  },
+
+  {
+    path: "/forgot-password-simple",
+    element: <ForgotPasswordSimple />,
   },
 
   {

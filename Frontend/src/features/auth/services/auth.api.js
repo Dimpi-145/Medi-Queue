@@ -26,6 +26,13 @@ export async function register(data) {
 
   return response.data;
 }
+
+export async function resetPassword(data) {
+  const response = await api.post("/forgot-password", data);
+
+  return response.data;
+}
+
 export const getPatientDashboard = async () => {
   const response = await api.get("/patient-dashboard");
   return response.data;

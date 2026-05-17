@@ -336,6 +336,24 @@ const DoctorDashboard = () => {
       fetchHistory();
     });
 
+    socket.on("doctorScheduleUpdated", (payload) => {
+      const { doctorId, schedule } = payload || {};
+      const storedId = localStorage.getItem("doctorId");
+      if (!doctorId || String(doctorId) !== String(storedId)) return;
+      if (schedule) {
+        setDoctorInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                schedule: { ...(prev.schedule || {}), ...schedule },
+              }
+            : prev,
+        );
+      }
+      fetchData(selectedDate);
+      fetchQueue(selectedDate);
+    });
+
     socket.on("sharedReportReceived", (payload) => {
       console.log("sharedReportReceived", payload);
       fetchSharedReports();
@@ -345,6 +363,7 @@ const DoctorDashboard = () => {
       socket.off("connect");
       socket.off("queueUpdated");
       socket.off("videoRequestReceived");
+      socket.off("doctorScheduleUpdated");
       socket.off("sharedReportReceived");
       socket.disconnect();
     };
