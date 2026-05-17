@@ -446,11 +446,7 @@ const DoctorDashboard = () => {
                     ? () => {
                         const p = mapAppointmentToPatient(item);
                         setSelectedPatient(p);
-<<<<<<< HEAD
-                        setSelectedPatientStatus("completed");
-=======
                         setNoMorePatients(false);
->>>>>>> 76b063aa8e0231cd43af445c63c1f7cba8e58e40
                       }
                     : undefined
                 }
