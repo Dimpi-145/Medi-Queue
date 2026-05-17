@@ -1,5 +1,7 @@
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
+  import.meta.env.DEV
+    ? ""
+    : import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 export const resolveAttachmentUrl = (url) => {
   if (!url) {

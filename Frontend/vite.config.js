@@ -79,6 +79,12 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        "/socket.io": {
+          target: apiTarget,
+          ws: true,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   };

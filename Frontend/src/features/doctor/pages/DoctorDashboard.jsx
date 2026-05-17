@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { initSocket, joinUserRoom } from "../../../services/socket";
+import { initSocket, joinUserRoom, joinDoctorRoom } from "../../../services/socket";
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -313,7 +313,13 @@ const DoctorDashboard = () => {
 
     socket.on("connect", () => {
       const storedId = localStorage.getItem("doctorId");
-      if (storedId) joinUserRoom(storedId);
+      if (storedId) {
+        joinDoctorRoom(storedId);
+      }
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        joinUserRoom(userId);
+      }
     });
 
     socket.on("queueUpdated", (data) => {

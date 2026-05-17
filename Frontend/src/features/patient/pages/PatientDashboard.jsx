@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import io from "socket.io-client";
+import { initSocket, joinUserRoom, joinDoctorRoom, leaveDoctorRoom, leaveUserRoom } from "../../../services/socket";
 
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -34,7 +34,9 @@ import "../../shared/global.scss";
 import "../patientDashboard.scss";
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
+  import.meta.env.DEV
+    ? ""
+    : import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -157,26 +159,20 @@ const PatientDashboard = () => {
       return;
     }
 
-    const socket = io(BACKEND_URL);
+    const token = localStorage.getItem("token");
+    const socket = initSocket(token);
     const doctorDocId =
       activeAppointment.doctorId?._id || activeAppointment.doctorId;
     const patientId = localStorage.getItem("userId");
 
-    const onConnect = () => {
-      if (patientId) {
-        socket.emit("joinUserRoom", patientId);
-      }
-      if (doctorDocId) {
-        socket.emit("joinDoctorRoom", doctorDocId);
-      }
-    };
-
-    socket.on("connect", onConnect);
-    if (socket.connected) {
-      onConnect();
+    if (patientId) {
+      joinUserRoom(patientId);
+    }
+    if (doctorDocId) {
+      joinDoctorRoom(doctorDocId);
     }
 
-    socket.on("queueUpdated", (data) => {
+    const handleQueueUpdated = (data) => {
       const matchesDoctor =
         doctorDocId != null && String(data.doctorId) === String(doctorDocId);
       const matchesPatient =
@@ -188,12 +184,14 @@ const PatientDashboard = () => {
         fetchDashboard(date);
         fetchQueueStatus();
       }
-    });
+    };
+
+    socket.on("queueUpdated", handleQueueUpdated);
 
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("queueUpdated");
-      socket.disconnect();
+      socket.off("queueUpdated", handleQueueUpdated);
+      if (doctorDocId) leaveDoctorRoom(doctorDocId);
+      if (patientId) leaveUserRoom(patientId);
     };
   }, [activeAppointment, fetchDashboard, fetchQueueStatus]);
 

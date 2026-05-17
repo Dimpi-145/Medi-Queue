@@ -3,9 +3,12 @@ import { io } from "socket.io-client";
 let socket = null;
 const joinedConsultationRooms = new Set();
 const joinedUserRooms = new Set();
+const joinedDoctorRooms = new Set();
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
+  import.meta.env.DEV
+    ? ""
+    : import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 const toConsultationRoom = (appointmentIdOrRoomId) => {
   const value = String(appointmentIdOrRoomId || "");
@@ -39,6 +42,14 @@ const rejoinRooms = () => {
       roomId,
     });
     socket.emit("joinConsultationRoom", roomId);
+  });
+
+  joinedDoctorRooms.forEach((doctorId) => {
+    console.log("[socket-debug] emit joinDoctorRoom", {
+      socketId: socket.id,
+      doctorId,
+    });
+    socket.emit("joinDoctorRoom", doctorId);
   });
 };
 
@@ -202,6 +213,40 @@ export const leaveUserRoom = (userId) => {
   socket.emit("leaveUserRoom", roomId);
 };
 
+export const joinDoctorRoom = (doctorId) => {
+  if (!doctorId) return;
+
+  const roomId = String(doctorId);
+  joinedDoctorRooms.add(roomId);
+  console.log("[socket-debug] joinDoctorRoom requested", {
+    doctorId: roomId,
+    hasSocket: Boolean(socket),
+    connected: Boolean(socket?.connected),
+    socketId: socket?.id,
+  });
+
+  if (!socket) return;
+
+  socket.emit("joinDoctorRoom", roomId);
+};
+
+export const leaveDoctorRoom = (doctorId) => {
+  if (!doctorId) return;
+
+  const roomId = String(doctorId);
+  joinedDoctorRooms.delete(roomId);
+  console.log("[socket-debug] leaveDoctorRoom requested", {
+    doctorId: roomId,
+    hasSocket: Boolean(socket),
+    connected: Boolean(socket?.connected),
+    socketId: socket?.id,
+  });
+
+  if (!socket) return;
+
+  socket.emit("leaveDoctorRoom", roomId);
+};
+
 export const disconnectSocket = () => {
   try {
     if (socket) {
@@ -210,6 +255,7 @@ export const disconnectSocket = () => {
       socket = null;
       joinedConsultationRooms.clear();
       joinedUserRooms.clear();
+      joinedDoctorRooms.clear();
     }
   } catch (error) {
     console.error("[socket] disconnect error:", error);

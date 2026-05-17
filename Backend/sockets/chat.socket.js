@@ -119,6 +119,48 @@ module.exports.register = function (
     }
   );
 
+  // ================= JOIN DOCTOR ROOM =================
+
+  socket.on(
+    "joinDoctorRoom",
+    (doctorId) => {
+      try {
+        if (!doctorId) return;
+        const targetRoom = String(doctorId);
+        socket.join(targetRoom);
+        console.log(
+          `[socket-debug] socket ${socket.id} joined doctor room ${targetRoom}`
+        );
+      } catch (error) {
+        console.error(
+          "[socket] join doctor room error:",
+          error
+        );
+      }
+    }
+  );
+
+  // ================= LEAVE DOCTOR ROOM =================
+
+  socket.on(
+    "leaveDoctorRoom",
+    (doctorId) => {
+      try {
+        if (!doctorId) return;
+        const targetRoom = String(doctorId);
+        socket.leave(targetRoom);
+        console.log(
+          `[socket-debug] socket ${socket.id} left doctor room ${targetRoom}`
+        );
+      } catch (error) {
+        console.error(
+          "[socket] leave doctor room error:",
+          error
+        );
+      }
+    }
+  );
+
   // ================= LEAVE USER ROOM =================
 
   socket.on(

@@ -12,7 +12,9 @@ import { callNextPatient } from "../services/doctor.api";
 import "../doctorDashboard.scss";
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
+  import.meta.env.DEV
+    ? ""
+    : import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 const getLocalDateString = (date = new Date()) => {
   const year = date.getFullYear();
