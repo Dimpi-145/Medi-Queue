@@ -7,8 +7,6 @@ const PrescriptionBox = ({
   onSubmit,
   onNext,
   disabled,
-  queueStatus,
-  onQueueStatusChange,
 }) => {
   return (
     <div className="prescription-card">
@@ -23,18 +21,6 @@ const PrescriptionBox = ({
         onChange={(e) => onTextChange(e.target.value)}
         placeholder="Write your prescription here..."
       />
-      <div className="prescription-status-field">
-        <label htmlFor="queue-status">Queue status</label>
-        <select
-          id="queue-status"
-          value={queueStatus}
-          onChange={(e) => onQueueStatusChange(e.target.value)}
-          disabled={disabled}
-        >
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
       <div className="prescription-actions">
         <button
           className="btn-secondary"

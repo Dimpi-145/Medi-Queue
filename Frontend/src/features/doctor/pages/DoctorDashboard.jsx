@@ -21,7 +21,7 @@ import {
 } from "../services/doctor.api";
 import PatientDetails from "../components/PatientDetails";
 import PrescriptionBox from "../components/PrescriptionBox";
-import axios from "../../../utils/axios";
+import API from "../../../utils/axios";
 import {
   getDoctorSharedReports,
   requestReport,
@@ -69,7 +69,7 @@ const DoctorDashboard = () => {
   const [doctorInfo, setDoctorInfo] = useState(null);
   const [queue, setQueue] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [selectedPatientStatus, setSelectedPatientStatus] = useState("pending");
+  const [noMorePatients, setNoMorePatients] = useState(false);
   const [prescriptionText, setPrescriptionText] = useState("");
   const [prescriptionLoading, setPrescriptionLoading] = useState(false);
 
@@ -156,7 +156,7 @@ const DoctorDashboard = () => {
 
         if (activePatient) {
           setSelectedPatient(activePatient);
-          setSelectedPatientStatus("completed");
+          setNoMorePatients(false);
         }
       } catch (err) {
         console.error("❌ Error fetching doctor data:", err);
@@ -427,7 +427,7 @@ const DoctorDashboard = () => {
                     ? () => {
                         const p = mapAppointmentToPatient(item);
                         setSelectedPatient(p);
-                        setSelectedPatientStatus("pending");
+                        setNoMorePatients(false);
                       }
                     : undefined
                 }
@@ -603,99 +603,112 @@ const DoctorDashboard = () => {
               </div>
               <div className="detail-and-prescription">
                 <div style={{ flex: 1 }}>
-                  <PatientDetails patient={selectedPatient} />
+                  {noMorePatients ? (
+                    <div className="detail-card empty-card">
+                      <h3>No more patient</h3>
+                      <p>All patients in the queue have been completed.</p>
+                    </div>
+                  ) : (
+                    <PatientDetails patient={selectedPatient} />
+                  )}
                 </div>
-                <div style={{ width: 360 }}>
-                  <PrescriptionBox
-                    prescriptionText={prescriptionText}
-                    onTextChange={setPrescriptionText}
-                    queueStatus={selectedPatientStatus}
-                    onQueueStatusChange={setSelectedPatientStatus}
-                    onSubmit={async () => {
-                      try {
-                        if (!selectedPatient) {
-                          alert("Select a patient first");
-                          return;
-                        }
-                        setPrescriptionLoading(true);
-                        await axios.post("/prescriptions/create", {
-                          patientId: selectedPatient.patientId,
-                          appointmentId: selectedPatient.appointmentId,
-                          notes: prescriptionText,
-                          medicines: [],
-                        });
-                        alert(
-                          "Prescription sent to the patient prescription section.",
-                        );
-                        setPrescriptionText("");
-                      } catch (err) {
-                        console.error("Prescription submit error", err);
-                        alert(
-                          err.response?.data?.message ||
-                            "Failed to submit prescription",
-                        );
-                      } finally {
-                        setPrescriptionLoading(false);
-                      }
-                    }}
-                    onNext={async () => {
-                      try {
-                        if (!selectedPatient) {
-                          alert("Select a patient first");
-                          return;
-                        }
-                        const response = await callNextPatient({
-                          date: selectedDate,
-                          appointmentId: selectedPatient.appointmentId,
-                          currentStatus: selectedPatientStatus,
-                        });
-                        const nextPatient = response.data?.patient;
-                        if (nextPatient) {
-                          setSelectedPatient({
-                            name: nextPatient.username || "N/A",
-                            age: nextPatient.age || "—",
-                            gender: nextPatient.gender || "—",
-                            queueNumber: response.data?.queueNumber,
-                            status: "approved",
-                            note: nextPatient.note || "",
-                            appointmentId: response.data?.appointmentId,
-                            patientId:
-                              response.data?.patientId || nextPatient._id,
+                {!noMorePatients && (
+                  <div style={{ width: 360 }}>
+                    <PrescriptionBox
+                      prescriptionText={prescriptionText}
+                      onTextChange={setPrescriptionText}
+                      onSubmit={async () => {
+                        try {
+                          if (!selectedPatient) {
+                            alert("Select a patient first");
+                            return;
+                          }
+                          setPrescriptionLoading(true);
+                          await API.post("/prescriptions/create", {
+                            patientId: selectedPatient.patientId,
+                            appointmentId: selectedPatient.appointmentId,
+                            notes: prescriptionText,
+                            medicines: [],
                           });
-                          setSelectedPatientStatus("completed");
-                        } else {
-                          setSelectedPatient((currentPatient) =>
-                            currentPatient
-                              ? {
-                                  ...currentPatient,
-                                  status:
-                                    response.data?.currentStatus ||
-                                    currentPatient.status,
-                                }
-                              : currentPatient,
+                          alert(
+                            "Prescription sent to the patient prescription section.",
                           );
-                          setSelectedPatientStatus(
-                            response.data?.currentStatus ||
-                              selectedPatientStatus,
+                          setPrescriptionText("");
+                        } catch (err) {
+                          console.error("Prescription submit error", err);
+                          alert(
+                            err.response?.data?.message ||
+                              "Failed to submit prescription",
+                          );
+                        } finally {
+                          setPrescriptionLoading(false);
+                        }
+                      }}
+                      onNext={async () => {
+                        try {
+                          if (!selectedPatient) {
+                            alert("Select a patient first");
+                            return;
+                          }
+                          const finishedAppointmentId =
+                            selectedPatient.appointmentId;
+                          const response = await callNextPatient({
+                            date: selectedDate,
+                            appointmentId: selectedPatient.appointmentId,
+                            currentStatus: selectedPatient.status || "pending",
+                          });
+                          const nextPatient = response.data?.patient;
+
+                          if (finishedAppointmentId) {
+                            setQueue((prev) =>
+                              prev.map((item) =>
+                                String(item._id || item.id) ===
+                                String(finishedAppointmentId)
+                                  ? {
+                                      ...item,
+                                      status: "completed",
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }
+
+                          if (nextPatient) {
+                            setSelectedPatient({
+                              name: nextPatient.username || "N/A",
+                              age: nextPatient.age || "—",
+                              gender: nextPatient.gender || "—",
+                              queueNumber: response.data?.queueNumber,
+                              status: "approved",
+                              note: nextPatient.note || "",
+                              appointmentId: response.data?.appointmentId,
+                              patientId:
+                                response.data?.patientId || nextPatient._id,
+                            });
+                            setNoMorePatients(false);
+                          } else {
+                            setSelectedPatient(null);
+                            setNoMorePatients(true);
+                          }
+
+                          setPrescriptionText("");
+                          await fetchQueue(selectedDate);
+                          await fetchData(selectedDate);
+                        } catch (err) {
+                          console.error("Call next failed", err);
+                          alert(
+                            err.response?.data?.message || "No patients left",
                           );
                         }
-                        setPrescriptionText("");
-                        await fetchQueue(selectedDate);
-                        await fetchData(selectedDate);
-                      } catch (err) {
-                        console.error("Call next failed", err);
-                        alert(
-                          err.response?.data?.message || "No patients left",
-                        );
+                      }}
+                      disabled={
+                        !canOperateQueue ||
+                        prescriptionLoading ||
+                        !selectedPatient
                       }
-                    }}
-                    disabled={
-                      !canOperateQueue ||
-                      prescriptionLoading ||
-                      !selectedPatient
-                    }
-                  />
-                </div>
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

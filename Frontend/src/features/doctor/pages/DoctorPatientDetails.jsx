@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import API from "../../../utils/axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
@@ -10,6 +10,9 @@ import PrescriptionBox from "../components/PrescriptionBox";
 import { callNextPatient } from "../services/doctor.api";
 
 import "../doctorDashboard.scss";
+
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || "https://medi-queue-1.onrender.com";
 
 const getLocalDateString = (date = new Date()) => {
   const year = date.getFullYear();
@@ -26,7 +29,6 @@ const DoctorPatientDetails = () => {
   const [patient, setPatient] = useState(null);
   const [prescriptionText, setPrescriptionText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [queueStatusValue, setQueueStatusValue] = useState("pending");
   const [queue, setQueue] = useState([]);
   const [selectedDate, setSelectedDate] = useState(
     localStorage.getItem("doctorQueueDate") || getLocalDateString(),
@@ -39,10 +41,7 @@ const DoctorPatientDetails = () => {
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        const res = await axios.get(
-          `https://medi-queue-1.onrender.com/api/queue/patient/${patientId}`,
-          { withCredentials: true },
-        );
+        const res = await API.get(`/queue/patient/${patientId}`);
 
         // Transform the data to match component expectations
         const patientData = res.data.patient;
@@ -73,13 +72,9 @@ const DoctorPatientDetails = () => {
   // ================= FETCH QUEUE =================
   const fetchQueue = async () => {
     try {
-      const res = await axios.get(
-        "https://medi-queue-1.onrender.com/api/queue/live",
-        {
-          params: { date: selectedDate },
-          withCredentials: true,
-        },
-      );
+      const res = await API.get("/queue/live", {
+        params: { date: selectedDate },
+      });
       const queueData = res.data?.patients || res.data || [];
       setQueue(Array.isArray(queueData) ? queueData : []);
     } catch (err) {
@@ -93,7 +88,7 @@ const DoctorPatientDetails = () => {
 
   // ================= SOCKET SETUP =================
   useEffect(() => {
-    const socket = io("https://medi-queue-1.onrender.com");
+    const socket = io(BACKEND_URL);
     socketRef.current = socket;
 
     // Join doctor room
@@ -135,16 +130,7 @@ const DoctorPatientDetails = () => {
 
       console.log("SENDING:", payload);
 
-      await axios.post(
-        "https://medi-queue-1.onrender.com/api/prescriptions/create",
-        payload,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      await API.post("/prescriptions/create", payload);
 
       alert("Prescription submitted successfully");
       setPrescriptionText("");
@@ -222,8 +208,6 @@ const DoctorPatientDetails = () => {
               onTextChange={setPrescriptionText}
               onSubmit={handleSubmitPrescription}
               onNext={handleNextPatient}
-              queueStatus={queueStatusValue}
-              onQueueStatusChange={setQueueStatusValue}
               loading={loading}
               disabled={!isQueueActive}
             />
