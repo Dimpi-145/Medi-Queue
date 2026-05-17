@@ -798,21 +798,34 @@ async function getReportFile(req, res) {
     if (!report) return res.status(404).json({ message: "Report not found" });
 
     // Basic permission check: allow owner, hospital that owns it, or if shared
-    const isOwner = report.patientId && String(report.patientId) === String(userId);
-    const isHospital = req.user && req.user.role === "hospital" && String(req.user.id) === String(report.hospitalId);
-    const isShared = Array.isArray(report.sharedWith) && report.sharedWith.some((s) => String(s.userId) === String(userId));
+    const isOwner =
+      report.patientId && String(report.patientId) === String(userId);
+    const isHospital =
+      req.user &&
+      req.user.role === "hospital" &&
+      String(req.user.id) === String(report.hospitalId);
+    const isShared =
+      Array.isArray(report.sharedWith) &&
+      report.sharedWith.some((s) => String(s.userId) === String(userId));
 
     if (!isOwner && !isHospital && !isShared) {
-      return res.status(403).json({ message: "Access denied to this report file" });
+      return res
+        .status(403)
+        .json({ message: "Access denied to this report file" });
     }
 
     const storageType = getReportStorageType(report);
 
     if (storageType === "local") {
-      const localName = report.localPath ? path.basename(report.localPath) : path.basename(report.fileUrl || report.fileName || "");
-      const localPath = report.localPath || path.join(reportUploadDir, localName);
+      const localName = report.localPath
+        ? path.basename(report.localPath)
+        : path.basename(report.fileUrl || report.fileName || "");
+      const localPath =
+        report.localPath || path.join(reportUploadDir, localName);
       if (!localPath || !fs.existsSync(localPath)) {
-        return res.status(404).json({ message: "Report file not found on server" });
+        return res
+          .status(404)
+          .json({ message: "Report file not found on server" });
       }
       return res.sendFile(localPath);
     }
@@ -822,10 +835,14 @@ async function getReportFile(req, res) {
       return res.redirect(report.fileUrl);
     }
 
-    return res.status(404).json({ message: "No file available for this report" });
+    return res
+      .status(404)
+      .json({ message: "No file available for this report" });
   } catch (err) {
     console.error("GET REPORT FILE ERROR:", err);
-    return res.status(500).json({ message: err.message || "Server error fetching report file" });
+    return res
+      .status(500)
+      .json({ message: err.message || "Server error fetching report file" });
   }
 }
 

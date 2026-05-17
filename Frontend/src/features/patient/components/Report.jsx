@@ -473,11 +473,13 @@ const Reports = () => {
                               {sendingRequestId === item._id
                                 ? "Sending..."
                                 : "Send"}
-                              </button>
-                              <button
+                            </button>
+                            <button
                               type="button"
                               className="secondary-button"
-                              onClick={() => openReport(item._id, item.fileName)}
+                              onClick={() =>
+                                openReport(item._id, item.fileName)
+                              }
                             >
                               View Report
                             </button>

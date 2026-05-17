@@ -806,19 +806,29 @@ const DoctorDashboard = () => {
                           type="button"
                           className="action-btn"
                           onClick={async () => {
-                            if (!item._id) return toast.error("No file available");
+                            if (!item._id)
+                              return toast.error("No file available");
                             try {
-                              const res = await fetch(`/api/reports/${item._id}/file`, {
-                                credentials: "include",
-                              });
-                              if (!res.ok) throw new Error("Unable to fetch file");
+                              const res = await fetch(
+                                `/api/reports/${item._id}/file`,
+                                {
+                                  credentials: "include",
+                                },
+                              );
+                              if (!res.ok)
+                                throw new Error("Unable to fetch file");
                               const blob = await res.blob();
                               const url = window.URL.createObjectURL(blob);
                               window.open(url, "_blank");
-                              setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+                              setTimeout(
+                                () => window.URL.revokeObjectURL(url),
+                                10000,
+                              );
                             } catch (err) {
                               console.error("Open report error:", err);
-                              toast.error("Unable to load file. It may be missing from the server.");
+                              toast.error(
+                                "Unable to load file. It may be missing from the server.",
+                              );
                             }
                           }}
                         >
