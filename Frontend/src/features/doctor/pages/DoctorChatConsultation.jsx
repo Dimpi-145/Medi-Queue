@@ -36,6 +36,54 @@ import { authContext } from "../../auth/auth.context";
 
 import "../styles/ChatConsultation.scss";
 
+const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+
+const renderMessageContent = (message) => {
+  const text = String(message || "");
+
+  if (!urlPattern.test(text)) {
+    return <p className="message-text">{text}</p>;
+  }
+
+  urlPattern.lastIndex = 0;
+
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = urlPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+
+    const rawUrl = match[0];
+    const href =
+      rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+        ? rawUrl
+        : `https://${rawUrl}`;
+
+    parts.push(
+      <a
+        key={`${match.index}-${rawUrl}`}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="message-link"
+      >
+        {rawUrl}
+      </a>,
+    );
+
+    lastIndex = match.index + rawUrl.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return <p className="message-text">{parts}</p>;
+};
+
 const DoctorChatConsultation = () => {
   const { user } = useContext(authContext);
 
@@ -671,9 +719,7 @@ const DoctorChatConsultation = () => {
                             </div>
                           )}
 
-                        {msg.message && (
-                          <p className="message-text">{msg.message}</p>
-                        )}
+                        {msg.message && renderMessageContent(msg.message)}
 
                         <span className="message-time">
                           {formatTime(msg.createdAt)}
