@@ -38,9 +38,9 @@ const getLocalDateString = (date = new Date()) => {
 
 const normalizeQueueStatus = (status = "") => {
   const value = String(status).toLowerCase();
-  return value === "approved" || value === "completed" || value === "treated"
-    ? "completed"
-    : value || "pending";
+  if (value === "completed" || value === "treated") return "completed";
+  if (value === "approved") return "in-consultation";
+  return value || "pending";
 };
 
 const mapAppointmentToPatient = (appointment) => {
@@ -674,7 +674,7 @@ const DoctorDashboard = () => {
                           const response = await callNextPatient({
                             date: selectedDate,
                             appointmentId: selectedPatient.appointmentId,
-                            currentStatus: selectedPatient.status || "pending",
+                            currentStatus: "completed",
                           });
                           const nextPatient = response.data?.patient;
 
