@@ -673,15 +673,15 @@ const HospitalReports = () => {
                       <Share2 size={16} />
                       Share
                     </button>
-+                    {user && user.role === "hospital" && (
-+                      <button
-+                        className="action-btn delete"
-+                        onClick={() => handleDeleteReport(report)}
-+                      >
-+                        <Trash2 size={16} />
-+                        Delete
-+                      </button>
-+                    )}
+                    {user && user.role === "hospital" && (
+                      <button
+                        className="action-btn delete"
+                        onClick={() => handleDeleteReport(report)}
+                      >
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
