@@ -65,7 +65,7 @@ async function callNextPatient(req, res) {
       selectedDate,
       new Date(),
       {
-        enforceToday: true,
+        enforceToday: false,
       },
     );
 
@@ -386,7 +386,7 @@ async function completeCurrent(req, res) {
       selectedDate,
       new Date(),
       {
-        enforceToday: true,
+        enforceToday: false,
       },
     );
 
