@@ -88,13 +88,12 @@ async function callNextPatient(req, res) {
             _id: currentAppointmentId,
             doctorId: req.user.id,
             date: selectedDate,
-            status: "approved",
           }
         : activeQuery,
     ).populate("patientId", "username age gender email phone");
 
-    if (!currentAppointment) {
-      currentAppointment = await Appointment.findOne(activeQuery).populate(
+    if (!currentAppointment && currentAppointmentId) {
+       currentAppointment = await Appointment.findOne(activeQuery).populate(
         "patientId",
         "username age gender email phone",
       );
@@ -106,9 +105,11 @@ async function callNextPatient(req, res) {
       });
     }
 
-    currentAppointment.status = "completed";
-    currentAppointment.completedAt = new Date();
-    currentAppointment.consultationEndedAt = currentAppointment.completedAt;
+    currentAppointment.status = currentStatus;
+    if (currentStatus === "completed") {
+      currentAppointment.completedAt = new Date();
+      currentAppointment.consultationEndedAt = currentAppointment.completedAt;
+    }
     const currentStartedAt = new Date(
       currentAppointment.consultationStartedAt ||
         currentAppointment.approvedAt ||

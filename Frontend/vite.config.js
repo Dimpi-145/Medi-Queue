@@ -74,6 +74,11 @@ export default defineConfig(async ({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        "/uploads": {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   };
