@@ -359,7 +359,7 @@ Some potential improvements for future versions include:
 
 * **Dimpi** — Frontend Developer
 * **Kalyanshnu Saikia** — Backend Developer
-* **Abidit Saikia** - UI/UX 
+* **Abidit Gogoi** - UI/UX 
 * **Amanjit Singh Bhamrah** - PPT
 * **Preeti Saikia** - Project Report
 ---
